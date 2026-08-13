@@ -21,7 +21,7 @@ export class OverworldScene implements GameScene {
 
   constructor(private readonly canvas: HTMLCanvasElement) {
     this.input = new PointerInput(canvas);
-    this.input.addEventListener(GAME_EVENTS.TAP, this.onTap as EventListener);
+    this.input.addEventListener(GAME_EVENTS.POINT, this.onPoint as EventListener);
 
     const paperTexture = this.createPaperTexture();
     this.ground = new THREE.Mesh(
@@ -82,7 +82,7 @@ export class OverworldScene implements GameScene {
   }
 
   dispose(): void {
-    this.input.removeEventListener(GAME_EVENTS.TAP, this.onTap as EventListener);
+    this.input.removeEventListener(GAME_EVENTS.POINT, this.onPoint as EventListener);
     this.input.dispose();
     this.scene.traverse((object) => {
       if (!(object instanceof THREE.Mesh)) return;
@@ -96,7 +96,7 @@ export class OverworldScene implements GameScene {
     this.scene.clear();
   }
 
-  private readonly onTap = (event: CustomEvent<TapDetail>): void => {
+  private readonly onPoint = (event: CustomEvent<TapDetail>): void => {
     const bounds = this.canvas.getBoundingClientRect();
     this.pointer.set(
       ((event.detail.clientX - bounds.left) / bounds.width) * 2 - 1,

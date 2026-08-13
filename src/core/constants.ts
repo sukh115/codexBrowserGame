@@ -3,6 +3,7 @@ export const GAME_EVENTS = {
   ASSET_COMPLETE: "game:asset-complete",
   STATE_CHANGE: "game:state-change",
   TAP: "game:tap",
+  POINT: "game:point",
 } as const;
 
 export const INPUT_LIMITS = {

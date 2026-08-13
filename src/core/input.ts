@@ -14,12 +14,14 @@ export class PointerInput extends EventTarget {
   constructor(private readonly element: HTMLElement) {
     super();
     element.addEventListener("pointerdown", this.onPointerDown);
+    element.addEventListener("pointermove", this.onPointerMove);
     element.addEventListener("pointerup", this.onPointerUp);
     element.addEventListener("pointercancel", this.onPointerCancel);
   }
 
   dispose(): void {
     this.element.removeEventListener("pointerdown", this.onPointerDown);
+    this.element.removeEventListener("pointermove", this.onPointerMove);
     this.element.removeEventListener("pointerup", this.onPointerUp);
     this.element.removeEventListener("pointercancel", this.onPointerCancel);
   }
@@ -31,6 +33,12 @@ export class PointerInput extends EventTarget {
     this.startY = event.clientY;
     this.startTime = performance.now();
     this.element.setPointerCapture(event.pointerId);
+    this.dispatchPoint(event);
+  };
+
+  private readonly onPointerMove = (event: PointerEvent): void => {
+    if (event.pointerId !== this.pointerId) return;
+    this.dispatchPoint(event);
   };
 
   private readonly onPointerUp = (event: PointerEvent): void => {
@@ -47,4 +55,9 @@ export class PointerInput extends EventTarget {
   private readonly onPointerCancel = (): void => {
     this.pointerId = null;
   };
+
+  private dispatchPoint(event: PointerEvent): void {
+    const detail: TapDetail = { clientX: event.clientX, clientY: event.clientY };
+    this.dispatchEvent(new CustomEvent<TapDetail>(GAME_EVENTS.POINT, { detail }));
+  }
 }
