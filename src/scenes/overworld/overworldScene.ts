@@ -17,7 +17,8 @@ export class OverworldScene implements GameScene {
   private readonly cameraTarget = new THREE.Vector3();
   private readonly cameraOffset = new THREE.Vector3(15, 18, 15);
   private readonly ground: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial>;
-  private readonly character = createPlaceholderCharacter();
+  private readonly characterRig = createPlaceholderCharacter();
+  private readonly character = this.characterRig.group;
   private readonly marker: THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>;
   private readonly entrance = new THREE.Group();
   private readonly entrancePosition = new THREE.Vector3(
@@ -87,13 +88,18 @@ export class OverworldScene implements GameScene {
         this.character.position.copy(this.destination);
         this.character.position.y = 0;
         this.moving = false;
+        this.resetWalkPose();
       } else {
         this.direction.normalize();
         this.character.position.addScaledVector(this.direction, Math.min(WORLD.MOVE_SPEED * deltaSeconds, distance));
         this.character.rotation.y = Math.atan2(this.direction.x, this.direction.z);
         this.walkTime += deltaSeconds * 10;
         this.character.position.y = Math.abs(Math.sin(this.walkTime)) * 0.12;
+        this.updateWalkPose();
       }
+    } else {
+      this.walkTime += deltaSeconds * 1.8;
+      this.updateIdlePose();
     }
 
     this.marker.material.opacity = Math.max(0, this.marker.material.opacity - deltaSeconds * 1.5);
@@ -162,6 +168,36 @@ export class OverworldScene implements GameScene {
 
   private createCharacter(): void {
     this.scene.add(this.character);
+  }
+
+  private updateWalkPose(): void {
+    const stride = Math.sin(this.walkTime) * 0.72;
+    const counterStride = Math.sin(this.walkTime + Math.PI) * 0.62;
+    this.characterRig.leftArm.rotation.x = stride;
+    this.characterRig.rightArm.rotation.x = -stride;
+    this.characterRig.leftLeg.rotation.x = counterStride;
+    this.characterRig.rightLeg.rotation.x = -counterStride;
+    this.characterRig.torso.rotation.z = Math.sin(this.walkTime * 0.5) * 0.055;
+    this.characterRig.head.rotation.z = -this.characterRig.torso.rotation.z * 0.7;
+    this.characterRig.head.rotation.y = Math.sin(this.walkTime * 0.5) * 0.06;
+  }
+
+  private updateIdlePose(): void {
+    const breath = Math.sin(this.walkTime) * 0.018;
+    this.character.position.y = Math.max(0, breath);
+    this.characterRig.torso.scale.y = 1 + breath * 0.45;
+    this.characterRig.head.position.y = 1.78 + breath * 0.35;
+    this.characterRig.head.rotation.y = Math.sin(this.walkTime * 0.42) * 0.035;
+    this.characterRig.leftArm.rotation.x *= 0.88;
+    this.characterRig.rightArm.rotation.x *= 0.88;
+    this.characterRig.leftLeg.rotation.x *= 0.82;
+    this.characterRig.rightLeg.rotation.x *= 0.82;
+    this.characterRig.torso.rotation.z *= 0.88;
+    this.characterRig.head.rotation.z *= 0.88;
+  }
+
+  private resetWalkPose(): void {
+    this.characterRig.torso.scale.y = 1;
   }
 
   private createBoundary(): void {

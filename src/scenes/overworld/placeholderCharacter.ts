@@ -1,6 +1,16 @@
 import * as THREE from "three";
 
-export function createPlaceholderCharacter(): THREE.Group {
+export interface PlaceholderCharacterRig {
+  readonly group: THREE.Group;
+  readonly torso: THREE.Mesh;
+  readonly head: THREE.Mesh;
+  readonly leftArm: THREE.Mesh;
+  readonly rightArm: THREE.Mesh;
+  readonly leftLeg: THREE.Mesh;
+  readonly rightLeg: THREE.Mesh;
+}
+
+export function createPlaceholderCharacter(): PlaceholderCharacterRig {
   const character = new THREE.Group();
   const hoodie = new THREE.MeshStandardMaterial({ color: 0x78b58b, roughness: 0.9 });
   const skin = new THREE.MeshStandardMaterial({ color: 0xf08a5d, roughness: 0.92 });
@@ -87,5 +97,5 @@ export function createPlaceholderCharacter(): THREE.Group {
     cable,
   );
   character.scale.setScalar(1.08);
-  return character;
+  return { group: character, torso, head, leftArm, rightArm, leftLeg, rightLeg };
 }
