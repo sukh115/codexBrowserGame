@@ -6,7 +6,31 @@ export interface RegionManifest {
   readonly background: string | null;
   readonly bpm: number;
   readonly aspectRatio: number;
+  readonly stems: readonly StemManifest[];
+  readonly noteStemMapping: Readonly<Record<string, string | null>>;
 }
+
+export interface StemManifest {
+  readonly id: string;
+  readonly path: string | null;
+}
+
+const PLACEHOLDER_STEMS = [
+  { id: "rhythm", path: null },
+  { id: "bass", path: null },
+  { id: "harmony", path: null },
+  { id: "melody", path: null },
+] as const;
+
+const NOTE_STEM_MAPPING = {
+  "note-1": "rhythm",
+  "note-2": null,
+  "note-3": "bass",
+  "note-4": "harmony",
+  "note-5": null,
+  "note-6": "melody",
+  "note-7": null,
+} as const;
 
 export const ASSET_MANIFEST = {
   characterModel: null as string | null,
@@ -18,6 +42,8 @@ export const ASSET_MANIFEST = {
       background: null,
       bpm: 120,
       aspectRatio: 2,
+      stems: PLACEHOLDER_STEMS,
+      noteStemMapping: NOTE_STEM_MAPPING,
     },
     "neon-forest": {
       id: "neon-forest",
@@ -25,6 +51,8 @@ export const ASSET_MANIFEST = {
       background: null,
       bpm: 120,
       aspectRatio: 2,
+      stems: PLACEHOLDER_STEMS,
+      noteStemMapping: NOTE_STEM_MAPPING,
     },
   } satisfies Record<RegionId, RegionManifest>,
   overworldEntrance: {

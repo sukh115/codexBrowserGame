@@ -30,6 +30,15 @@ class GameStore extends EventTarget {
     this.state = { ...this.state, ...patch };
     this.dispatchEvent(new CustomEvent<GameState>(GAME_EVENTS.STATE_CHANGE, { detail: this.state }));
   }
+
+  collectNote(noteId: string): void {
+    if (this.state.collectedNotes.includes(noteId)) return;
+    const collectedNotes = [...this.state.collectedNotes, noteId];
+    this.setState({
+      collectedNotes,
+      completed: collectedNotes.length >= 7,
+    });
+  }
 }
 
 export const gameStore = new GameStore();
