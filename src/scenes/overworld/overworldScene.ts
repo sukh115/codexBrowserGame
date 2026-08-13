@@ -17,6 +17,7 @@ export class OverworldScene implements GameScene {
   private readonly direction = new THREE.Vector3();
   private readonly cameraTarget = new THREE.Vector3();
   private readonly cameraOffset = new THREE.Vector3(15, 18, 15);
+  private readonly baseCameraOffset = new THREE.Vector3(15, 18, 15);
   private readonly ground: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial>;
   private readonly characterRig = createPlaceholderCharacter();
   private readonly character = this.characterRig.group;
@@ -151,6 +152,8 @@ export class OverworldScene implements GameScene {
 
   resize(width: number, height: number): void {
     this.camera.aspect = width / height;
+    const portraitScale = THREE.MathUtils.clamp(1 / this.camera.aspect, 1, 1.65);
+    this.cameraOffset.copy(this.baseCameraOffset).multiplyScalar(portraitScale);
     this.camera.updateProjectionMatrix();
   }
 

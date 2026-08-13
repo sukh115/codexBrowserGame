@@ -1,5 +1,7 @@
 export type RegionId = "music-shop" | "neon-forest";
 
+const assetPath = (path: string): string => `${import.meta.env.BASE_URL}${path.replace(/^\//, "")}`;
+
 export interface RegionManifest {
   readonly id: RegionId;
   readonly title: string;
@@ -51,14 +53,14 @@ export const ASSET_MANIFEST = {
   overworldProps: [
     {
       id: "tree-test",
-      path: "/assets/models/tree-test.fbx",
+      path: assetPath("assets/models/tree-test.fbx"),
       position: { x: -5, z: -4 },
       targetHeight: 7.2,
     },
     {
       id: "tree-test-obj",
-      path: "/assets/models/tree-test.obj",
-      materialPath: "/assets/models/tree-test.mtl",
+      path: assetPath("assets/models/tree-test.obj"),
+      materialPath: assetPath("assets/models/tree-test.mtl"),
       position: { x: -9, z: -4 },
       targetHeight: 7.2,
     },
@@ -67,7 +69,7 @@ export const ASSET_MANIFEST = {
     "music-shop": {
       id: "music-shop",
       title: "잠든 악기점",
-      background: "/assets/textures/music-shop.webp",
+      background: assetPath("assets/textures/music-shop.webp"),
       bpm: 120,
       aspectRatio: 2,
       stems: PLACEHOLDER_STEMS,

@@ -13,11 +13,14 @@ html, body, #app {
   margin: 0;
   overflow: hidden;
   overscroll-behavior: none;
+  min-height: 100dvh;
 }
 
 button { font: inherit; }
 
 .game-canvas {
+  position: fixed;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
@@ -27,6 +30,9 @@ button { font: inherit; }
 .ui-layer {
   position: fixed;
   inset: 0;
+  width: 100dvw;
+  height: 100dvh;
+  overflow: hidden;
   pointer-events: none;
 }
 
@@ -293,25 +299,28 @@ button { font: inherit; }
   .loading-screen .eyebrow { font-size: 12px; }
 }
 
-.orientation-notice {
-  position: absolute;
-  inset: 0;
-  z-index: 100;
-  display: none;
-  place-content: center;
-  gap: 10px;
-  padding: 30px;
-  color: #fff;
-  text-align: center;
-  background: #17142b;
-  pointer-events: auto;
-}
-
-.orientation-notice strong { font-size: 25px; }
-.orientation-notice span { color: #b8dcd7; line-height: 1.5; }
-
 @media (orientation: portrait) and (max-width: 820px) {
-  .orientation-notice { display: grid; }
+  .loading-screen { padding: max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom)); }
+  .loading-screen h1 { font-size: clamp(38px, 13vw, 62px); }
+  .note-counter { top: max(10px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left)); padding: 8px 12px; font-size: 15px; }
+  .hud-button { top: max(10px, env(safe-area-inset-top)); padding: 8px 10px; font-size: 12px; }
+  .mute-button { right: max(10px, env(safe-area-inset-right)); }
+  .reset-button { top: max(52px, calc(env(safe-area-inset-top) + 52px)); right: max(10px, env(safe-area-inset-right)); }
+  .replay-button { top: max(94px, calc(env(safe-area-inset-top) + 94px)); right: max(10px, env(safe-area-inset-right)); }
+  .settings-panel { top: max(52px, calc(env(safe-area-inset-top) + 52px)); left: max(10px, env(safe-area-inset-left)); width: min(235px, calc(100vw - 20px)); }
+  .exit-button { top: auto; right: max(10px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom)); padding: 10px 13px; font-size: 12px; }
+  .context-button { bottom: max(18px, env(safe-area-inset-bottom)); width: min(310px, calc(100vw - 30px)); }
+  .tutorial-tip { bottom: max(74px, calc(env(safe-area-inset-bottom) + 74px)); padding: 13px; font-size: 13px; }
+  .minigame-overlay { align-items: center; overflow-y: auto; padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); }
+  .minigame-panel { width: min(100%, 440px); min-height: 0; max-height: calc(100dvh - 24px); padding: 18px 14px; overflow-y: auto; }
+  .minigame-title { font-size: 24px; }
+  .minigame-status { margin-bottom: 10px; font-size: 13px; }
+  .minigame-stage { min-height: 180px; }
+  .timing-track { width: min(100%, 360px); }
+  .rhythm-track { width: 145px; height: 190px; }
+  .rhythm-pad { width: 125px; }
+  .memory-key { width: min(140px, 38vw); height: 68px; }
+  .minigame-entrance { min-width: 48px; min-height: 44px; transform: translate(-50%, -50%) scale(.86); }
 }
 
 @media (max-height: 520px) {

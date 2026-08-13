@@ -23,12 +23,14 @@ export class Engine {
     this.renderer.domElement.className = "game-canvas";
     container.append(this.renderer.domElement);
     window.addEventListener("resize", this.handleResize);
+    window.visualViewport?.addEventListener("resize", this.handleResize);
   }
 
   setScene(scene: GameScene): void {
     this.activeScene = scene;
     scene.init();
-    scene.resize(window.innerWidth, window.innerHeight);
+    const { width, height } = this.getViewportSize();
+    scene.resize(width, height);
   }
 
   start(): void {
@@ -39,6 +41,7 @@ export class Engine {
   dispose(): void {
     cancelAnimationFrame(this.animationFrame);
     window.removeEventListener("resize", this.handleResize);
+    window.visualViewport?.removeEventListener("resize", this.handleResize);
     this.activeScene?.dispose();
     this.renderer.dispose();
     this.renderer.domElement.remove();
@@ -54,10 +57,16 @@ export class Engine {
   };
 
   private readonly handleResize = (): void => {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+    const { width, height } = this.getViewportSize();
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setSize(width, height);
     this.activeScene?.resize(width, height);
   };
+
+  private getViewportSize(): { width: number; height: number } {
+    return {
+      width: Math.max(1, Math.round(window.visualViewport?.width ?? window.innerWidth)),
+      height: Math.max(1, Math.round(window.visualViewport?.height ?? window.innerHeight)),
+    };
+  }
 }

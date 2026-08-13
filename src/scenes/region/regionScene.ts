@@ -9,7 +9,7 @@ import { ReactiveLayer } from "./reactiveLayer";
 
 const BACKGROUND_HEIGHT = 10;
 const MIN_ZOOM = 1;
-const MAX_ZOOM = 2.5;
+const MAX_ZOOM = 5;
 
 export class RegionScene implements GameScene {
   readonly scene = new THREE.Scene();
@@ -115,10 +115,18 @@ export class RegionScene implements GameScene {
     this.viewportWidth = width;
     this.viewportHeight = height;
     const aspect = width / height;
-    this.camera.left = -(BACKGROUND_HEIGHT * aspect) / 2;
-    this.camera.right = (BACKGROUND_HEIGHT * aspect) / 2;
-    this.camera.top = BACKGROUND_HEIGHT / 2;
-    this.camera.bottom = -BACKGROUND_HEIGHT / 2;
+    const backgroundWidth = BACKGROUND_HEIGHT * this.manifest.aspectRatio;
+    let viewWidth = backgroundWidth;
+    let viewHeight = BACKGROUND_HEIGHT;
+    if (aspect >= this.manifest.aspectRatio) {
+      viewWidth = BACKGROUND_HEIGHT * aspect;
+    } else {
+      viewHeight = backgroundWidth / aspect;
+    }
+    this.camera.left = -viewWidth / 2;
+    this.camera.right = viewWidth / 2;
+    this.camera.top = viewHeight / 2;
+    this.camera.bottom = -viewHeight / 2;
     this.camera.updateProjectionMatrix();
     this.noteField.resize(width, height);
     this.clampCamera();
