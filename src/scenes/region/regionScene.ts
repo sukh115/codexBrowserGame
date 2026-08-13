@@ -26,6 +26,7 @@ export class RegionScene implements GameScene {
   private tapStartX = 0;
   private tapStartY = 0;
   private tapStartTime = 0;
+  private inputLocked = false;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -74,6 +75,11 @@ export class RegionScene implements GameScene {
     this.noteField.syncCollectedNotes(collectedNotes);
   }
 
+  setInputLocked(locked: boolean): void {
+    this.inputLocked = locked;
+    if (locked) this.pointers.clear();
+  }
+
   resize(width: number, height: number): void {
     this.viewportWidth = width;
     this.viewportHeight = height;
@@ -105,6 +111,7 @@ export class RegionScene implements GameScene {
   }
 
   private readonly onPointerDown = (event: PointerEvent): void => {
+    if (this.inputLocked) return;
     this.canvas.setPointerCapture(event.pointerId);
     this.pointers.set(event.pointerId, new THREE.Vector2(event.clientX, event.clientY));
     this.dragPointerId = event.pointerId;
@@ -117,6 +124,7 @@ export class RegionScene implements GameScene {
   };
 
   private readonly onPointerMove = (event: PointerEvent): void => {
+    if (this.inputLocked) return;
     const pointer = this.pointers.get(event.pointerId);
     if (!pointer) return;
     pointer.set(event.clientX, event.clientY);
@@ -139,6 +147,7 @@ export class RegionScene implements GameScene {
   };
 
   private readonly onPointerUp = (event: PointerEvent): void => {
+    if (this.inputLocked) return;
     if (this.pointers.size === 1) {
       const distance = Math.hypot(event.clientX - this.tapStartX, event.clientY - this.tapStartY);
       const duration = performance.now() - this.tapStartTime;
@@ -153,6 +162,7 @@ export class RegionScene implements GameScene {
 
   private readonly onWheel = (event: WheelEvent): void => {
     event.preventDefault();
+    if (this.inputLocked) return;
     this.setZoom(this.camera.zoom * Math.exp(-event.deltaY * 0.0015));
   };
 

@@ -142,6 +142,46 @@ button { font: inherit; }
   50% { transform: scale(1.22); background: #f08a5d; }
 }
 
+.completion-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  overflow: hidden;
+  color: #fff;
+  text-align: center;
+  background: radial-gradient(circle, rgb(113 62 143 / 30%), rgb(8 8 24 / 78%));
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.completion-overlay.is-visible { visibility: visible; }
+.completion-overlay h2 { max-width: min(720px, 86vw); margin: 0; font-size: clamp(32px, 6vw, 68px); line-height: 1.08; letter-spacing: -0.05em; text-shadow: 0 0 28px #d97fd7; }
+.completion-overlay p { margin: 0; color: #b9fff3; font-size: clamp(15px, 2vw, 21px); }
+.completion-particles { position: absolute; inset: 0; }
+
+.completion-particles i {
+  position: absolute;
+  bottom: -16px;
+  left: var(--particle-x);
+  width: 7px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--particle-color);
+  box-shadow: 0 0 12px var(--particle-color);
+  animation: particle-rise 2.6s var(--particle-delay) ease-out infinite;
+}
+
+@keyframes particle-rise {
+  0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(0); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(35px, -105vh, 0) rotate(240deg); }
+}
+
 .context-button {
   bottom: max(28px, env(safe-area-inset-bottom));
   left: 50%;

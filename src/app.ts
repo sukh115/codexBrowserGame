@@ -10,6 +10,7 @@ import { ASSET_MANIFEST, type RegionManifest } from "./core/assetManifest";
 import { StemPlayer } from "./audio/stemPlayer";
 import { SfxPlayer } from "./audio/sfx";
 import { Hud } from "./ui/hud";
+import { CompletionOverlay } from "./ui/completion";
 
 export function bootstrap(root: HTMLElement): void {
   const overlay = document.createElement("div");
@@ -25,6 +26,8 @@ export function bootstrap(root: HTMLElement): void {
   const sfxPlayer = new SfxPlayer();
   let hud: Hud | null = null;
   let activeRegionScene: RegionScene | null = null;
+  const completionOverlay = new CompletionOverlay(overlay);
+  let wasCompleted = gameStore.snapshot.completed;
   overlay.append(loading.element);
 
   loader.addEventListener(GAME_EVENTS.ASSET_PROGRESS, (event) => {
@@ -107,6 +110,16 @@ export function bootstrap(root: HTMLElement): void {
       stemPlayer.setMasterVolume(state.muted ? 0 : 1);
     }
     if (state.collectedNotes.length === 0) stemPlayer.lockAll();
+    if (!wasCompleted && state.completed) {
+      activeRegionScene?.setInputLocked(true);
+      sfxPlayer.playComplete();
+      completionOverlay.show(() => activeRegionScene?.setInputLocked(false));
+    }
+    if (wasCompleted && !state.completed) {
+      completionOverlay.hide();
+      activeRegionScene?.setInputLocked(false);
+    }
+    wasCompleted = state.completed;
     const region: RegionManifest = ASSET_MANIFEST.regions[state.currentRegion];
     for (const noteId of state.collectedNotes) {
       const stemId = region.noteStemMapping[noteId];
