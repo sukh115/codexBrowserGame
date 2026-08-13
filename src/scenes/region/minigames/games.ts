@@ -72,22 +72,26 @@ function startRhythm(
   frame.stage.append(track, pad);
   const beatSeconds = 60 / bpm;
   const firstBeat = Math.ceil(getTransportTime() / beatSeconds) + 2;
-  const targets = Array.from({ length: 16 }, (_, index) => (firstBeat + index) * beatSeconds);
+  const practiceCount = 4;
+  const scoredCount = 16;
+  const targets = Array.from({ length: practiceCount + scoredCount }, (_, index) => (firstBeat + index) * beatSeconds);
   const notes = targets.map(() => {
     const note = document.createElement("i");
     note.className = "rhythm-note";
     track.append(note);
     return note;
   });
-  const judged = Array.from({ length: 16 }, () => false);
+  notes.slice(0, practiceCount).forEach((note) => note.classList.add("is-practice"));
+  const judged = Array.from({ length: targets.length }, () => false);
   let judgedCount = 0;
   let score = 0;
+  let combo = 0;
   let animationFrame = 0;
   let finished = false;
   const finish = (): void => {
-    if (finished || judgedCount < 16) return;
+    if (finished || judgedCount < scoredCount) return;
     finished = true;
-    const accuracy = score / 16;
+    const accuracy = score / scoredCount;
     if (accuracy >= 0.7) {
       frame.status.textContent = `정확도 ${Math.round(accuracy * 100)}% · 클리어!`;
       window.setTimeout(onClear, 650);
@@ -105,9 +109,12 @@ function startRhythm(
       notes[index].hidden = progress < -0.05 || progress > 1.15;
       if (timeUntil < -(assist ? 0.28 : 0.2)) {
         judged[index] = true;
-        judgedCount += 1;
         notes[index].classList.add("is-miss");
-        frame.status.textContent = `Miss · ${judgedCount}/16`;
+        if (index >= practiceCount) {
+          judgedCount += 1;
+          combo = 0;
+          frame.status.textContent = `Miss · ${judgedCount}/${scoredCount} · Combo 0`;
+        }
       }
     });
     finish();
@@ -131,18 +138,23 @@ function startRhythm(
       return;
     }
     const result = nearestError <= (assist ? 0.12 : 0.08) ? "Perfect" : "Good";
-    if (result === "Perfect") score += 1;
-    if (result === "Good") score += 0.7;
     judged[nearestIndex] = true;
-    judgedCount += 1;
     notes[nearestIndex].classList.add(result === "Perfect" ? "is-perfect" : "is-good");
-    frame.status.textContent = `${result} · ${judgedCount}/16`;
+    if (nearestIndex < practiceCount) {
+      frame.status.textContent = `연습 ${nearestIndex + 1}/${practiceCount} · ${result}`;
+    } else {
+      if (result === "Perfect") score += 1;
+      if (result === "Good") score += 0.7;
+      judgedCount += 1;
+      combo += 1;
+      frame.status.textContent = `${result} · ${judgedCount}/${scoredCount} · Combo ${combo}`;
+    }
     pad.classList.remove("is-hit");
     requestAnimationFrame(() => pad.classList.add("is-hit"));
     finish();
   };
   pad.addEventListener("pointerdown", tap);
-  frame.status.textContent = "노트가 판정선에 닿을 때 탭하세요";
+  frame.status.textContent = "첫 4노트는 연습입니다 · 판정선에서 탭하세요";
   animationFrame = requestAnimationFrame(animate);
   return () => {
     cancelAnimationFrame(animationFrame);

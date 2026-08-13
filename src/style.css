@@ -231,6 +231,7 @@ button { font: inherit; }
 .rhythm-track { position: relative; width: 180px; height: 210px; overflow: hidden; border: 2px solid #8d72e1; border-radius: 16px; background: linear-gradient(#15112c, #2f1b4b); }
 .rhythm-judge-line { position: absolute; right: 10px; bottom: 15%; left: 10px; height: 4px; background: #67e8d2; box-shadow: 0 0 14px #67e8d2; }
 .rhythm-note { position: absolute; left: 50%; width: 38px; height: 16px; border-radius: 999px; background: #e97ac7; box-shadow: 0 0 15px #e97ac7; transform: translate(-50%, -50%); }
+.rhythm-note.is-practice { outline: 2px dashed #fff; background: #8d72e1; box-shadow: 0 0 15px #8d72e1; }
 .rhythm-note.is-perfect { background: #fff3a2; box-shadow: 0 0 20px #fff3a2; opacity: 0; }
 .rhythm-note.is-good { background: #67e8d2; opacity: 0; }
 .rhythm-note.is-miss { background: #e85278; opacity: 0; }
