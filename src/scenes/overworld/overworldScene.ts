@@ -143,10 +143,10 @@ export class OverworldScene implements GameScene {
     this.onRegionProximityChange(linearProximity * linearProximity * (3 - 2 * linearProximity));
 
     if (this.entering) return;
-    this.cameraTarget.copy(this.character.position).add(this.cameraOffset);
+    // 캐릭터의 보행 바운스는 연출용이며 카메라 추적 높이에는 반영하지 않는다.
+    this.cameraTarget.set(this.character.position.x, 0, this.character.position.z).add(this.cameraOffset);
     this.camera.position.lerp(this.cameraTarget, 1 - Math.pow(0.001, deltaSeconds));
-    this.cameraTarget.copy(this.character.position);
-    this.cameraTarget.y += 0.7;
+    this.cameraTarget.set(this.character.position.x, 0.7, this.character.position.z);
     this.camera.lookAt(this.cameraTarget);
   }
 
