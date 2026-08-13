@@ -35,8 +35,11 @@ export function createPlaceholderCharacter(): THREE.Group {
   leftEye.position.set(-0.14, 1.82, 0.43);
   const rightEye = leftEye.clone();
   rightEye.position.x = 0.14;
-  const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.035, 0.025), dark);
-  mouth.position.set(0, 1.66, 0.445);
+  const repeatBarGeometry = new THREE.BoxGeometry(0.28, 0.028, 0.025);
+  const upperRepeatBar = new THREE.Mesh(repeatBarGeometry, dark);
+  upperRepeatBar.position.set(0, 1.69, 0.445);
+  const lowerRepeatBar = upperRepeatBar.clone();
+  lowerRepeatBar.position.y = 1.63;
 
   const limbGeometry = new THREE.CapsuleGeometry(0.095, 0.5, 4, 8);
   const leftArm = new THREE.Mesh(limbGeometry, hoodie);
@@ -73,7 +76,8 @@ export function createPlaceholderCharacter(): THREE.Group {
     rightEar,
     leftEye,
     rightEye,
-    mouth,
+    upperRepeatBar,
+    lowerRepeatBar,
     leftArm,
     rightArm,
     leftLeg,
