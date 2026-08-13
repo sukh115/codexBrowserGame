@@ -4,6 +4,7 @@ export class LoadingScreen {
   private readonly status = document.createElement("p");
   private readonly button = document.createElement("button");
   private readonly credits = document.createElement("button");
+  private startHandled = false;
 
   constructor() {
     this.element.className = "loading-screen";
@@ -17,7 +18,7 @@ export class LoadingScreen {
     this.button.hidden = true;
     this.credits.className = "credits-button";
     this.credits.textContent = "크레딧";
-    this.credits.addEventListener("pointerup", this.toggleCredits);
+    this.credits.addEventListener("click", this.toggleCredits);
     track.append(this.fill);
     this.element.append(track, this.status, this.button, this.credits);
   }
@@ -35,7 +36,12 @@ export class LoadingScreen {
   }
 
   onStart(callback: () => void): void {
-    this.button.addEventListener("pointerup", callback, { once: true });
+    this.button.addEventListener("click", () => {
+      if (this.startHandled) return;
+      this.startHandled = true;
+      this.button.disabled = true;
+      callback();
+    });
   }
 
   hide(): void {
