@@ -17,6 +17,7 @@ export class MinigameController {
     private readonly backgroundHeight: number,
     private readonly bpm: number,
     private readonly getTransportTime: () => number,
+    private readonly playTone: (index: number) => void,
     cleared: readonly string[],
     private readonly onModalChange: (open: boolean) => void,
     private readonly onClear: (gameId: string, rewardNoteId: string) => void,
@@ -24,9 +25,9 @@ export class MinigameController {
     this.frame = new MinigameFrame(overlayRoot, () => this.close());
     MINIGAME_SPOTS.forEach((spot) => {
       const button = document.createElement("button");
-      button.className = "minigame-entrance";
+      button.className = `minigame-entrance entrance-${spot.type}`;
       button.dataset.gameId = spot.id;
-      button.textContent = cleared.includes(spot.id) ? `✓ ${spot.label}` : spot.label;
+      this.setButtonContent(button, spot, cleared.includes(spot.id));
       button.disabled = cleared.includes(spot.id);
       button.addEventListener("pointerup", () => this.open(spot));
       overlayRoot.append(button);
@@ -53,7 +54,7 @@ export class MinigameController {
     MINIGAME_SPOTS.forEach((spot, index) => {
       const complete = cleared.includes(spot.id);
       this.buttons[index].disabled = complete;
-      this.buttons[index].textContent = complete ? `✓ ${spot.label}` : spot.label;
+      this.setButtonContent(this.buttons[index], spot, complete);
     });
   }
 
@@ -68,10 +69,17 @@ export class MinigameController {
     this.activeSpot = spot;
     this.onModalChange(true);
     this.frame.open(spot);
-    this.stopGame = startMinigame(spot.type, this.frame, this.bpm, this.getTransportTime, () => {
+    this.stopGame = startMinigame(
+      spot.type,
+      this.frame,
+      this.bpm,
+      this.getTransportTime,
+      this.playTone,
+      () => {
       this.onClear(spot.id, spot.rewardNoteId);
       this.close();
-    });
+      },
+    );
   }
 
   private close(): void {
@@ -80,5 +88,14 @@ export class MinigameController {
     this.activeSpot = null;
     this.frame.close();
     this.onModalChange(false);
+  }
+
+  private setButtonContent(button: HTMLButtonElement, spot: MinigameSpot, complete: boolean): void {
+    const icons: Record<MinigameSpot["type"], string> = {
+      timing: "AMP",
+      rhythm: "BEAT",
+      memory: "CRT",
+    };
+    button.innerHTML = `<b>${complete ? "✓" : icons[spot.type]}</b><span>${complete ? "완료" : spot.label}</span>`;
   }
 }

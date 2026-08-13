@@ -48,4 +48,22 @@ export class SfxPlayer {
       oscillator.stop(now + 2.45);
     });
   }
+
+  playTone(index: number, duration = 0.18): void {
+    if (!this.context || this.muted) return;
+    const frequencies = [261.63, 329.63, 392, 523.25] as const;
+    const frequency = frequencies[index];
+    if (!frequency) return;
+    const now = this.context.currentTime;
+    const oscillator = this.context.createOscillator();
+    const gain = this.context.createGain();
+    oscillator.type = "sine";
+    oscillator.frequency.value = frequency;
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.13, now + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    oscillator.connect(gain).connect(this.context.destination);
+    oscillator.start(now);
+    oscillator.stop(now + duration + 0.02);
+  }
 }

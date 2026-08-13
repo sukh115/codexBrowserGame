@@ -40,6 +40,7 @@ export class RegionScene implements GameScene {
     clearedMinigames: readonly string[],
     onClearMinigame: (gameId: string, rewardNoteId: string) => void,
     getTransportTime: () => number,
+    playTone: (index: number) => void,
   ) {
     const width = BACKGROUND_HEIGHT * manifest.aspectRatio;
     this.background = new THREE.Mesh(
@@ -59,6 +60,7 @@ export class RegionScene implements GameScene {
       BACKGROUND_HEIGHT,
       manifest.bpm,
       getTransportTime,
+      playTone,
       clearedMinigames,
       (open) => this.setInputLocked(open),
       onClearMinigame,

@@ -8,11 +8,12 @@ export function startMinigame(
   frame: MinigameFrame,
   bpm: number,
   getTransportTime: () => number,
+  playTone: (index: number) => void,
   onClear: () => void,
 ): StopGame {
   if (type === "timing") return startTiming(frame, onClear);
   if (type === "rhythm") return startRhythm(frame, bpm, getTransportTime, onClear);
-  return startMemory(frame, onClear);
+  return startMemory(frame, playTone, onClear);
 }
 
 function startTiming(frame: MinigameFrame, onClear: () => void): StopGame {
@@ -147,7 +148,7 @@ function startRhythm(
   };
 }
 
-function startMemory(frame: MinigameFrame, onClear: () => void): StopGame {
+function startMemory(frame: MinigameFrame, playTone: (index: number) => void, onClear: () => void): StopGame {
   const buttons = Array.from({ length: 4 }, (_, index) => {
     const button = document.createElement("button");
     button.className = `memory-key key-${index + 1}`;
@@ -159,26 +160,13 @@ function startMemory(frame: MinigameFrame, onClear: () => void): StopGame {
   let sequence: number[] = [];
   let inputIndex = 0;
   let accepting = false;
-  let audioContext: AudioContext | null = new AudioContext();
-  void audioContext.resume();
   const timers: number[] = [];
   const flashKey = (value: number, className = "is-pressed", duration = 190): void => {
     const button = buttons[value];
     button.classList.remove("is-pressed", "is-wrong");
     requestAnimationFrame(() => button.classList.add(className));
     timers.push(window.setTimeout(() => button.classList.remove(className), duration));
-    if (!audioContext) return;
-    const oscillator = audioContext.createOscillator();
-    const gain = audioContext.createGain();
-    const now = audioContext.currentTime;
-    oscillator.type = "sine";
-    oscillator.frequency.value = [261.63, 329.63, 392, 523.25][value];
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.13, now + 0.008);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
-    oscillator.connect(gain).connect(audioContext.destination);
-    oscillator.start(now);
-    oscillator.stop(now + 0.2);
+    playTone(value);
   };
   const playRound = (): void => {
     sequence = Array.from({ length: round + 2 }, () => Math.floor(Math.random() * 4));
@@ -221,6 +209,5 @@ function startMemory(frame: MinigameFrame, onClear: () => void): StopGame {
   return () => {
     timers.forEach(window.clearTimeout);
     buttons.forEach((button, index) => button.removeEventListener("pointerdown", listeners[index]));
-    void audioContext?.close();
   };
 }
