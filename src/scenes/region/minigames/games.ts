@@ -100,15 +100,15 @@ function startMemory(frame: MinigameFrame, onClear: () => void): StopGame {
   let sequence: number[] = [];
   let inputIndex = 0;
   let accepting = false;
-  let audioContext: AudioContext | null = null;
+  let audioContext: AudioContext | null = new AudioContext();
+  void audioContext.resume();
   const timers: number[] = [];
-  const flashKey = (value: number, className = "is-pressed"): void => {
+  const flashKey = (value: number, className = "is-pressed", duration = 190): void => {
     const button = buttons[value];
     button.classList.remove("is-pressed", "is-wrong");
     requestAnimationFrame(() => button.classList.add(className));
-    timers.push(window.setTimeout(() => button.classList.remove(className), 190));
-    audioContext ??= new AudioContext();
-    void audioContext.resume();
+    timers.push(window.setTimeout(() => button.classList.remove(className), duration));
+    if (!audioContext) return;
     const oscillator = audioContext.createOscillator();
     const gain = audioContext.createGain();
     const now = audioContext.currentTime;
@@ -127,8 +127,7 @@ function startMemory(frame: MinigameFrame, onClear: () => void): StopGame {
     accepting = false;
     frame.status.textContent = `라운드 ${round}/3 · 순서를 기억하세요`;
     sequence.forEach((value, index) => {
-      timers.push(window.setTimeout(() => buttons[value].classList.add("is-lit"), 550 + index * 520));
-      timers.push(window.setTimeout(() => buttons[value].classList.remove("is-lit"), 850 + index * 520));
+      timers.push(window.setTimeout(() => flashKey(value, "is-lit", 300), 550 + index * 520));
     });
     timers.push(window.setTimeout(() => {
       accepting = true;
