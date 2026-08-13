@@ -4,6 +4,7 @@ import { GAME_EVENTS, WORLD } from "../../core/constants";
 import { PointerInput, type TapDetail } from "../../core/input";
 import { ASSET_MANIFEST } from "../../core/assetManifest";
 import { gsap } from "gsap";
+import { createPlaceholderCharacter } from "./placeholderCharacter";
 
 export class OverworldScene implements GameScene {
   readonly scene = new THREE.Scene();
@@ -16,7 +17,7 @@ export class OverworldScene implements GameScene {
   private readonly cameraTarget = new THREE.Vector3();
   private readonly cameraOffset = new THREE.Vector3(15, 18, 15);
   private readonly ground: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial>;
-  private readonly character = new THREE.Group();
+  private readonly character = createPlaceholderCharacter();
   private readonly marker: THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>;
   private readonly entrance = new THREE.Group();
   private readonly entrancePosition = new THREE.Vector3(
@@ -160,13 +161,6 @@ export class OverworldScene implements GameScene {
   };
 
   private createCharacter(): void {
-    const green = new THREE.MeshStandardMaterial({ color: 0x78b58b, roughness: 0.9 });
-    const orange = new THREE.MeshStandardMaterial({ color: 0xf08a5d, roughness: 0.9 });
-    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.38, 0.8, 5, 12), green);
-    body.position.y = 0.82;
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.44, 20, 14), orange);
-    head.position.y = 1.65;
-    this.character.add(body, head);
     this.scene.add(this.character);
   }
 
