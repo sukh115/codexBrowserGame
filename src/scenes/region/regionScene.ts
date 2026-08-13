@@ -1,6 +1,9 @@
 import * as THREE from "three";
 import type { GameScene } from "../../core/engine";
 import type { RegionManifest } from "../../core/assetManifest";
+import { NOTE_SPOTS } from "./noteSpots";
+import { NoteField } from "./noteField";
+import { INPUT_LIMITS } from "../../core/constants";
 
 const BACKGROUND_HEIGHT = 10;
 const MIN_ZOOM = 1;
@@ -11,6 +14,7 @@ export class RegionScene implements GameScene {
   readonly camera = new THREE.OrthographicCamera(-10, 10, 5, -5, 0.1, 20);
   private readonly background: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
   private readonly exitButton = document.createElement("button");
+  private readonly noteField: NoteField;
   private readonly pointers = new Map<number, THREE.Vector2>();
   private dragPointerId: number | null = null;
   private lastPointerX = 0;
@@ -19,17 +23,29 @@ export class RegionScene implements GameScene {
   private viewportWidth = 1;
   private viewportHeight = 1;
   private disposed = false;
+  private tapStartX = 0;
+  private tapStartY = 0;
+  private tapStartTime = 0;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
     overlayRoot: HTMLElement,
     private readonly manifest: RegionManifest,
     private readonly onExit: () => void,
+    collectedNotes: readonly string[],
+    onCollectNote: (noteId: string) => void,
   ) {
     const width = BACKGROUND_HEIGHT * manifest.aspectRatio;
     this.background = new THREE.Mesh(
       new THREE.PlaneGeometry(width, BACKGROUND_HEIGHT),
       new THREE.MeshBasicMaterial({ map: this.createPlaceholderTexture() }),
+    );
+    this.noteField = new NoteField(
+      NOTE_SPOTS[manifest.id],
+      collectedNotes,
+      width,
+      BACKGROUND_HEIGHT,
+      onCollectNote,
     );
     this.loadBackground();
     this.exitButton.className = "exit-button";
@@ -41,6 +57,7 @@ export class RegionScene implements GameScene {
   init(): void {
     this.scene.background = new THREE.Color(0x17142b);
     this.scene.add(this.background);
+    this.scene.add(this.noteField.group);
     this.camera.position.set(0, 0, 10);
     this.canvas.addEventListener("pointerdown", this.onPointerDown);
     this.canvas.addEventListener("pointermove", this.onPointerMove);
@@ -49,7 +66,9 @@ export class RegionScene implements GameScene {
     this.canvas.addEventListener("wheel", this.onWheel, { passive: false });
   }
 
-  update(): void {}
+  update(deltaSeconds: number): void {
+    this.noteField.update(deltaSeconds, this.camera);
+  }
 
   resize(width: number, height: number): void {
     this.viewportWidth = width;
@@ -60,6 +79,7 @@ export class RegionScene implements GameScene {
     this.camera.top = BACKGROUND_HEIGHT / 2;
     this.camera.bottom = -BACKGROUND_HEIGHT / 2;
     this.camera.updateProjectionMatrix();
+    this.noteField.resize(width, height);
     this.clampCamera();
   }
 
@@ -75,6 +95,7 @@ export class RegionScene implements GameScene {
     this.background.geometry.dispose();
     this.background.material.map?.dispose();
     this.background.material.dispose();
+    this.noteField.dispose();
     this.scene.clear();
     this.pointers.clear();
   }
@@ -85,6 +106,9 @@ export class RegionScene implements GameScene {
     this.dragPointerId = event.pointerId;
     this.lastPointerX = event.clientX;
     this.lastPointerY = event.clientY;
+    this.tapStartX = event.clientX;
+    this.tapStartY = event.clientY;
+    this.tapStartTime = performance.now();
     this.updatePinchDistance();
   };
 
@@ -111,6 +135,13 @@ export class RegionScene implements GameScene {
   };
 
   private readonly onPointerUp = (event: PointerEvent): void => {
+    if (this.pointers.size === 1) {
+      const distance = Math.hypot(event.clientX - this.tapStartX, event.clientY - this.tapStartY);
+      const duration = performance.now() - this.tapStartTime;
+      if (distance < INPUT_LIMITS.TAP_DISTANCE_PX && duration < INPUT_LIMITS.TAP_DURATION_MS) {
+        this.noteField.collectAt(event.clientX, event.clientY, this.camera);
+      }
+    }
     this.pointers.delete(event.pointerId);
     this.dragPointerId = null;
     this.lastPinchDistance = 0;

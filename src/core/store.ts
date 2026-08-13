@@ -13,7 +13,7 @@ export interface GameState {
 }
 
 class GameStore extends EventTarget {
-  private state: GameState = {
+  private readonly initialState: GameState = {
     collectedNotes: [],
     clearedMinigames: [],
     currentScene: "loading",
@@ -21,6 +21,7 @@ class GameStore extends EventTarget {
     muted: false,
     completed: false,
   };
+  private state: GameState = this.load();
 
   get snapshot(): GameState {
     return this.state;
@@ -28,6 +29,7 @@ class GameStore extends EventTarget {
 
   setState(patch: Partial<GameState>): void {
     this.state = { ...this.state, ...patch };
+    localStorage.setItem("lost-song-progress", JSON.stringify(this.state));
     this.dispatchEvent(new CustomEvent<GameState>(GAME_EVENTS.STATE_CHANGE, { detail: this.state }));
   }
 
@@ -38,6 +40,32 @@ class GameStore extends EventTarget {
       collectedNotes,
       completed: collectedNotes.length >= 7,
     });
+  }
+
+  reset(): void {
+    this.state = { ...this.initialState, currentScene: this.state.currentScene };
+    localStorage.removeItem("lost-song-progress");
+    this.dispatchEvent(new CustomEvent<GameState>(GAME_EVENTS.STATE_CHANGE, { detail: this.state }));
+  }
+
+  private load(): GameState {
+    try {
+      const value: unknown = JSON.parse(localStorage.getItem("lost-song-progress") ?? "null");
+      if (!value || typeof value !== "object") return this.initialState;
+      const stored = value as Partial<GameState>;
+      if (!Array.isArray(stored.collectedNotes) || !Array.isArray(stored.clearedMinigames)) {
+        return this.initialState;
+      }
+      return {
+        ...this.initialState,
+        ...stored,
+        collectedNotes: stored.collectedNotes.filter((item): item is string => typeof item === "string"),
+        clearedMinigames: stored.clearedMinigames.filter((item): item is string => typeof item === "string"),
+        currentScene: "loading",
+      };
+    } catch {
+      return this.initialState;
+    }
   }
 }
 

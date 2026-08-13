@@ -9,6 +9,7 @@ export class StemPlayer {
   private context: AudioContext | null = null;
   private masterGain: GainNode | null = null;
   private readonly activeStems = new Map<string, ActiveStem>();
+  private readonly unlockedStemIds = new Set<string>();
   private unlocked = false;
   private started = false;
 
@@ -44,8 +45,10 @@ export class StemPlayer {
   }
 
   unlockStem(id: string, fadeSeconds = 2): void {
+    if (this.unlockedStemIds.has(id)) return;
     const active = this.activeStems.get(id);
     if (!active || !this.context) return;
+    this.unlockedStemIds.add(id);
     const now = this.context.currentTime;
     active.gain.gain.cancelScheduledValues(now);
     active.gain.gain.setValueAtTime(active.gain.gain.value, now);
@@ -60,6 +63,7 @@ export class StemPlayer {
       gain.gain.setValueAtTime(gain.gain.value, now);
       gain.gain.linearRampToValueAtTime(0, now + fadeSeconds);
     }
+    this.unlockedStemIds.clear();
   }
 
   setMasterVolume(volume: number, fadeSeconds = 0.35): void {
@@ -85,6 +89,7 @@ export class StemPlayer {
       gain.disconnect();
     }
     this.activeStems.clear();
+    this.unlockedStemIds.clear();
     this.masterGain?.disconnect();
     void this.context?.close();
     this.context = null;

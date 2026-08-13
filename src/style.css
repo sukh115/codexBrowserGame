@@ -100,6 +100,48 @@ button { font: inherit; }
   pointer-events: auto;
 }
 
+.hud {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.note-counter,
+.hud-button {
+  position: absolute;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 999px;
+  color: #fff;
+  background: rgb(28 29 31 / 82%);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 7px 24px rgb(0 0 0 / 14%);
+}
+
+.note-counter {
+  top: max(18px, env(safe-area-inset-top));
+  left: max(18px, env(safe-area-inset-left));
+  padding: 11px 17px;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.note-counter.is-pulsing { animation: counter-pulse 450ms ease; }
+
+.hud-button {
+  top: max(18px, env(safe-area-inset-top));
+  padding: 10px 14px;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.mute-button { right: max(18px, env(safe-area-inset-right)); }
+.reset-button { right: max(108px, calc(env(safe-area-inset-right) + 108px)); }
+
+@keyframes counter-pulse {
+  50% { transform: scale(1.22); background: #f08a5d; }
+}
+
 .context-button {
   bottom: max(28px, env(safe-area-inset-bottom));
   left: 50%;
@@ -108,7 +150,7 @@ button { font: inherit; }
 }
 
 .exit-button {
-  top: max(18px, env(safe-area-inset-top));
+  top: max(68px, calc(env(safe-area-inset-top) + 68px));
   right: max(18px, env(safe-area-inset-right));
   padding: 11px 17px;
 }
