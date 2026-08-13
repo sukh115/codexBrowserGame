@@ -21,6 +21,7 @@ export class OverworldScene implements GameScene {
   private readonly character = this.characterRig.group;
   private readonly marker: THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>;
   private readonly entrance = new THREE.Group();
+  private readonly entranceWaves: Array<THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>> = [];
   private readonly entrancePosition = new THREE.Vector3(
     ASSET_MANIFEST.overworldEntrance.position.x,
     0,
@@ -104,6 +105,12 @@ export class OverworldScene implements GameScene {
 
     this.marker.material.opacity = Math.max(0, this.marker.material.opacity - deltaSeconds * 1.5);
     this.entrance.rotation.y += deltaSeconds * 0.45;
+    for (let index = 0; index < this.entranceWaves.length; index += 1) {
+      const wave = this.entranceWaves[index];
+      const phase = (this.walkTime * 0.35 + index / this.entranceWaves.length) % 1;
+      wave.scale.setScalar(0.7 + phase * 1.45);
+      wave.material.opacity = (1 - phase) * 0.42;
+    }
     const nearEntrance = this.character.position.distanceToSquared(this.entrancePosition)
       <= ASSET_MANIFEST.overworldEntrance.activationRadius ** 2;
     this.enterButton.hidden = !nearEntrance || this.entering;
@@ -225,7 +232,22 @@ export class OverworldScene implements GameScene {
     ring.position.y = 1.15;
     const glow = new THREE.PointLight(0xf08a5d, 2.5, 7);
     glow.position.y = 1.3;
-    this.entrance.add(base, ring, glow);
+    const beacon = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.32, 0.85, 7, 18, 1, true),
+      new THREE.MeshBasicMaterial({ color: 0x67e8d2, transparent: true, opacity: 0.12, side: THREE.DoubleSide }),
+    );
+    beacon.position.y = 3.55;
+    this.entrance.add(base, ring, glow, beacon);
+    for (let index = 0; index < 3; index += 1) {
+      const wave = new THREE.Mesh(
+        new THREE.RingGeometry(0.75, 0.82, 32),
+        new THREE.MeshBasicMaterial({ color: index % 2 === 0 ? 0x67e8d2 : 0xe97ac7, transparent: true }),
+      );
+      wave.rotation.x = -Math.PI / 2;
+      wave.position.y = 0.04;
+      this.entranceWaves.push(wave);
+      this.entrance.add(wave);
+    }
     this.entrance.position.copy(this.entrancePosition);
     this.scene.add(this.entrance);
   }

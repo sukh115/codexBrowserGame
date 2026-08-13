@@ -24,7 +24,8 @@ export class Hud {
   }
 
   update(state: GameState): void {
-    this.counter.textContent = `♪ ${state.collectedNotes.length}/7`;
+    this.counter.textContent = state.completed ? "♪ 노래 완성" : `♪ ${state.collectedNotes.length}/7`;
+    this.counter.classList.toggle("is-complete", state.completed);
     this.muteButton.textContent = state.muted ? "소리 켜기" : "음소거";
     if (state.collectedNotes.length > this.previousCount) {
       this.counter.classList.remove("is-pulsing");
