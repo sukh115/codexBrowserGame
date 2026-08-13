@@ -22,6 +22,7 @@ export class OverworldScene implements GameScene {
   private readonly marker: THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>;
   private readonly entrance = new THREE.Group();
   private readonly entranceWaves: Array<THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>> = [];
+  private readonly footsteps: Array<THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>> = [];
   private readonly entrancePosition = new THREE.Vector3(
     ASSET_MANIFEST.overworldEntrance.position.x,
     0,
@@ -31,6 +32,9 @@ export class OverworldScene implements GameScene {
   private moving = false;
   private walkTime = 0;
   private entering = false;
+  private footstepIndex = 0;
+  private footstepDistance = 0;
+  private readonly previousCharacterPosition = new THREE.Vector3();
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -76,6 +80,7 @@ export class OverworldScene implements GameScene {
     }
     this.createBoundary();
     this.createEntrance();
+    this.createFootsteps();
     this.destination.copy(this.character.position);
     this.camera.position.copy(this.cameraOffset);
     this.camera.lookAt(this.character.position);
@@ -91,8 +96,14 @@ export class OverworldScene implements GameScene {
         this.moving = false;
         this.resetWalkPose();
       } else {
+        this.previousCharacterPosition.copy(this.character.position);
         this.direction.normalize();
         this.character.position.addScaledVector(this.direction, Math.min(WORLD.MOVE_SPEED * deltaSeconds, distance));
+        this.footstepDistance += this.previousCharacterPosition.distanceTo(this.character.position);
+        if (this.footstepDistance >= 0.72) {
+          this.footstepDistance = 0;
+          this.placeFootstep();
+        }
         this.character.rotation.y = Math.atan2(this.direction.x, this.direction.z);
         this.walkTime += deltaSeconds * 10;
         this.character.position.y = Math.abs(Math.sin(this.walkTime)) * 0.12;
@@ -104,6 +115,10 @@ export class OverworldScene implements GameScene {
     }
 
     this.marker.material.opacity = Math.max(0, this.marker.material.opacity - deltaSeconds * 1.5);
+    for (const footstep of this.footsteps) {
+      footstep.material.opacity = Math.max(0, footstep.material.opacity - deltaSeconds * 0.8);
+      footstep.scale.multiplyScalar(1 + deltaSeconds * 0.35);
+    }
     this.entrance.rotation.y += deltaSeconds * 0.45;
     for (let index = 0; index < this.entranceWaves.length; index += 1) {
       const wave = this.entranceWaves[index];
@@ -250,6 +265,27 @@ export class OverworldScene implements GameScene {
     }
     this.entrance.position.copy(this.entrancePosition);
     this.scene.add(this.entrance);
+  }
+
+  private createFootsteps(): void {
+    for (let index = 0; index < 12; index += 1) {
+      const footstep = new THREE.Mesh(
+        new THREE.RingGeometry(0.1, 0.16, 12),
+        new THREE.MeshBasicMaterial({ color: index % 2 === 0 ? 0x67e8d2 : 0xe97ac7, transparent: true, opacity: 0 }),
+      );
+      footstep.rotation.x = -Math.PI / 2;
+      footstep.position.y = 0.04;
+      this.footsteps.push(footstep);
+      this.scene.add(footstep);
+    }
+  }
+
+  private placeFootstep(): void {
+    const footstep = this.footsteps[this.footstepIndex];
+    footstep.position.set(this.character.position.x, 0.04, this.character.position.z);
+    footstep.scale.setScalar(1);
+    footstep.material.opacity = 0.48;
+    this.footstepIndex = (this.footstepIndex + 1) % this.footsteps.length;
   }
 
   private readonly startEntrance = (): void => {
