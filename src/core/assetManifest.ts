@@ -55,6 +55,12 @@ export const ASSET_MANIFEST = {
       position: { x: -5, z: -4 },
       targetHeight: 3,
     },
+    {
+      id: "tree-test-obj",
+      path: "/assets/models/tree-test.obj",
+      position: { x: -9, z: -4 },
+      targetHeight: 3,
+    },
   ],
   regions: {
     "music-shop": {

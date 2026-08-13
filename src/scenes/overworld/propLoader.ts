@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 
 export interface PropConfig {
   readonly id: string;
@@ -15,14 +16,22 @@ export class OverworldPropLoader {
   constructor(private readonly scene: THREE.Scene) {}
 
   load(configs: readonly PropConfig[]): void {
-    const loader = new FBXLoader();
     for (const config of configs) {
-      loader.load(
-        config.path,
-        (object) => this.addProp(object, config),
-        undefined,
-        (error) => console.warn(`[Overworld] 소품 로드 실패: ${config.id}`, error),
-      );
+      if (config.path.toLowerCase().endsWith(".obj")) {
+        new OBJLoader().load(
+          config.path,
+          (object) => this.addProp(object, config, true),
+          undefined,
+          (error) => console.warn(`[Overworld] OBJ 소품 로드 실패: ${config.id}`, error),
+        );
+      } else {
+        new FBXLoader().load(
+          config.path,
+          (object) => this.addProp(object, config, false),
+          undefined,
+          (error) => console.warn(`[Overworld] FBX 소품 로드 실패: ${config.id}`, error),
+        );
+      }
     }
   }
 
@@ -46,7 +55,7 @@ export class OverworldPropLoader {
     this.props.length = 0;
   }
 
-  private addProp(object: THREE.Group, config: PropConfig): void {
+  private addProp(object: THREE.Group, config: PropConfig, useFallbackMaterial: boolean): void {
     if (this.disposed) {
       object.traverse((child) => {
         if (child instanceof THREE.Mesh) child.geometry.dispose();
@@ -61,6 +70,11 @@ export class OverworldPropLoader {
     object.position.set(config.position.x, -box.min.y, config.position.z);
     object.traverse((child) => {
       if (!(child instanceof THREE.Mesh)) return;
+      if (useFallbackMaterial) {
+        const materials = Array.isArray(child.material) ? child.material : [child.material];
+        for (const material of materials) material.dispose();
+        child.material = new THREE.MeshStandardMaterial({ color: 0x78b58b, roughness: 0.92 });
+      }
       child.castShadow = false;
       child.receiveShadow = false;
     });
