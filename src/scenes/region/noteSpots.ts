@@ -16,9 +16,6 @@ const DEFAULT_NOTE_SPOTS: readonly NoteSpot[] = [
   { id: "note-2", u: 0.105, v: 0.565, glyph: "♩", color: 0xc874dc, rotation: 0.12, size: 0.82 },
   { id: "note-3", u: 0.292, v: 0.625, glyph: "♫", color: 0xe97ecf, rotation: -0.1, size: 0.86 },
   { id: "note-4", u: 0.493, v: 0.805, glyph: "♪", color: 0x62dfd5, rotation: 0.35, size: 0.78 },
-  { id: "note-5", u: 0.646, v: 0.553, glyph: "♩", color: 0x9b70db, rotation: -0.22, size: 0.88 },
-  { id: "note-6", u: 0.792, v: 0.475, glyph: "♫", color: 0x5cebe0, rotation: 0.16, size: 0.8 },
-  { id: "note-7", u: 0.905, v: 0.765, glyph: "♪", color: 0xe97abf, rotation: -0.3, size: 0.84 },
 ];
 
 export const NOTE_SPOTS: Readonly<Record<RegionId, readonly NoteSpot[]>> = {

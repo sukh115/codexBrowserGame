@@ -4,6 +4,7 @@ import type { RegionManifest } from "../../core/assetManifest";
 import { NOTE_SPOTS } from "./noteSpots";
 import { NoteField } from "./noteField";
 import { INPUT_LIMITS } from "../../core/constants";
+import { MinigameController } from "./minigames/controller";
 
 const BACKGROUND_HEIGHT = 10;
 const MIN_ZOOM = 1;
@@ -15,6 +16,7 @@ export class RegionScene implements GameScene {
   private readonly background: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
   private readonly exitButton = document.createElement("button");
   private readonly noteField: NoteField;
+  private readonly minigames: MinigameController;
   private readonly pointers = new Map<number, THREE.Vector2>();
   private dragPointerId: number | null = null;
   private lastPointerX = 0;
@@ -35,6 +37,8 @@ export class RegionScene implements GameScene {
     private readonly onExit: () => void,
     collectedNotes: readonly string[],
     onCollectNote: (noteId: string) => void,
+    clearedMinigames: readonly string[],
+    onClearMinigame: (gameId: string, rewardNoteId: string) => void,
   ) {
     const width = BACKGROUND_HEIGHT * manifest.aspectRatio;
     this.background = new THREE.Mesh(
@@ -47,6 +51,15 @@ export class RegionScene implements GameScene {
       width,
       BACKGROUND_HEIGHT,
       onCollectNote,
+    );
+    this.minigames = new MinigameController(
+      overlayRoot,
+      width,
+      BACKGROUND_HEIGHT,
+      manifest.bpm,
+      clearedMinigames,
+      (open) => this.setInputLocked(open),
+      onClearMinigame,
     );
     this.loadBackground();
     this.exitButton.className = "exit-button";
@@ -69,10 +82,15 @@ export class RegionScene implements GameScene {
 
   update(deltaSeconds: number): void {
     this.noteField.update(deltaSeconds, this.camera);
+    this.minigames.update(this.camera, this.viewportWidth, this.viewportHeight);
   }
 
   syncCollectedNotes(collectedNotes: readonly string[]): void {
     this.noteField.syncCollectedNotes(collectedNotes);
+  }
+
+  syncClearedMinigames(cleared: readonly string[]): void {
+    this.minigames.syncCleared(cleared);
   }
 
   setInputLocked(locked: boolean): void {
@@ -106,6 +124,7 @@ export class RegionScene implements GameScene {
     this.background.material.map?.dispose();
     this.background.material.dispose();
     this.noteField.dispose();
+    this.minigames.dispose();
     this.scene.clear();
     this.pointers.clear();
   }

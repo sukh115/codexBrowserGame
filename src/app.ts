@@ -76,6 +76,11 @@ export function bootstrap(root: HTMLElement): void {
           sfxPlayer.playFound();
           gameStore.collectNote(noteId);
         },
+        gameStore.snapshot.clearedMinigames,
+        (gameId, rewardNoteId) => {
+          sfxPlayer.playFound();
+          gameStore.clearMinigame(gameId, rewardNoteId);
+        },
       );
       sceneManager.transitionTo(activeRegionScene);
     };
@@ -105,6 +110,7 @@ export function bootstrap(root: HTMLElement): void {
     const state = (event as CustomEvent<typeof gameStore.snapshot>).detail;
     hud?.update(state);
     activeRegionScene?.syncCollectedNotes(state.collectedNotes);
+    activeRegionScene?.syncClearedMinigames(state.clearedMinigames);
     sfxPlayer.setMuted(state.muted);
     if (state.muted || state.currentScene === "region") {
       stemPlayer.setMasterVolume(state.muted ? 0 : 1);

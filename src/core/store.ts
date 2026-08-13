@@ -42,6 +42,15 @@ class GameStore extends EventTarget {
     });
   }
 
+  clearMinigame(gameId: string, rewardNoteId: string): void {
+    if (this.state.clearedMinigames.includes(gameId)) return;
+    const clearedMinigames = [...this.state.clearedMinigames, gameId];
+    const collectedNotes = this.state.collectedNotes.includes(rewardNoteId)
+      ? [...this.state.collectedNotes]
+      : [...this.state.collectedNotes, rewardNoteId];
+    this.setState({ clearedMinigames, collectedNotes, completed: collectedNotes.length >= 7 });
+  }
+
   reset(): void {
     this.state = { ...this.initialState, currentScene: this.state.currentScene };
     localStorage.removeItem("lost-song-progress");

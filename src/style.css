@@ -182,6 +182,38 @@ button { font: inherit; }
   100% { opacity: 0; transform: translate3d(35px, -105vh, 0) rotate(240deg); }
 }
 
+.minigame-entrance {
+  position: absolute;
+  z-index: 6;
+  padding: 7px 10px;
+  border: 1px solid #67e8d2;
+  border-radius: 8px;
+  color: #dffffa;
+  background: rgb(21 13 43 / 88%);
+  box-shadow: 0 0 14px rgb(103 232 210 / 35%);
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.minigame-entrance:disabled { color: #9e90ad; border-color: #716379; box-shadow: none; }
+.minigame-overlay { position: absolute; inset: 0; z-index: 40; display: none; place-content: center; padding: 20px; background: rgb(7 6 20 / 80%); pointer-events: auto; }
+.minigame-overlay.is-open { display: grid; }
+.minigame-panel { width: min(560px, 92vw); min-height: 380px; padding: 28px; border: 2px solid #67e8d2; border-radius: 22px; color: #fff; text-align: center; background: linear-gradient(145deg, #211740, #101d35); box-shadow: 0 0 50px rgb(103 232 210 / 20%); }
+.minigame-title { margin: 0 0 8px; font-size: 30px; }
+.minigame-status { min-height: 24px; margin: 0 0 22px; color: #f0a2d7; }
+.minigame-stage { display: grid; grid-template-columns: repeat(2, 1fr); place-items: center; gap: 14px; min-height: 210px; }
+.minigame-close { margin-top: 18px; padding: 9px 18px; border: 0; border-radius: 999px; cursor: pointer; }
+.timing-track { position: relative; grid-column: 1 / -1; width: min(430px, 75vw); height: 76px; border: 1px solid #8d72e1; border-radius: 14px; background: #0d1026; cursor: pointer; }
+.timing-target { position: absolute; top: 0; bottom: 0; left: 42%; width: 16%; background: rgb(103 232 210 / 35%); }
+.timing-cursor { position: absolute; top: 8px; bottom: 8px; width: 7px; border-radius: 9px; background: #f5e68b; box-shadow: 0 0 14px #f5e68b; transform: translateX(-50%); }
+.rhythm-pad { grid-column: 1 / -1; width: 180px; aspect-ratio: 1; border: 3px solid #e97ac7; border-radius: 50%; color: #fff; font-weight: 900; background: #542d70; box-shadow: 0 0 30px rgb(233 122 199 / 25%); cursor: pointer; }
+.rhythm-pad.is-hit { animation: rhythm-hit 160ms ease; }
+.memory-key { width: min(150px, 34vw); height: 82px; border: 2px solid #8d72e1; border-radius: 16px; color: #fff; font-size: 22px; background: #30245b; cursor: pointer; }
+.memory-key.is-lit { background: #67e8d2; box-shadow: 0 0 28px #67e8d2; transform: scale(1.06); }
+.key-2, .key-3 { border-color: #e97ac7; }
+@keyframes rhythm-hit { 50% { transform: scale(.88); background: #67e8d2; } }
+
 .context-button {
   bottom: max(28px, env(safe-area-inset-bottom));
   left: 50%;
