@@ -47,8 +47,13 @@ export function bootstrap(root: HTMLElement): void {
     gameStore.setState({ currentScene: "overworld" });
     const showOverworld = (): void => {
       gameStore.setState({ currentScene: "overworld" });
-      if (!gameStore.snapshot.muted) stemPlayer.setMasterVolume(0.3);
-      sceneManager.transitionTo(new OverworldScene(engine.renderer.domElement, overlay, showRegion, true));
+      sceneManager.transitionTo(new OverworldScene(
+        engine.renderer.domElement,
+        overlay,
+        showRegion,
+        true,
+        updateOverworldAudio,
+      ));
     };
     const showRegion = (): void => {
       const region = ASSET_MANIFEST.regions[gameStore.snapshot.currentRegion];
@@ -66,7 +71,21 @@ export function bootstrap(root: HTMLElement): void {
         },
       ));
     };
-    sceneManager.show(new OverworldScene(engine.renderer.domElement, overlay, showRegion));
+    const updateOverworldAudio = (proximity: number): void => {
+      if (gameStore.snapshot.muted || gameStore.snapshot.currentScene !== "overworld") return;
+      const { minimumVolume, maximumVolume } = ASSET_MANIFEST.overworldEntrance;
+      stemPlayer.setMasterVolume(
+        minimumVolume + (maximumVolume - minimumVolume) * proximity,
+        0.12,
+      );
+    };
+    sceneManager.show(new OverworldScene(
+      engine.renderer.domElement,
+      overlay,
+      showRegion,
+      false,
+      updateOverworldAudio,
+    ));
     loading.hide();
     engine.start();
   });
@@ -78,7 +97,9 @@ export function bootstrap(root: HTMLElement): void {
     const state = (event as CustomEvent<typeof gameStore.snapshot>).detail;
     hud?.update(state);
     sfxPlayer.setMuted(state.muted);
-    stemPlayer.setMasterVolume(state.muted ? 0 : state.currentScene === "region" ? 1 : 0.3);
+    if (state.muted || state.currentScene === "region") {
+      stemPlayer.setMasterVolume(state.muted ? 0 : 1);
+    }
     if (state.collectedNotes.length === 0) stemPlayer.lockAll();
     const region: RegionManifest = ASSET_MANIFEST.regions[state.currentRegion];
     for (const noteId of state.collectedNotes) {

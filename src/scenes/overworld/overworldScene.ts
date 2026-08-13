@@ -34,6 +34,7 @@ export class OverworldScene implements GameScene {
     overlayRoot: HTMLElement,
     private readonly onEnterRegion: () => void,
     private readonly spawnAtEntrance = false,
+    private readonly onRegionProximityChange: (proximity: number) => void = () => {},
   ) {
     this.input = new PointerInput(canvas);
     this.input.addEventListener(GAME_EVENTS.POINT, this.onPoint as EventListener);
@@ -99,6 +100,14 @@ export class OverworldScene implements GameScene {
     const nearEntrance = this.character.position.distanceToSquared(this.entrancePosition)
       <= ASSET_MANIFEST.overworldEntrance.activationRadius ** 2;
     this.enterButton.hidden = !nearEntrance || this.entering;
+    const distanceToEntrance = Math.sqrt(this.character.position.distanceToSquared(this.entrancePosition));
+    const linearProximity = THREE.MathUtils.clamp(
+      1 - distanceToEntrance / ASSET_MANIFEST.overworldEntrance.audioRadius,
+      0,
+      1,
+    );
+    // 가장자리에서 볼륨이 갑자기 튀지 않도록 부드러운 감쇠 곡선을 쓴다.
+    this.onRegionProximityChange(linearProximity * linearProximity * (3 - 2 * linearProximity));
 
     if (this.entering) return;
     this.cameraTarget.copy(this.character.position).add(this.cameraOffset);
@@ -114,6 +123,7 @@ export class OverworldScene implements GameScene {
   }
 
   dispose(): void {
+    this.onRegionProximityChange(0);
     this.input.removeEventListener(GAME_EVENTS.POINT, this.onPoint as EventListener);
     this.input.dispose();
     this.enterButton.removeEventListener("pointerup", this.startEntrance);

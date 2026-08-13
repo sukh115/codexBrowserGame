@@ -12,6 +12,7 @@ export class StemPlayer {
   private readonly unlockedStemIds = new Set<string>();
   private unlocked = false;
   private started = false;
+  private targetMasterVolume = -1;
 
   constructor(private readonly bpm: number) {}
 
@@ -68,10 +69,13 @@ export class StemPlayer {
 
   setMasterVolume(volume: number, fadeSeconds = 0.35): void {
     if (!this.context || !this.masterGain) return;
+    const normalizedVolume = Math.max(0, volume);
+    if (Math.abs(normalizedVolume - this.targetMasterVolume) < 0.008) return;
+    this.targetMasterVolume = normalizedVolume;
     const now = this.context.currentTime;
     this.masterGain.gain.cancelScheduledValues(now);
     this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, now);
-    this.masterGain.gain.linearRampToValueAtTime(Math.max(0, volume), now + fadeSeconds);
+    this.masterGain.gain.linearRampToValueAtTime(normalizedVolume, now + fadeSeconds);
   }
 
   setMuted(muted: boolean): void {
@@ -96,6 +100,7 @@ export class StemPlayer {
     this.masterGain = null;
     this.started = false;
     this.unlocked = false;
+    this.targetMasterVolume = -1;
   }
 
   private async loadBuffer(stem: StemManifest, index: number): Promise<AudioBuffer> {

@@ -59,5 +59,8 @@ export const ASSET_MANIFEST = {
     regionId: "music-shop" as RegionId,
     position: { x: 7, z: -5 },
     activationRadius: 2,
+    audioRadius: 16,
+    minimumVolume: 0.02,
+    maximumVolume: 0.42,
   },
 } as const;
