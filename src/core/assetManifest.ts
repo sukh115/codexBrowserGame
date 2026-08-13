@@ -48,6 +48,14 @@ const NOTE_EFFECT_MAPPING = {
 export const ASSET_MANIFEST = {
   characterModel: null as string | null,
   overworldGround: null as string | null,
+  overworldProps: [
+    {
+      id: "tree-test",
+      path: "/assets/models/tree-test.fbx",
+      position: { x: -5, z: -4 },
+      targetHeight: 3,
+    },
+  ],
   regions: {
     "music-shop": {
       id: "music-shop",

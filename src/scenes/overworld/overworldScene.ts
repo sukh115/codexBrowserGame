@@ -5,6 +5,7 @@ import { PointerInput, type TapDetail } from "../../core/input";
 import { ASSET_MANIFEST } from "../../core/assetManifest";
 import { gsap } from "gsap";
 import { createPlaceholderCharacter } from "./placeholderCharacter";
+import { OverworldPropLoader } from "./propLoader";
 
 export class OverworldScene implements GameScene {
   readonly scene = new THREE.Scene();
@@ -35,6 +36,7 @@ export class OverworldScene implements GameScene {
   private footstepIndex = 0;
   private footstepDistance = 0;
   private readonly previousCharacterPosition = new THREE.Vector3();
+  private readonly propLoader = new OverworldPropLoader(this.scene);
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -81,6 +83,7 @@ export class OverworldScene implements GameScene {
     this.createBoundary();
     this.createEntrance();
     this.createFootsteps();
+    this.propLoader.load(ASSET_MANIFEST.overworldProps);
     this.destination.copy(this.character.position);
     this.camera.position.copy(this.cameraOffset);
     this.camera.lookAt(this.character.position);
@@ -155,6 +158,7 @@ export class OverworldScene implements GameScene {
     this.onRegionProximityChange(0);
     this.input.removeEventListener(GAME_EVENTS.POINT, this.onPoint as EventListener);
     this.input.dispose();
+    this.propLoader.dispose();
     this.enterButton.removeEventListener("pointerup", this.startEntrance);
     this.enterButton.remove();
     this.scene.traverse((object) => {
