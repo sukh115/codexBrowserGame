@@ -226,6 +226,8 @@ export class RegionScene implements GameScene {
           return;
         }
         texture.colorSpace = THREE.SRGBColorSpace;
+        texture.magFilter = THREE.NearestFilter;
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
         const placeholder = this.background.material.map;
         this.background.material.map = texture;
         this.background.material.needsUpdate = true;

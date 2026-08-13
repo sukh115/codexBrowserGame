@@ -39,7 +39,7 @@ export const ASSET_MANIFEST = {
     "music-shop": {
       id: "music-shop",
       title: "잠든 악기점",
-      background: null,
+      background: "/assets/textures/music-shop.png",
       bpm: 120,
       aspectRatio: 2,
       stems: PLACEHOLDER_STEMS,
