@@ -49,6 +49,7 @@ button { font: inherit; }
 .loading-screen h1 { margin: 0; font-size: clamp(42px, 8vw, 84px); letter-spacing: -0.06em; }
 .loading-screen p { margin: 0; color: #708087; }
 .loading-screen .eyebrow { color: #f08a5d; font-weight: 800; letter-spacing: 0.16em; }
+.loading-screen .play-guide { max-width: 520px; text-align: center; line-height: 1.55; }
 
 .loading-track {
   width: min(360px, 75vw);
@@ -230,4 +231,39 @@ button { font: inherit; }
 @media (max-width: 640px) {
   .loading-screen { gap: 14px; }
   .loading-screen .eyebrow { font-size: 12px; }
+}
+
+.orientation-notice {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: none;
+  place-content: center;
+  gap: 10px;
+  padding: 30px;
+  color: #fff;
+  text-align: center;
+  background: #17142b;
+  pointer-events: auto;
+}
+
+.orientation-notice strong { font-size: 25px; }
+.orientation-notice span { color: #b8dcd7; line-height: 1.5; }
+
+@media (orientation: portrait) and (max-width: 820px) {
+  .orientation-notice { display: grid; }
+}
+
+@media (max-height: 520px) {
+  .note-counter { top: 10px; left: 10px; padding: 8px 13px; font-size: 15px; }
+  .hud-button { top: 10px; padding: 8px 11px; font-size: 13px; }
+  .exit-button { top: 52px; right: 10px; padding: 8px 12px; font-size: 13px; }
+  .minigame-panel { min-height: 300px; padding: 18px; }
+  .minigame-title { font-size: 24px; }
+  .minigame-status { margin-bottom: 10px; }
+  .minigame-stage { min-height: 160px; }
+  .rhythm-pad { width: 130px; }
+  .memory-key { height: 58px; }
+  .minigame-close { margin-top: 10px; }
+  .minigame-entrance { min-width: 44px; min-height: 44px; font-size: 12px; }
 }

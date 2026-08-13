@@ -6,7 +6,7 @@ export class LoadingScreen {
 
   constructor() {
     this.element.className = "loading-screen";
-    this.element.innerHTML = "<p class=\"eyebrow\">A MUSIC EXPLORATION</p><h1>잃어버린 노래</h1>";
+    this.element.innerHTML = "<p class=\"eyebrow\">A MUSIC EXPLORATION</p><h1>잃어버린 노래</h1><p class=\"play-guide\">오버월드를 움직여 악기점에 들어가고, 숨은 음표와 미니게임으로 노래를 완성하세요.</p>";
     const track = document.createElement("div");
     track.className = "loading-track";
     this.fill.className = "loading-fill";

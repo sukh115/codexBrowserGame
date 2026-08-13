@@ -16,6 +16,10 @@ export function bootstrap(root: HTMLElement): void {
   const overlay = document.createElement("div");
   overlay.className = "ui-layer";
   root.append(overlay);
+  const orientationNotice = document.createElement("div");
+  orientationNotice.className = "orientation-notice";
+  orientationNotice.innerHTML = "<strong>화면을 가로로 돌려주세요</strong><span>악기점 구석구석을 더 편하게 탐험할 수 있어요.</span>";
+  overlay.append(orientationNotice);
 
   const engine = new Engine(root);
   const sceneManager = new SceneManager(engine, overlay);
