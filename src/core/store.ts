@@ -10,6 +10,11 @@ export interface GameState {
   readonly currentRegion: RegionId;
   readonly muted: boolean;
   readonly completed: boolean;
+  readonly tutorialCompleted: boolean;
+  readonly masterVolume: number;
+  readonly sfxVolume: number;
+  readonly reducedMotion: boolean;
+  readonly rhythmAssist: boolean;
 }
 
 class GameStore extends EventTarget {
@@ -20,6 +25,11 @@ class GameStore extends EventTarget {
     currentRegion: "music-shop",
     muted: false,
     completed: false,
+    tutorialCompleted: false,
+    masterVolume: 1,
+    sfxVolume: 1,
+    reducedMotion: false,
+    rhythmAssist: false,
   };
   private state: GameState = this.load();
 

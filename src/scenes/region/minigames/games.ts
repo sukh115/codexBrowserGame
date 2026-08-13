@@ -9,10 +9,11 @@ export function startMinigame(
   bpm: number,
   getTransportTime: () => number,
   playTone: (index: number) => void,
+  rhythmAssist: boolean,
   onClear: () => void,
 ): StopGame {
   if (type === "timing") return startTiming(frame, onClear);
-  if (type === "rhythm") return startRhythm(frame, bpm, getTransportTime, onClear);
+  if (type === "rhythm") return startRhythm(frame, bpm, getTransportTime, rhythmAssist, onClear);
   return startMemory(frame, playTone, onClear);
 }
 
@@ -57,6 +58,7 @@ function startRhythm(
   frame: MinigameFrame,
   bpm: number,
   getTransportTime: () => number,
+  assist: boolean,
   onClear: () => void,
 ): StopGame {
   const track = document.createElement("div");
@@ -101,7 +103,7 @@ function startRhythm(
       const progress = 1 - timeUntil / 2;
       notes[index].style.top = `${progress * 82}%`;
       notes[index].hidden = progress < -0.05 || progress > 1.15;
-      if (timeUntil < -0.2) {
+      if (timeUntil < -(assist ? 0.28 : 0.2)) {
         judged[index] = true;
         judgedCount += 1;
         notes[index].classList.add("is-miss");
@@ -124,11 +126,11 @@ function startRhythm(
         nearestIndex = index;
       }
     });
-    if (nearestIndex < 0 || nearestError > 0.2) {
+    if (nearestIndex < 0 || nearestError > (assist ? 0.28 : 0.2)) {
       frame.status.textContent = "Miss · 판정선에서 탭하세요";
       return;
     }
-    const result = nearestError <= 0.08 ? "Perfect" : "Good";
+    const result = nearestError <= (assist ? 0.12 : 0.08) ? "Perfect" : "Good";
     if (result === "Perfect") score += 1;
     if (result === "Good") score += 0.7;
     judged[nearestIndex] = true;

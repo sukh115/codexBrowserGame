@@ -19,6 +19,7 @@ export class StemPlayer {
   private started = false;
   private targetMasterVolume = -1;
   private transportStartTime = 0;
+  private userVolume = 1;
 
   constructor(private readonly bpm: number) {}
 
@@ -121,13 +122,18 @@ export class StemPlayer {
 
   setMasterVolume(volume: number, fadeSeconds = 0.35): void {
     if (!this.context || !this.masterGain) return;
-    const normalizedVolume = Math.max(0, volume);
+    const normalizedVolume = Math.max(0, volume) * this.userVolume;
     if (Math.abs(normalizedVolume - this.targetMasterVolume) < 0.008) return;
     this.targetMasterVolume = normalizedVolume;
     const now = this.context.currentTime;
     this.masterGain.gain.cancelScheduledValues(now);
     this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, now);
     this.masterGain.gain.linearRampToValueAtTime(normalizedVolume, now + fadeSeconds);
+  }
+
+  setUserVolume(volume: number): void {
+    this.userVolume = Math.max(0, Math.min(1, volume));
+    this.targetMasterVolume = -1;
   }
 
   setMuted(muted: boolean): void {

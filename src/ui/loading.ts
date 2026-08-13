@@ -3,6 +3,7 @@ export class LoadingScreen {
   private readonly fill = document.createElement("div");
   private readonly status = document.createElement("p");
   private readonly button = document.createElement("button");
+  private readonly credits = document.createElement("button");
 
   constructor() {
     this.element.className = "loading-screen";
@@ -14,8 +15,11 @@ export class LoadingScreen {
     this.button.className = "start-button";
     this.button.textContent = "탐험 시작";
     this.button.hidden = true;
+    this.credits.className = "credits-button";
+    this.credits.textContent = "크레딧";
+    this.credits.addEventListener("pointerup", this.toggleCredits);
     track.append(this.fill);
-    this.element.append(track, this.status, this.button);
+    this.element.append(track, this.status, this.button, this.credits);
   }
 
   setProgress(progress: number): void {
@@ -38,4 +42,16 @@ export class LoadingScreen {
     this.element.classList.add("is-hidden");
     this.element.addEventListener("transitionend", () => this.element.remove(), { once: true });
   }
+
+  private readonly toggleCredits = (): void => {
+    const existing = this.element.querySelector(".credits-card");
+    if (existing) {
+      existing.remove();
+      return;
+    }
+    const card = document.createElement("div");
+    card.className = "credits-card";
+    card.innerHTML = "<strong>잃어버린 노래</strong><span>기획 · 디자인 · 사운드 · 개발 팀 프로젝트</span><small>Three.js · GSAP · Web Audio API · Codex Collaboration</small>";
+    this.element.append(card);
+  };
 }

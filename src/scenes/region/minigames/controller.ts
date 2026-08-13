@@ -18,6 +18,7 @@ export class MinigameController {
     private readonly bpm: number,
     private readonly getTransportTime: () => number,
     private readonly playTone: (index: number) => void,
+    private readonly getRhythmAssist: () => boolean,
     cleared: readonly string[],
     private readonly onModalChange: (open: boolean) => void,
     private readonly onClear: (gameId: string, rewardNoteId: string) => void,
@@ -75,6 +76,7 @@ export class MinigameController {
       this.bpm,
       this.getTransportTime,
       this.playTone,
+      this.getRhythmAssist(),
       () => {
       this.onClear(spot.id, spot.rewardNoteId);
       this.close();

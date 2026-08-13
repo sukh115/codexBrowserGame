@@ -78,6 +78,9 @@ button { font: inherit; }
   cursor: pointer;
   pointer-events: auto;
 }
+.credits-button { border: 0; color: #708087; background: transparent; text-decoration: underline; cursor: pointer; }
+.credits-card { display: grid; gap: 6px; max-width: 420px; padding: 15px 20px; border: 1px solid #d5d9d5; border-radius: 14px; text-align: center; background: #fff; }
+.credits-card small { color: #708087; }
 
 .scene-fade {
   position: absolute;
@@ -139,6 +142,7 @@ button { font: inherit; }
 
 .mute-button { right: max(18px, env(safe-area-inset-right)); }
 .reset-button { right: max(108px, calc(env(safe-area-inset-right) + 108px)); }
+.replay-button { top: 68px; right: max(108px, calc(env(safe-area-inset-right) + 108px)); color: #17142b; background: #fff0a5; }
 
 @keyframes counter-pulse {
   50% { transform: scale(1.22); background: #f08a5d; }
@@ -240,6 +244,35 @@ button { font: inherit; }
 @keyframes rhythm-hit { 50% { transform: scale(.88); background: #67e8d2; } }
 @keyframes memory-wrong { 33% { transform: translateX(-7px); } 66% { transform: translateX(7px); } }
 @keyframes entrance-breathe { 50% { filter: brightness(1.25); } }
+
+.tutorial-tip { position: absolute; bottom: 86px; left: 50%; z-index: 50; display: none; width: min(520px, 88vw); padding: 16px 18px; border: 1px solid #67e8d2; border-radius: 16px; color: #fff; text-align: center; background: rgb(15 15 35 / 94%); box-shadow: 0 0 30px rgb(103 232 210 / 20%); transform: translateX(-50%); pointer-events: auto; }
+.tutorial-tip.is-visible { display: block; animation: tutorial-in 350ms ease; }
+.tutorial-tip p { margin: 0 0 12px; line-height: 1.5; }
+.tutorial-tip button { padding: 8px 15px; border: 0; border-radius: 999px; cursor: pointer; }
+@keyframes tutorial-in { from { opacity: 0; transform: translate(-50%, 15px); } }
+
+.settings-panel { position: absolute; top: 68px; left: 18px; z-index: 20; display: grid; width: 235px; padding: 0; border-radius: 14px; color: #fff; background: rgb(16 15 34 / 95%); pointer-events: auto; }
+.settings-panel[hidden] { display: none; }
+.settings-open { position: absolute; top: 0; left: 0; padding: 8px 13px; border: 1px solid #776d8e; border-radius: 999px; color: #fff; background: #25213b; cursor: pointer; }
+.settings-panel > label, .settings-close { display: none; }
+.settings-panel.is-open { padding: 48px 16px 16px; border: 1px solid #776d8e; gap: 13px; }
+.settings-panel.is-open > label { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; }
+.settings-panel.is-open .settings-close { display: block; padding: 7px; border: 0; border-radius: 8px; cursor: pointer; }
+.settings-panel input[type="range"] { width: 105px; }
+
+.region-reactive-layer { position: absolute; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; }
+.region-reactive-layer i { position: absolute; display: block; opacity: 0; transition: opacity 1s ease; }
+.reactive-crt { top: 31%; right: 6%; width: 15%; height: 28%; background: repeating-linear-gradient(0deg, rgb(103 232 210 / 8%) 0 2px, transparent 2px 5px); mix-blend-mode: screen; }
+.reactive-neon { inset: 0; background: radial-gradient(circle at 50% 20%, rgb(233 122 199 / 20%), transparent 42%); mix-blend-mode: screen; }
+.reactive-bass { inset: -10%; border: 22px solid rgb(103 232 210 / 0%); border-radius: 12%; }
+.region-reactive-layer.has-melody .reactive-crt { opacity: .9; animation: crt-flicker 2.1s steps(3) infinite; }
+.region-reactive-layer.has-harmony .reactive-neon { opacity: 1; }
+.region-reactive-layer.has-bass.on-beat .reactive-bass { animation: bass-pulse 280ms ease; }
+.region-reactive-layer.has-rhythm.on-beat { filter: brightness(1.08); }
+@keyframes crt-flicker { 50% { opacity: .45; transform: translateX(1px); } }
+@keyframes bass-pulse { 20% { border-color: rgb(103 232 210 / 24%); transform: scale(.98); } }
+
+.reduced-motion *, .reduced-motion *::before, .reduced-motion *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
 
 .context-button {
   bottom: max(28px, env(safe-area-inset-bottom));

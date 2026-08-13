@@ -4,6 +4,7 @@ export const GAME_EVENTS = {
   STATE_CHANGE: "game:state-change",
   TAP: "game:tap",
   POINT: "game:point",
+  TUTORIAL_NEXT: "game:tutorial-next",
 } as const;
 
 export const INPUT_LIMITS = {

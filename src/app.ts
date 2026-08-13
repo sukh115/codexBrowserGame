@@ -11,6 +11,8 @@ import { StemPlayer } from "./audio/stemPlayer";
 import { SfxPlayer } from "./audio/sfx";
 import { Hud } from "./ui/hud";
 import { CompletionOverlay } from "./ui/completion";
+import { Tutorial } from "./ui/tutorial";
+import { SettingsPanel } from "./ui/settings";
 
 export function bootstrap(root: HTMLElement): void {
   const overlay = document.createElement("div");
@@ -31,6 +33,8 @@ export function bootstrap(root: HTMLElement): void {
   let hud: Hud | null = null;
   let activeRegionScene: RegionScene | null = null;
   const completionOverlay = new CompletionOverlay(overlay);
+  const settings = new SettingsPanel(overlay, (patch) => gameStore.setState(patch));
+  const tutorial = new Tutorial(overlay, () => gameStore.setState({ tutorialCompleted: true }));
   let wasCompleted = gameStore.snapshot.completed;
   overlay.append(loading.element);
 
@@ -52,8 +56,14 @@ export function bootstrap(root: HTMLElement): void {
       overlay,
       () => gameStore.setState({ muted: !gameStore.snapshot.muted }),
       () => gameStore.reset(),
+      () => {
+        stemPlayer.setMasterVolume(1);
+        completionOverlay.show(() => {});
+      },
     );
     hud.update(gameStore.snapshot);
+    settings.update(gameStore.snapshot);
+    settings.show();
     gameStore.setState({ currentScene: "overworld" });
     const showOverworld = (): void => {
       activeRegionScene = null;
@@ -87,8 +97,10 @@ export function bootstrap(root: HTMLElement): void {
         },
         () => stemPlayer.getTransportTime(),
         (index) => sfxPlayer.playTone(index),
+        () => gameStore.snapshot.rhythmAssist,
       );
       sceneManager.transitionTo(activeRegionScene);
+      if (!gameStore.snapshot.tutorialCompleted) tutorial.showRegion();
     };
     const updateOverworldAudio = (proximity: number): void => {
       if (gameStore.snapshot.muted || gameStore.snapshot.currentScene !== "overworld") return;
@@ -107,6 +119,7 @@ export function bootstrap(root: HTMLElement): void {
     ));
     loading.hide();
     engine.start();
+    if (!gameStore.snapshot.tutorialCompleted) tutorial.showMovement();
   });
 
   // 외부 에셋이 없는 현재 단계도 동일한 로딩 흐름을 유지한다.
@@ -115,6 +128,9 @@ export function bootstrap(root: HTMLElement): void {
   gameStore.addEventListener(GAME_EVENTS.STATE_CHANGE, (event) => {
     const state = (event as CustomEvent<typeof gameStore.snapshot>).detail;
     hud?.update(state);
+    settings.update(state);
+    stemPlayer.setUserVolume(state.masterVolume);
+    sfxPlayer.setVolume(state.sfxVolume);
     activeRegionScene?.syncCollectedNotes(state.collectedNotes);
     activeRegionScene?.syncClearedMinigames(state.clearedMinigames);
     sfxPlayer.setMuted(state.muted);

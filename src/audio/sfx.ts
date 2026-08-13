@@ -1,6 +1,7 @@
 export class SfxPlayer {
   private context: AudioContext | null = null;
   private muted = false;
+  private volume = 1;
 
   async unlock(): Promise<void> {
     if (!this.context) this.context = new AudioContext();
@@ -11,12 +12,16 @@ export class SfxPlayer {
     this.muted = muted;
   }
 
+  setVolume(volume: number): void {
+    this.volume = Math.max(0, Math.min(1, volume));
+  }
+
   playFound(): void {
     if (!this.context || this.muted) return;
     const now = this.context.currentTime;
     const gain = this.context.createGain();
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.2, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.2 * this.volume, now + 0.01);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
     gain.connect(this.context.destination);
     [659.25, 880].forEach((frequency, index) => {
@@ -35,7 +40,7 @@ export class SfxPlayer {
     const now = this.context.currentTime;
     const gain = this.context.createGain();
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.16, now + 0.025);
+    gain.gain.exponentialRampToValueAtTime(0.16 * this.volume, now + 0.025);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.4);
     gain.connect(this.context.destination);
     [261.63, 329.63, 392, 523.25].forEach((frequency, index) => {
@@ -60,7 +65,7 @@ export class SfxPlayer {
     oscillator.type = "sine";
     oscillator.frequency.value = frequency;
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.13, now + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.13 * this.volume, now + 0.008);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
     oscillator.connect(gain).connect(this.context.destination);
     oscillator.start(now);

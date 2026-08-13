@@ -5,6 +5,7 @@ import { NOTE_SPOTS } from "./noteSpots";
 import { NoteField } from "./noteField";
 import { INPUT_LIMITS } from "../../core/constants";
 import { MinigameController } from "./minigames/controller";
+import { ReactiveLayer } from "./reactiveLayer";
 
 const BACKGROUND_HEIGHT = 10;
 const MIN_ZOOM = 1;
@@ -17,6 +18,7 @@ export class RegionScene implements GameScene {
   private readonly exitButton = document.createElement("button");
   private readonly noteField: NoteField;
   private readonly minigames: MinigameController;
+  private readonly reactiveLayer: ReactiveLayer;
   private readonly pointers = new Map<number, THREE.Vector2>();
   private dragPointerId: number | null = null;
   private lastPointerX = 0;
@@ -29,6 +31,7 @@ export class RegionScene implements GameScene {
   private tapStartY = 0;
   private tapStartTime = 0;
   private inputLocked = false;
+  private collectedNotes: readonly string[];
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -39,8 +42,9 @@ export class RegionScene implements GameScene {
     onCollectNote: (noteId: string) => void,
     clearedMinigames: readonly string[],
     onClearMinigame: (gameId: string, rewardNoteId: string) => void,
-    getTransportTime: () => number,
+    private readonly getTransportTime: () => number,
     playTone: (index: number) => void,
+    getRhythmAssist: () => boolean,
   ) {
     const width = BACKGROUND_HEIGHT * manifest.aspectRatio;
     this.background = new THREE.Mesh(
@@ -54,6 +58,8 @@ export class RegionScene implements GameScene {
       BACKGROUND_HEIGHT,
       onCollectNote,
     );
+    this.collectedNotes = collectedNotes;
+    this.reactiveLayer = new ReactiveLayer(overlayRoot);
     this.minigames = new MinigameController(
       overlayRoot,
       width,
@@ -61,6 +67,7 @@ export class RegionScene implements GameScene {
       manifest.bpm,
       getTransportTime,
       playTone,
+      getRhythmAssist,
       clearedMinigames,
       (open) => this.setInputLocked(open),
       onClearMinigame,
@@ -87,9 +94,11 @@ export class RegionScene implements GameScene {
   update(deltaSeconds: number): void {
     this.noteField.update(deltaSeconds, this.camera);
     this.minigames.update(this.camera, this.viewportWidth, this.viewportHeight);
+    this.reactiveLayer.update(this.collectedNotes, this.getTransportTime(), this.manifest.bpm);
   }
 
   syncCollectedNotes(collectedNotes: readonly string[]): void {
+    this.collectedNotes = collectedNotes;
     this.noteField.syncCollectedNotes(collectedNotes);
   }
 
@@ -129,6 +138,7 @@ export class RegionScene implements GameScene {
     this.background.material.dispose();
     this.noteField.dispose();
     this.minigames.dispose();
+    this.reactiveLayer.dispose();
     this.scene.clear();
     this.pointers.clear();
   }
