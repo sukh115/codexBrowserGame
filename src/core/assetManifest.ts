@@ -58,6 +58,7 @@ export const ASSET_MANIFEST = {
     {
       id: "tree-test-obj",
       path: "/assets/models/tree-test.obj",
+      materialPath: "/assets/models/tree-test.mtl",
       position: { x: -9, z: -4 },
       targetHeight: 3,
     },

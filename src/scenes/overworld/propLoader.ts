@@ -1,10 +1,12 @@
 import * as THREE from "three";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
+import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
 
 export interface PropConfig {
   readonly id: string;
   readonly path: string;
+  readonly materialPath?: string;
   readonly position: { readonly x: number; readonly z: number };
   readonly targetHeight: number;
 }
@@ -18,12 +20,7 @@ export class OverworldPropLoader {
   load(configs: readonly PropConfig[]): void {
     for (const config of configs) {
       if (config.path.toLowerCase().endsWith(".obj")) {
-        new OBJLoader().load(
-          config.path,
-          (object) => this.addProp(object, config, true),
-          undefined,
-          (error) => console.warn(`[Overworld] OBJ 소품 로드 실패: ${config.id}`, error),
-        );
+        this.loadObj(config);
       } else {
         new FBXLoader().load(
           config.path,
@@ -33,6 +30,35 @@ export class OverworldPropLoader {
         );
       }
     }
+  }
+
+  private loadObj(config: PropConfig): void {
+    const loadGeometry = (materials?: MTLLoader.MaterialCreator): void => {
+      const loader = new OBJLoader();
+      if (materials) loader.setMaterials(materials);
+      loader.load(
+        config.path,
+        (object) => this.addProp(object, config, !materials),
+        undefined,
+        (error) => console.warn(`[Overworld] OBJ 소품 로드 실패: ${config.id}`, error),
+      );
+    };
+    if (!config.materialPath) {
+      loadGeometry();
+      return;
+    }
+    new MTLLoader().load(
+      config.materialPath,
+      (materials) => {
+        materials.preload();
+        loadGeometry(materials);
+      },
+      undefined,
+      (error) => {
+        console.warn(`[Overworld] MTL 로드 실패, 임시 재질 사용: ${config.id}`, error);
+        loadGeometry();
+      },
+    );
   }
 
   dispose(): void {
