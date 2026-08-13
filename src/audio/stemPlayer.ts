@@ -18,6 +18,7 @@ export class StemPlayer {
   private unlocked = false;
   private started = false;
   private targetMasterVolume = -1;
+  private transportStartTime = 0;
 
   constructor(private readonly bpm: number) {}
 
@@ -42,6 +43,7 @@ export class StemPlayer {
     if (!this.unlocked || !this.context || !this.masterGain || this.started) return;
     const buffers = await Promise.all(stems.map((stem, index) => this.loadBuffer(stem, index)));
     const startTime = this.context.currentTime + 0.08;
+    this.transportStartTime = startTime;
     stems.forEach((stem, index) => {
       if (!this.context || !this.masterGain) return;
       const source = this.context.createBufferSource();
@@ -136,6 +138,11 @@ export class StemPlayer {
     return this.bpm;
   }
 
+  getTransportTime(): number {
+    if (!this.context || !this.started) return 0;
+    return Math.max(0, this.context.currentTime - this.transportStartTime);
+  }
+
   dispose(): void {
     for (const { source, gain } of this.activeStems.values()) {
       source.stop();
@@ -155,6 +162,7 @@ export class StemPlayer {
     this.started = false;
     this.unlocked = false;
     this.targetMasterVolume = -1;
+    this.transportStartTime = 0;
     this.appliedEffects.clear();
     this.stemLevels.clear();
   }

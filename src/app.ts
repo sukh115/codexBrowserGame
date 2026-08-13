@@ -85,6 +85,7 @@ export function bootstrap(root: HTMLElement): void {
           sfxPlayer.playFound();
           gameStore.clearMinigame(gameId, rewardNoteId);
         },
+        () => stemPlayer.getTransportTime(),
       );
       sceneManager.transitionTo(activeRegionScene);
     };

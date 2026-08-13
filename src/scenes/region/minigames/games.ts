@@ -7,10 +7,11 @@ export function startMinigame(
   type: MinigameType,
   frame: MinigameFrame,
   bpm: number,
+  getTransportTime: () => number,
   onClear: () => void,
 ): StopGame {
   if (type === "timing") return startTiming(frame, onClear);
-  if (type === "rhythm") return startRhythm(frame, bpm, onClear);
+  if (type === "rhythm") return startRhythm(frame, bpm, getTransportTime, onClear);
   return startMemory(frame, onClear);
 }
 
@@ -51,41 +52,99 @@ function startTiming(frame: MinigameFrame, onClear: () => void): StopGame {
   };
 }
 
-function startRhythm(frame: MinigameFrame, bpm: number, onClear: () => void): StopGame {
+function startRhythm(
+  frame: MinigameFrame,
+  bpm: number,
+  getTransportTime: () => number,
+  onClear: () => void,
+): StopGame {
+  const track = document.createElement("div");
+  track.className = "rhythm-track";
+  const line = document.createElement("i");
+  line.className = "rhythm-judge-line";
   const pad = document.createElement("button");
   pad.className = "rhythm-pad";
-  pad.textContent = "BEAT";
-  frame.stage.append(pad);
-  const interval = 60_000 / bpm;
-  const started = performance.now() + interval;
-  let hits = 0;
+  pad.textContent = "TAP";
+  track.append(line);
+  frame.stage.append(track, pad);
+  const beatSeconds = 60 / bpm;
+  const firstBeat = Math.ceil(getTransportTime() / beatSeconds) + 2;
+  const targets = Array.from({ length: 16 }, (_, index) => (firstBeat + index) * beatSeconds);
+  const notes = targets.map(() => {
+    const note = document.createElement("i");
+    note.className = "rhythm-note";
+    track.append(note);
+    return note;
+  });
+  const judged = Array.from({ length: 16 }, () => false);
+  let judgedCount = 0;
   let score = 0;
-  const tap = (): void => {
-    if (hits >= 16) return;
-    const elapsed = performance.now() - started;
-    const error = Math.abs(elapsed - Math.round(elapsed / interval) * interval);
-    const result = error <= 90 ? "Perfect" : error <= 170 ? "Good" : "Miss";
-    if (result === "Perfect") score += 1;
-    if (result === "Good") score += 0.7;
-    hits += 1;
-    frame.status.textContent = `${result} · ${hits}/16`;
-    pad.classList.remove("is-hit");
-    requestAnimationFrame(() => pad.classList.add("is-hit"));
-    if (hits === 16) {
-      const accuracy = score / 16;
-      if (accuracy >= 0.7) {
-        frame.status.textContent = `정확도 ${Math.round(accuracy * 100)}% · 클리어!`;
-        window.setTimeout(onClear, 550);
-      } else {
-        frame.status.textContent = `정확도 ${Math.round(accuracy * 100)}% · 다시 도전하세요`;
-        hits = 0;
-        score = 0;
-      }
+  let animationFrame = 0;
+  let finished = false;
+  const finish = (): void => {
+    if (finished || judgedCount < 16) return;
+    finished = true;
+    const accuracy = score / 16;
+    if (accuracy >= 0.7) {
+      frame.status.textContent = `정확도 ${Math.round(accuracy * 100)}% · 클리어!`;
+      window.setTimeout(onClear, 650);
+    } else {
+      frame.status.textContent = `정확도 ${Math.round(accuracy * 100)}% · 닫고 다시 도전하세요`;
     }
   };
+  const animate = (): void => {
+    const now = getTransportTime();
+    targets.forEach((target, index) => {
+      if (judged[index]) return;
+      const timeUntil = target - now;
+      const progress = 1 - timeUntil / 2;
+      notes[index].style.top = `${progress * 82}%`;
+      notes[index].hidden = progress < -0.05 || progress > 1.15;
+      if (timeUntil < -0.2) {
+        judged[index] = true;
+        judgedCount += 1;
+        notes[index].classList.add("is-miss");
+        frame.status.textContent = `Miss · ${judgedCount}/16`;
+      }
+    });
+    finish();
+    if (!finished) animationFrame = requestAnimationFrame(animate);
+  };
+  const tap = (): void => {
+    if (finished) return;
+    const now = getTransportTime();
+    let nearestIndex = -1;
+    let nearestError = Number.POSITIVE_INFINITY;
+    targets.forEach((target, index) => {
+      if (judged[index]) return;
+      const error = Math.abs(now - target);
+      if (error < nearestError) {
+        nearestError = error;
+        nearestIndex = index;
+      }
+    });
+    if (nearestIndex < 0 || nearestError > 0.2) {
+      frame.status.textContent = "Miss · 판정선에서 탭하세요";
+      return;
+    }
+    const result = nearestError <= 0.08 ? "Perfect" : "Good";
+    if (result === "Perfect") score += 1;
+    if (result === "Good") score += 0.7;
+    judged[nearestIndex] = true;
+    judgedCount += 1;
+    notes[nearestIndex].classList.add(result === "Perfect" ? "is-perfect" : "is-good");
+    frame.status.textContent = `${result} · ${judgedCount}/16`;
+    pad.classList.remove("is-hit");
+    requestAnimationFrame(() => pad.classList.add("is-hit"));
+    finish();
+  };
   pad.addEventListener("pointerdown", tap);
-  frame.status.textContent = "박자에 맞춰 16번 탭하세요";
-  return () => pad.removeEventListener("pointerdown", tap);
+  frame.status.textContent = "노트가 판정선에 닿을 때 탭하세요";
+  animationFrame = requestAnimationFrame(animate);
+  return () => {
+    cancelAnimationFrame(animationFrame);
+    pad.removeEventListener("pointerdown", tap);
+  };
 }
 
 function startMemory(frame: MinigameFrame, onClear: () => void): StopGame {

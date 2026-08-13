@@ -16,6 +16,7 @@ export class MinigameController {
     private readonly backgroundWidth: number,
     private readonly backgroundHeight: number,
     private readonly bpm: number,
+    private readonly getTransportTime: () => number,
     cleared: readonly string[],
     private readonly onModalChange: (open: boolean) => void,
     private readonly onClear: (gameId: string, rewardNoteId: string) => void,
@@ -67,7 +68,7 @@ export class MinigameController {
     this.activeSpot = spot;
     this.onModalChange(true);
     this.frame.open(spot);
-    this.stopGame = startMinigame(spot.type, this.frame, this.bpm, () => {
+    this.stopGame = startMinigame(spot.type, this.frame, this.bpm, this.getTransportTime, () => {
       this.onClear(spot.id, spot.rewardNoteId);
       this.close();
     });
