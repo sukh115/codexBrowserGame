@@ -100,7 +100,27 @@ function startMemory(frame: MinigameFrame, onClear: () => void): StopGame {
   let sequence: number[] = [];
   let inputIndex = 0;
   let accepting = false;
+  let audioContext: AudioContext | null = null;
   const timers: number[] = [];
+  const flashKey = (value: number, className = "is-pressed"): void => {
+    const button = buttons[value];
+    button.classList.remove("is-pressed", "is-wrong");
+    requestAnimationFrame(() => button.classList.add(className));
+    timers.push(window.setTimeout(() => button.classList.remove(className), 190));
+    audioContext ??= new AudioContext();
+    void audioContext.resume();
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    const now = audioContext.currentTime;
+    oscillator.type = "sine";
+    oscillator.frequency.value = [261.63, 329.63, 392, 523.25][value];
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.13, now + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+    oscillator.connect(gain).connect(audioContext.destination);
+    oscillator.start(now);
+    oscillator.stop(now + 0.2);
+  };
   const playRound = (): void => {
     sequence = Array.from({ length: round + 2 }, () => Math.floor(Math.random() * 4));
     inputIndex = 0;
@@ -119,12 +139,15 @@ function startMemory(frame: MinigameFrame, onClear: () => void): StopGame {
     const listener = (): void => {
       if (!accepting) return;
       if (sequence[inputIndex] !== value) {
-        frame.status.textContent = "순서가 달라요 · 다시 봅니다";
+        flashKey(value, "is-wrong");
+        frame.status.textContent = `순서가 달라요 · ${inputIndex}/${sequence.length}까지 성공`;
         timers.push(window.setTimeout(playRound, 650));
         accepting = false;
         return;
       }
+      flashKey(value);
       inputIndex += 1;
+      frame.status.textContent = `좋아요 · ${inputIndex}/${sequence.length}`;
       if (inputIndex === sequence.length) {
         round += 1;
         if (round > 3) {
@@ -140,5 +163,6 @@ function startMemory(frame: MinigameFrame, onClear: () => void): StopGame {
   return () => {
     timers.forEach(window.clearTimeout);
     buttons.forEach((button, index) => button.removeEventListener("pointerdown", listeners[index]));
+    void audioContext?.close();
   };
 }

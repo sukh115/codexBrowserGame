@@ -212,8 +212,11 @@ button { font: inherit; }
 .rhythm-pad.is-hit { animation: rhythm-hit 160ms ease; }
 .memory-key { width: min(150px, 34vw); height: 82px; border: 2px solid #8d72e1; border-radius: 16px; color: #fff; font-size: 22px; background: #30245b; cursor: pointer; }
 .memory-key.is-lit { background: #67e8d2; box-shadow: 0 0 28px #67e8d2; transform: scale(1.06); }
+.memory-key.is-pressed { background: #f4d978; border-color: #fff4b8; box-shadow: 0 0 30px #f4d978; transform: scale(.94); }
+.memory-key.is-wrong { background: #e85278; border-color: #ffb3c6; box-shadow: 0 0 30px #e85278; animation: memory-wrong 190ms ease; }
 .key-2, .key-3 { border-color: #e97ac7; }
 @keyframes rhythm-hit { 50% { transform: scale(.88); background: #67e8d2; } }
+@keyframes memory-wrong { 33% { transform: translateX(-7px); } 66% { transform: translateX(7px); } }
 
 .context-button {
   bottom: max(28px, env(safe-area-inset-bottom));
