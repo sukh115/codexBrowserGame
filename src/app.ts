@@ -5,6 +5,8 @@ import { gameStore } from "./core/store";
 import { SceneManager } from "./scenes/sceneManager";
 import { OverworldScene } from "./scenes/overworld/overworldScene";
 import { LoadingScreen } from "./ui/loading";
+import { RegionScene } from "./scenes/region/regionScene";
+import { ASSET_MANIFEST } from "./core/assetManifest";
 
 export function bootstrap(root: HTMLElement): void {
   const overlay = document.createElement("div");
@@ -23,7 +25,16 @@ export function bootstrap(root: HTMLElement): void {
   loader.addEventListener(GAME_EVENTS.ASSET_COMPLETE, () => loading.complete());
   loading.onStart(() => {
     gameStore.setState({ currentScene: "overworld" });
-    sceneManager.show(new OverworldScene(engine.renderer.domElement));
+    const showOverworld = (): void => {
+      gameStore.setState({ currentScene: "overworld" });
+      sceneManager.transitionTo(new OverworldScene(engine.renderer.domElement, overlay, showRegion, true));
+    };
+    const showRegion = (): void => {
+      const region = ASSET_MANIFEST.regions[gameStore.snapshot.currentRegion];
+      gameStore.setState({ currentScene: "region" });
+      sceneManager.transitionTo(new RegionScene(engine.renderer.domElement, overlay, region, showOverworld));
+    };
+    sceneManager.show(new OverworldScene(engine.renderer.domElement, overlay, showRegion));
     loading.hide();
     engine.start();
   });

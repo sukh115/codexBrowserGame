@@ -2,6 +2,8 @@ import * as THREE from "three";
 import type { GameScene } from "../../core/engine";
 import { GAME_EVENTS, WORLD } from "../../core/constants";
 import { PointerInput, type TapDetail } from "../../core/input";
+import { ASSET_MANIFEST } from "../../core/assetManifest";
+import { gsap } from "gsap";
 
 export class OverworldScene implements GameScene {
   readonly scene = new THREE.Scene();
@@ -16,10 +18,23 @@ export class OverworldScene implements GameScene {
   private readonly ground: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial>;
   private readonly character = new THREE.Group();
   private readonly marker: THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>;
+  private readonly entrance = new THREE.Group();
+  private readonly entrancePosition = new THREE.Vector3(
+    ASSET_MANIFEST.overworldEntrance.position.x,
+    0,
+    ASSET_MANIFEST.overworldEntrance.position.z,
+  );
+  private readonly enterButton = document.createElement("button");
   private moving = false;
   private walkTime = 0;
+  private entering = false;
 
-  constructor(private readonly canvas: HTMLCanvasElement) {
+  constructor(
+    private readonly canvas: HTMLCanvasElement,
+    overlayRoot: HTMLElement,
+    private readonly onEnterRegion: () => void,
+    private readonly spawnAtEntrance = false,
+  ) {
     this.input = new PointerInput(canvas);
     this.input.addEventListener(GAME_EVENTS.POINT, this.onPoint as EventListener);
 
@@ -36,6 +51,12 @@ export class OverworldScene implements GameScene {
     );
     this.marker.rotation.x = -Math.PI / 2;
     this.marker.position.y = 0.025;
+
+    this.enterButton.className = "context-button";
+    this.enterButton.textContent = "음악이 들리는 곳으로 들어가기";
+    this.enterButton.hidden = true;
+    this.enterButton.addEventListener("pointerup", this.startEntrance);
+    overlayRoot.append(this.enterButton);
   }
 
   init(): void {
@@ -45,7 +66,12 @@ export class OverworldScene implements GameScene {
     sun.position.set(8, 15, 6);
     this.scene.add(sun, this.ground, this.marker);
     this.createCharacter();
+    if (this.spawnAtEntrance) {
+      this.character.position.copy(this.entrancePosition);
+      this.character.position.z += 2.7;
+    }
     this.createBoundary();
+    this.createEntrance();
     this.destination.copy(this.character.position);
     this.camera.position.copy(this.cameraOffset);
     this.camera.lookAt(this.character.position);
@@ -69,6 +95,12 @@ export class OverworldScene implements GameScene {
     }
 
     this.marker.material.opacity = Math.max(0, this.marker.material.opacity - deltaSeconds * 1.5);
+    this.entrance.rotation.y += deltaSeconds * 0.45;
+    const nearEntrance = this.character.position.distanceToSquared(this.entrancePosition)
+      <= ASSET_MANIFEST.overworldEntrance.activationRadius ** 2;
+    this.enterButton.hidden = !nearEntrance || this.entering;
+
+    if (this.entering) return;
     this.cameraTarget.copy(this.character.position).add(this.cameraOffset);
     this.camera.position.lerp(this.cameraTarget, 1 - Math.pow(0.001, deltaSeconds));
     this.cameraTarget.copy(this.character.position);
@@ -84,8 +116,10 @@ export class OverworldScene implements GameScene {
   dispose(): void {
     this.input.removeEventListener(GAME_EVENTS.POINT, this.onPoint as EventListener);
     this.input.dispose();
+    this.enterButton.removeEventListener("pointerup", this.startEntrance);
+    this.enterButton.remove();
     this.scene.traverse((object) => {
-      if (!(object instanceof THREE.Mesh)) return;
+      if (!(object instanceof THREE.Mesh) && !(object instanceof THREE.Line)) return;
       object.geometry.dispose();
       const materials = Array.isArray(object.material) ? object.material : [object.material];
       for (const material of materials) {
@@ -137,6 +171,40 @@ export class OverworldScene implements GameScene {
     const geometry = new THREE.BufferGeometry().setFromPoints(points);
     this.scene.add(new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: 0xe9a37e })));
   }
+
+  private createEntrance(): void {
+    const base = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.1, 1.1, 0.12, 32),
+      new THREE.MeshStandardMaterial({ color: 0xf08a5d, emissive: 0x6d2411, emissiveIntensity: 0.35 }),
+    );
+    base.position.y = 0.06;
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(0.82, 0.09, 10, 40),
+      new THREE.MeshBasicMaterial({ color: 0x78b58b }),
+    );
+    ring.position.y = 1.15;
+    const glow = new THREE.PointLight(0xf08a5d, 2.5, 7);
+    glow.position.y = 1.3;
+    this.entrance.add(base, ring, glow);
+    this.entrance.position.copy(this.entrancePosition);
+    this.scene.add(this.entrance);
+  }
+
+  private readonly startEntrance = (): void => {
+    if (this.entering) return;
+    this.entering = true;
+    this.moving = false;
+    this.enterButton.hidden = true;
+    gsap.to(this.camera.position, {
+      x: this.entrancePosition.x + 3.5,
+      y: 4.5,
+      z: this.entrancePosition.z + 3.5,
+      duration: 0.55,
+      ease: "power2.inOut",
+      onUpdate: () => this.camera.lookAt(this.entrancePosition.x, 0.8, this.entrancePosition.z),
+      onComplete: this.onEnterRegion,
+    });
+  };
 
   private createPaperTexture(): THREE.CanvasTexture {
     const canvas = document.createElement("canvas");

@@ -1,0 +1,206 @@
+import * as THREE from "three";
+import type { GameScene } from "../../core/engine";
+import type { RegionManifest } from "../../core/assetManifest";
+
+const BACKGROUND_HEIGHT = 10;
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 2.5;
+
+export class RegionScene implements GameScene {
+  readonly scene = new THREE.Scene();
+  readonly camera = new THREE.OrthographicCamera(-10, 10, 5, -5, 0.1, 20);
+  private readonly background: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
+  private readonly exitButton = document.createElement("button");
+  private readonly pointers = new Map<number, THREE.Vector2>();
+  private dragPointerId: number | null = null;
+  private lastPointerX = 0;
+  private lastPointerY = 0;
+  private lastPinchDistance = 0;
+  private viewportWidth = 1;
+  private viewportHeight = 1;
+  private disposed = false;
+
+  constructor(
+    private readonly canvas: HTMLCanvasElement,
+    overlayRoot: HTMLElement,
+    private readonly manifest: RegionManifest,
+    private readonly onExit: () => void,
+  ) {
+    const width = BACKGROUND_HEIGHT * manifest.aspectRatio;
+    this.background = new THREE.Mesh(
+      new THREE.PlaneGeometry(width, BACKGROUND_HEIGHT),
+      new THREE.MeshBasicMaterial({ map: this.createPlaceholderTexture() }),
+    );
+    this.loadBackground();
+    this.exitButton.className = "exit-button";
+    this.exitButton.textContent = "오버월드로 나가기";
+    this.exitButton.addEventListener("pointerup", this.onExit);
+    overlayRoot.append(this.exitButton);
+  }
+
+  init(): void {
+    this.scene.background = new THREE.Color(0x17142b);
+    this.scene.add(this.background);
+    this.camera.position.set(0, 0, 10);
+    this.canvas.addEventListener("pointerdown", this.onPointerDown);
+    this.canvas.addEventListener("pointermove", this.onPointerMove);
+    this.canvas.addEventListener("pointerup", this.onPointerUp);
+    this.canvas.addEventListener("pointercancel", this.onPointerUp);
+    this.canvas.addEventListener("wheel", this.onWheel, { passive: false });
+  }
+
+  update(): void {}
+
+  resize(width: number, height: number): void {
+    this.viewportWidth = width;
+    this.viewportHeight = height;
+    const aspect = width / height;
+    this.camera.left = -(BACKGROUND_HEIGHT * aspect) / 2;
+    this.camera.right = (BACKGROUND_HEIGHT * aspect) / 2;
+    this.camera.top = BACKGROUND_HEIGHT / 2;
+    this.camera.bottom = -BACKGROUND_HEIGHT / 2;
+    this.camera.updateProjectionMatrix();
+    this.clampCamera();
+  }
+
+  dispose(): void {
+    this.disposed = true;
+    this.canvas.removeEventListener("pointerdown", this.onPointerDown);
+    this.canvas.removeEventListener("pointermove", this.onPointerMove);
+    this.canvas.removeEventListener("pointerup", this.onPointerUp);
+    this.canvas.removeEventListener("pointercancel", this.onPointerUp);
+    this.canvas.removeEventListener("wheel", this.onWheel);
+    this.exitButton.removeEventListener("pointerup", this.onExit);
+    this.exitButton.remove();
+    this.background.geometry.dispose();
+    this.background.material.map?.dispose();
+    this.background.material.dispose();
+    this.scene.clear();
+    this.pointers.clear();
+  }
+
+  private readonly onPointerDown = (event: PointerEvent): void => {
+    this.canvas.setPointerCapture(event.pointerId);
+    this.pointers.set(event.pointerId, new THREE.Vector2(event.clientX, event.clientY));
+    this.dragPointerId = event.pointerId;
+    this.lastPointerX = event.clientX;
+    this.lastPointerY = event.clientY;
+    this.updatePinchDistance();
+  };
+
+  private readonly onPointerMove = (event: PointerEvent): void => {
+    const pointer = this.pointers.get(event.pointerId);
+    if (!pointer) return;
+    pointer.set(event.clientX, event.clientY);
+    if (this.pointers.size >= 2) {
+      const distance = this.getPinchDistance();
+      if (this.lastPinchDistance > 0) {
+        this.setZoom(this.camera.zoom * (distance / this.lastPinchDistance));
+      }
+      this.lastPinchDistance = distance;
+      return;
+    }
+    if (event.pointerId !== this.dragPointerId) return;
+    const worldPerPixelX = (this.camera.right - this.camera.left) / (this.camera.zoom * this.viewportWidth);
+    const worldPerPixelY = (this.camera.top - this.camera.bottom) / (this.camera.zoom * this.viewportHeight);
+    this.camera.position.x -= (event.clientX - this.lastPointerX) * worldPerPixelX;
+    this.camera.position.y += (event.clientY - this.lastPointerY) * worldPerPixelY;
+    this.lastPointerX = event.clientX;
+    this.lastPointerY = event.clientY;
+    this.clampCamera();
+  };
+
+  private readonly onPointerUp = (event: PointerEvent): void => {
+    this.pointers.delete(event.pointerId);
+    this.dragPointerId = null;
+    this.lastPinchDistance = 0;
+  };
+
+  private readonly onWheel = (event: WheelEvent): void => {
+    event.preventDefault();
+    this.setZoom(this.camera.zoom * Math.exp(-event.deltaY * 0.0015));
+  };
+
+  private setZoom(zoom: number): void {
+    this.camera.zoom = THREE.MathUtils.clamp(zoom, MIN_ZOOM, MAX_ZOOM);
+    this.camera.updateProjectionMatrix();
+    this.clampCamera();
+  }
+
+  private clampCamera(): void {
+    const halfBackgroundWidth = (BACKGROUND_HEIGHT * this.manifest.aspectRatio) / 2;
+    const halfBackgroundHeight = BACKGROUND_HEIGHT / 2;
+    const halfViewWidth = (this.camera.right - this.camera.left) / (2 * this.camera.zoom);
+    const halfViewHeight = (this.camera.top - this.camera.bottom) / (2 * this.camera.zoom);
+    const maxX = Math.max(0, halfBackgroundWidth - halfViewWidth);
+    const maxY = Math.max(0, halfBackgroundHeight - halfViewHeight);
+    this.camera.position.x = THREE.MathUtils.clamp(this.camera.position.x, -maxX, maxX);
+    this.camera.position.y = THREE.MathUtils.clamp(this.camera.position.y, -maxY, maxY);
+  }
+
+  private getPinchDistance(): number {
+    const values = [...this.pointers.values()];
+    return values.length < 2 ? 0 : values[0].distanceTo(values[1]);
+  }
+
+  private updatePinchDistance(): void {
+    this.lastPinchDistance = this.getPinchDistance();
+  }
+
+  private createPlaceholderTexture(): THREE.CanvasTexture {
+    const canvas = document.createElement("canvas");
+    canvas.width = 2048;
+    canvas.height = 1024;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Canvas 2D 컨텍스트를 만들 수 없습니다.");
+    const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, "#20183f");
+    gradient.addColorStop(0.5, "#453064");
+    gradient.addColorStop(1, "#173d48");
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    const colors = ["#67e8d2", "#d976c5", "#8d72e1", "#f09b72"];
+    for (let index = 0; index < 8; index += 1) {
+      context.fillStyle = colors[index % colors.length];
+      context.globalAlpha = 0.22;
+      context.fillRect(index * 256 + 22, 120 + (index % 3) * 170, 185, 540 - (index % 3) * 80);
+      context.globalAlpha = 1;
+      context.fillStyle = "#f5efff";
+      context.font = "bold 30px sans-serif";
+      context.textAlign = "center";
+      context.fillText(`${index + 1}`, index * 256 + 114, 880);
+    }
+    context.fillStyle = "#ffffff";
+    context.font = "bold 66px sans-serif";
+    context.textAlign = "center";
+    context.fillText(this.manifest.title, 1024, 105);
+    context.font = "28px sans-serif";
+    context.fillText("드래그로 이동 · 휠 또는 핀치로 확대", 1024, 960);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    return texture;
+  }
+
+  private loadBackground(): void {
+    if (!this.manifest.background) return;
+    new THREE.TextureLoader().load(
+      this.manifest.background,
+      (texture) => {
+        if (this.disposed) {
+          texture.dispose();
+          return;
+        }
+        texture.colorSpace = THREE.SRGBColorSpace;
+        const placeholder = this.background.material.map;
+        this.background.material.map = texture;
+        this.background.material.needsUpdate = true;
+        placeholder?.dispose();
+      },
+      undefined,
+      () => {
+        // 에셋 전달 전에도 전체 게임 흐름은 중단하지 않는다.
+        console.warn(`[RegionScene] 배경 로드 실패, 플레이스홀더 유지: ${this.manifest.background}`);
+      },
+    );
+  }
+}

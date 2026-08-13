@@ -87,6 +87,32 @@ button { font: inherit; }
   pointer-events: none;
 }
 
+.context-button,
+.exit-button {
+  position: absolute;
+  z-index: 5;
+  border: 1px solid rgb(255 255 255 / 30%);
+  border-radius: 999px;
+  color: #fff;
+  background: rgb(28 29 31 / 88%);
+  box-shadow: 0 8px 30px rgb(0 0 0 / 18%);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.context-button {
+  bottom: max(28px, env(safe-area-inset-bottom));
+  left: 50%;
+  padding: 14px 22px;
+  transform: translateX(-50%);
+}
+
+.exit-button {
+  top: max(18px, env(safe-area-inset-top));
+  right: max(18px, env(safe-area-inset-right));
+  padding: 11px 17px;
+}
+
 @media (max-width: 640px) {
   .loading-screen { gap: 14px; }
   .loading-screen .eyebrow { font-size: 12px; }
