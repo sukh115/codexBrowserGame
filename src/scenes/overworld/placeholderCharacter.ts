@@ -8,8 +8,6 @@ export interface PlaceholderCharacterRig {
   readonly rightArm: THREE.Mesh;
   readonly leftLeg: THREE.Mesh;
   readonly rightLeg: THREE.Mesh;
-  readonly leftShoe: THREE.Mesh;
-  readonly rightShoe: THREE.Mesh;
 }
 
 export function createPlaceholderCharacter(): PlaceholderCharacterRig {
@@ -66,11 +64,6 @@ export function createPlaceholderCharacter(): PlaceholderCharacterRig {
   leftLeg.position.set(-0.18, 0.31, 0);
   const rightLeg = leftLeg.clone();
   rightLeg.position.x = 0.18;
-  const shoeGeometry = new THREE.BoxGeometry(0.28, 0.14, 0.43);
-  const leftShoe = new THREE.Mesh(shoeGeometry, dark);
-  leftShoe.position.set(-0.18, 0.06, 0.09);
-  const rightShoe = leftShoe.clone();
-  rightShoe.position.x = 0.18;
 
   const cableCurve = new THREE.CatmullRomCurve3([
     new THREE.Vector3(-0.45, 1.72, -0.02),
@@ -94,10 +87,8 @@ export function createPlaceholderCharacter(): PlaceholderCharacterRig {
     rightArm,
     leftLeg,
     rightLeg,
-    leftShoe,
-    rightShoe,
     cable,
   );
   character.scale.setScalar(1.08);
-  return { group: character, torso, head, leftArm, rightArm, leftLeg, rightLeg, leftShoe, rightShoe };
+  return { group: character, torso, head, leftArm, rightArm, leftLeg, rightLeg };
 }
