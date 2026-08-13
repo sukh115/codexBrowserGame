@@ -5,14 +5,14 @@ import { PointerInput, type TapDetail } from "../../core/input";
 
 export class OverworldScene implements GameScene {
   readonly scene = new THREE.Scene();
-  readonly camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+  readonly camera = new THREE.PerspectiveCamera(42, 1, 0.1, 120);
   private readonly input: PointerInput;
   private readonly raycaster = new THREE.Raycaster();
   private readonly pointer = new THREE.Vector2();
   private readonly destination = new THREE.Vector3();
   private readonly direction = new THREE.Vector3();
   private readonly cameraTarget = new THREE.Vector3();
-  private readonly cameraOffset = new THREE.Vector3(9, 11, 9);
+  private readonly cameraOffset = new THREE.Vector3(15, 18, 15);
   private readonly ground: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial>;
   private readonly character = new THREE.Group();
   private readonly marker: THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>;
