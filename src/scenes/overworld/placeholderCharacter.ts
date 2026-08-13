@@ -8,6 +8,8 @@ export interface PlaceholderCharacterRig {
   readonly rightArm: THREE.Mesh;
   readonly leftLeg: THREE.Mesh;
   readonly rightLeg: THREE.Mesh;
+  readonly leftShoe: THREE.Mesh;
+  readonly rightShoe: THREE.Mesh;
 }
 
 export function createPlaceholderCharacter(): PlaceholderCharacterRig {
@@ -97,5 +99,5 @@ export function createPlaceholderCharacter(): PlaceholderCharacterRig {
     cable,
   );
   character.scale.setScalar(1.08);
-  return { group: character, torso, head, leftArm, rightArm, leftLeg, rightLeg };
+  return { group: character, torso, head, leftArm, rightArm, leftLeg, rightLeg, leftShoe, rightShoe };
 }

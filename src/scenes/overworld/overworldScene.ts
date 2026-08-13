@@ -177,6 +177,14 @@ export class OverworldScene implements GameScene {
     this.characterRig.rightArm.rotation.x = -stride;
     this.characterRig.leftLeg.rotation.x = counterStride;
     this.characterRig.rightLeg.rotation.x = -counterStride;
+    const leftStep = Math.sin(this.walkTime + Math.PI);
+    const rightStep = -leftStep;
+    this.characterRig.leftShoe.position.z = 0.09 + leftStep * 0.23;
+    this.characterRig.rightShoe.position.z = 0.09 + rightStep * 0.23;
+    this.characterRig.leftShoe.position.y = 0.06 + Math.max(0, leftStep) * 0.13;
+    this.characterRig.rightShoe.position.y = 0.06 + Math.max(0, rightStep) * 0.13;
+    this.characterRig.leftShoe.rotation.x = -Math.max(0, leftStep) * 0.28;
+    this.characterRig.rightShoe.rotation.x = -Math.max(0, rightStep) * 0.28;
     this.characterRig.torso.rotation.z = Math.sin(this.walkTime * 0.5) * 0.055;
     this.characterRig.head.rotation.z = -this.characterRig.torso.rotation.z * 0.7;
     this.characterRig.head.rotation.y = Math.sin(this.walkTime * 0.5) * 0.06;
@@ -192,6 +200,12 @@ export class OverworldScene implements GameScene {
     this.characterRig.rightArm.rotation.x *= 0.88;
     this.characterRig.leftLeg.rotation.x *= 0.82;
     this.characterRig.rightLeg.rotation.x *= 0.82;
+    this.characterRig.leftShoe.position.z += (0.09 - this.characterRig.leftShoe.position.z) * 0.18;
+    this.characterRig.rightShoe.position.z += (0.09 - this.characterRig.rightShoe.position.z) * 0.18;
+    this.characterRig.leftShoe.position.y += (0.06 - this.characterRig.leftShoe.position.y) * 0.18;
+    this.characterRig.rightShoe.position.y += (0.06 - this.characterRig.rightShoe.position.y) * 0.18;
+    this.characterRig.leftShoe.rotation.x *= 0.8;
+    this.characterRig.rightShoe.rotation.x *= 0.8;
     this.characterRig.torso.rotation.z *= 0.88;
     this.characterRig.head.rotation.z *= 0.88;
   }
