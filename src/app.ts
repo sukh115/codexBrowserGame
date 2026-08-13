@@ -37,6 +37,8 @@ export function bootstrap(root: HTMLElement): void {
       for (const noteId of gameStore.snapshot.collectedNotes) {
         const stemId = initialRegion.noteStemMapping[noteId];
         if (stemId) stemPlayer.unlockStem(stemId, 0.05);
+        const effect = initialRegion.noteEffectMapping[noteId];
+        if (effect) stemPlayer.applyEffect(effect, 0.05);
       }
     });
     hud = new Hud(
@@ -109,6 +111,8 @@ export function bootstrap(root: HTMLElement): void {
     for (const noteId of state.collectedNotes) {
       const stemId = region.noteStemMapping[noteId];
       if (stemId) stemPlayer.unlockStem(stemId);
+      const effect = region.noteEffectMapping[noteId];
+      if (effect) stemPlayer.applyEffect(effect);
     }
   });
 

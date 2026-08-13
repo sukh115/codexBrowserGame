@@ -1,4 +1,5 @@
 import type { StemManifest } from "../core/assetManifest";
+import type { MusicEffect } from "../core/assetManifest";
 
 interface ActiveStem {
   readonly source: AudioBufferSourceNode;
@@ -8,8 +9,12 @@ interface ActiveStem {
 export class StemPlayer {
   private context: AudioContext | null = null;
   private masterGain: GainNode | null = null;
+  private masterFilter: BiquadFilterNode | null = null;
+  private outputBoost: GainNode | null = null;
   private readonly activeStems = new Map<string, ActiveStem>();
   private readonly unlockedStemIds = new Set<string>();
+  private readonly appliedEffects = new Set<MusicEffect>();
+  private readonly stemLevels = new Map<string, number>();
   private unlocked = false;
   private started = false;
   private targetMasterVolume = -1;
@@ -20,8 +25,14 @@ export class StemPlayer {
     if (!this.context) {
       this.context = new AudioContext();
       this.masterGain = this.context.createGain();
+      this.masterFilter = this.context.createBiquadFilter();
+      this.outputBoost = this.context.createGain();
       this.masterGain.gain.value = 0.3;
-      this.masterGain.connect(this.context.destination);
+      this.masterFilter.type = "lowpass";
+      this.masterFilter.frequency.value = 2400;
+      this.masterFilter.Q.value = 0.7;
+      this.outputBoost.gain.value = 1;
+      this.masterGain.connect(this.masterFilter).connect(this.outputBoost).connect(this.context.destination);
     }
     await this.context.resume();
     this.unlocked = true;
@@ -41,6 +52,7 @@ export class StemPlayer {
       source.connect(gain).connect(this.masterGain);
       source.start(startTime);
       this.activeStems.set(stem.id, { source, gain });
+      this.stemLevels.set(stem.id, 1);
     });
     this.started = true;
   }
@@ -53,7 +65,35 @@ export class StemPlayer {
     const now = this.context.currentTime;
     active.gain.gain.cancelScheduledValues(now);
     active.gain.gain.setValueAtTime(active.gain.gain.value, now);
-    active.gain.gain.linearRampToValueAtTime(1, now + fadeSeconds);
+    active.gain.gain.linearRampToValueAtTime(this.stemLevels.get(id) ?? 1, now + fadeSeconds);
+  }
+
+  applyEffect(effect: MusicEffect, fadeSeconds = 1.2): void {
+    if (this.appliedEffects.has(effect) || !this.context) return;
+    this.appliedEffects.add(effect);
+    const now = this.context.currentTime;
+    if (effect === "rhythm-accent") {
+      this.stemLevels.set("rhythm", 1.28);
+      const rhythm = this.activeStems.get("rhythm");
+      if (rhythm && this.unlockedStemIds.has("rhythm")) {
+        rhythm.gain.gain.cancelScheduledValues(now);
+        rhythm.gain.gain.setValueAtTime(rhythm.gain.gain.value, now);
+        rhythm.gain.gain.linearRampToValueAtTime(1.28, now + fadeSeconds);
+      }
+    }
+    if (effect === "open-filter" && this.masterFilter) {
+      this.masterFilter.frequency.cancelScheduledValues(now);
+      this.masterFilter.frequency.setValueAtTime(this.masterFilter.frequency.value, now);
+      this.masterFilter.frequency.exponentialRampToValueAtTime(9000, now + fadeSeconds * 1.5);
+    }
+    if (effect === "completion-boost" && this.masterFilter && this.outputBoost) {
+      this.masterFilter.frequency.cancelScheduledValues(now);
+      this.masterFilter.frequency.setValueAtTime(this.masterFilter.frequency.value, now);
+      this.masterFilter.frequency.exponentialRampToValueAtTime(20000, now + fadeSeconds * 1.5);
+      this.outputBoost.gain.cancelScheduledValues(now);
+      this.outputBoost.gain.setValueAtTime(this.outputBoost.gain.value, now);
+      this.outputBoost.gain.linearRampToValueAtTime(1.16, now + fadeSeconds);
+    }
   }
 
   lockAll(fadeSeconds = 0.1): void {
@@ -65,6 +105,16 @@ export class StemPlayer {
       gain.gain.linearRampToValueAtTime(0, now + fadeSeconds);
     }
     this.unlockedStemIds.clear();
+    this.appliedEffects.clear();
+    this.stemLevels.set("rhythm", 1);
+    if (this.masterFilter) {
+      this.masterFilter.frequency.cancelScheduledValues(now);
+      this.masterFilter.frequency.linearRampToValueAtTime(2400, now + fadeSeconds);
+    }
+    if (this.outputBoost) {
+      this.outputBoost.gain.cancelScheduledValues(now);
+      this.outputBoost.gain.linearRampToValueAtTime(1, now + fadeSeconds);
+    }
   }
 
   setMasterVolume(volume: number, fadeSeconds = 0.35): void {
@@ -95,12 +145,18 @@ export class StemPlayer {
     this.activeStems.clear();
     this.unlockedStemIds.clear();
     this.masterGain?.disconnect();
+    this.masterFilter?.disconnect();
+    this.outputBoost?.disconnect();
     void this.context?.close();
     this.context = null;
     this.masterGain = null;
+    this.masterFilter = null;
+    this.outputBoost = null;
     this.started = false;
     this.unlocked = false;
     this.targetMasterVolume = -1;
+    this.appliedEffects.clear();
+    this.stemLevels.clear();
   }
 
   private async loadBuffer(stem: StemManifest, index: number): Promise<AudioBuffer> {
