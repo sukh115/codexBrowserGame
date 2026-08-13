@@ -24,6 +24,7 @@ export function bootstrap(root: HTMLElement): void {
   const stemPlayer = new StemPlayer(initialRegion.bpm);
   const sfxPlayer = new SfxPlayer();
   let hud: Hud | null = null;
+  let activeRegionScene: RegionScene | null = null;
   overlay.append(loading.element);
 
   loader.addEventListener(GAME_EVENTS.ASSET_PROGRESS, (event) => {
@@ -46,6 +47,7 @@ export function bootstrap(root: HTMLElement): void {
     hud.update(gameStore.snapshot);
     gameStore.setState({ currentScene: "overworld" });
     const showOverworld = (): void => {
+      activeRegionScene = null;
       gameStore.setState({ currentScene: "overworld" });
       sceneManager.transitionTo(new OverworldScene(
         engine.renderer.domElement,
@@ -59,7 +61,7 @@ export function bootstrap(root: HTMLElement): void {
       const region = ASSET_MANIFEST.regions[gameStore.snapshot.currentRegion];
       gameStore.setState({ currentScene: "region" });
       if (!gameStore.snapshot.muted) stemPlayer.setMasterVolume(1);
-      sceneManager.transitionTo(new RegionScene(
+      activeRegionScene = new RegionScene(
         engine.renderer.domElement,
         overlay,
         region,
@@ -69,7 +71,8 @@ export function bootstrap(root: HTMLElement): void {
           sfxPlayer.playFound();
           gameStore.collectNote(noteId);
         },
-      ));
+      );
+      sceneManager.transitionTo(activeRegionScene);
     };
     const updateOverworldAudio = (proximity: number): void => {
       if (gameStore.snapshot.muted || gameStore.snapshot.currentScene !== "overworld") return;
@@ -96,6 +99,7 @@ export function bootstrap(root: HTMLElement): void {
   gameStore.addEventListener(GAME_EVENTS.STATE_CHANGE, (event) => {
     const state = (event as CustomEvent<typeof gameStore.snapshot>).detail;
     hud?.update(state);
+    activeRegionScene?.syncCollectedNotes(state.collectedNotes);
     sfxPlayer.setMuted(state.muted);
     if (state.muted || state.currentScene === "region") {
       stemPlayer.setMasterVolume(state.muted ? 0 : 1);

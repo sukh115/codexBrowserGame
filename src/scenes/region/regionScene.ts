@@ -70,6 +70,10 @@ export class RegionScene implements GameScene {
     this.noteField.update(deltaSeconds, this.camera);
   }
 
+  syncCollectedNotes(collectedNotes: readonly string[]): void {
+    this.noteField.syncCollectedNotes(collectedNotes);
+  }
+
   resize(width: number, height: number): void {
     this.viewportWidth = width;
     this.viewportHeight = height;

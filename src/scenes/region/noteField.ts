@@ -117,6 +117,17 @@ export class NoteField {
     return true;
   }
 
+  syncCollectedNotes(collectedNotes: readonly string[]): void {
+    for (const note of this.notes) {
+      note.active = !collectedNotes.includes(note.id);
+      note.sprite.visible = note.active;
+      note.sprite.material.opacity = 1;
+    }
+    this.hintNote = null;
+    this.hintElapsed = 0;
+    this.idleSeconds = 0;
+  }
+
   dispose(): void {
     for (const note of this.notes) note.sprite.material.dispose();
     for (const burst of this.bursts) {
