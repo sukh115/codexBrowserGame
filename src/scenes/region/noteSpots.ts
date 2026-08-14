@@ -25,6 +25,6 @@ export const NOTE_SPOTS: Readonly<Record<RegionId, readonly NoteSpot[]>> = {
     { id: "greenhouse-note-1", u: 0.13, v: 0.31, glyph: "♪", kind: "seed", color: 0xe5cf83, rotation: -0.18, size: 0.82 },
     { id: "greenhouse-note-2", u: 0.32, v: 0.18, glyph: "♫", kind: "seed", color: 0x9ac49a, rotation: 0.15, size: 0.75 },
     { id: "greenhouse-note-3", u: 0.47, v: 0.58, glyph: "♩", kind: "seed", color: 0xc2a4b1, rotation: -0.12, size: 0.78 },
-    { id: "greenhouse-note-4", u: 0.83, v: 0.38, glyph: "♪", kind: "seed", color: 0xafd19c, rotation: 0.22, size: 0.8 },
+    { id: "greenhouse-note-4", u: 0.86, v: 0.47, glyph: "♪", kind: "seed", color: 0xffe99a, rotation: 0.12, size: 1.08 },
   ],
 };
