@@ -2,6 +2,11 @@ export class SfxPlayer {
   private context: AudioContext | null = null;
   private muted = false;
   private volume = 1;
+  private humGain: GainNode | null = null;
+  private humRoot: OscillatorNode | null = null;
+  private humOvertone: OscillatorNode | null = null;
+  private humOvertoneGain: GainNode | null = null;
+  private humIntensity = 0;
 
   async unlock(): Promise<void> {
     if (!this.context) this.context = new AudioContext();
@@ -10,10 +15,12 @@ export class SfxPlayer {
 
   setMuted(muted: boolean): void {
     this.muted = muted;
+    this.updateHumGain(0.04);
   }
 
   setVolume(volume: number): void {
     this.volume = Math.max(0, Math.min(1, volume));
+    this.updateHumGain(0.04);
   }
 
   playFound(): void {
@@ -70,5 +77,72 @@ export class SfxPlayer {
     oscillator.connect(gain).connect(this.context.destination);
     oscillator.start(now);
     oscillator.stop(now + duration + 0.02);
+  }
+
+  playPluck(frequency: number): void {
+    if (!this.context || this.muted) return;
+    const now = this.context.currentTime;
+    const oscillator = this.context.createOscillator();
+    const gain = this.context.createGain();
+    oscillator.type = "triangle";
+    oscillator.frequency.setValueAtTime(frequency, now);
+    oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.995, now + 0.32);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.12 * this.volume, now + 0.006);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.36);
+    oscillator.connect(gain).connect(this.context.destination);
+    oscillator.start(now);
+    oscillator.stop(now + 0.38);
+  }
+
+  setHum(frequency: number, intensity: number): void {
+    if (!this.context) return;
+    if (!this.humGain || !this.humRoot || !this.humOvertone) this.startHum(frequency);
+    if (!this.humRoot || !this.humOvertone) return;
+    const now = this.context.currentTime;
+    this.humRoot.frequency.setTargetAtTime(frequency, now, 0.04);
+    this.humOvertone.frequency.setTargetAtTime(frequency * 2, now, 0.04);
+    this.humIntensity = Math.max(0, Math.min(1, intensity));
+    this.updateHumGain(0.08);
+  }
+
+  stopHum(): void {
+    this.humRoot?.stop();
+    this.humOvertone?.stop();
+    this.humRoot?.disconnect();
+    this.humOvertone?.disconnect();
+    this.humOvertoneGain?.disconnect();
+    this.humGain?.disconnect();
+    this.humRoot = null;
+    this.humOvertone = null;
+    this.humOvertoneGain = null;
+    this.humGain = null;
+    this.humIntensity = 0;
+  }
+
+  private startHum(frequency: number): void {
+    if (!this.context) return;
+    this.stopHum();
+    this.humGain = this.context.createGain();
+    this.humRoot = this.context.createOscillator();
+    this.humOvertone = this.context.createOscillator();
+    this.humOvertoneGain = this.context.createGain();
+    this.humRoot.type = "sine";
+    this.humOvertone.type = "sine";
+    this.humRoot.frequency.value = frequency;
+    this.humOvertone.frequency.value = frequency * 2;
+    this.humGain.gain.value = 0;
+    this.humOvertoneGain.gain.value = 0.28;
+    this.humRoot.connect(this.humGain);
+    this.humOvertone.connect(this.humOvertoneGain).connect(this.humGain);
+    this.humGain.connect(this.context.destination);
+    this.humRoot.start();
+    this.humOvertone.start();
+  }
+
+  private updateHumGain(timeConstant: number): void {
+    if (!this.context || !this.humGain) return;
+    const target = this.muted ? 0 : this.humIntensity * this.volume * 0.022;
+    this.humGain.gain.setTargetAtTime(target, this.context.currentTime, timeConstant);
   }
 }

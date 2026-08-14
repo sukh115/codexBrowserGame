@@ -7,6 +7,7 @@ export interface RegionManifest {
   readonly title: string;
   readonly background: string | null;
   readonly bpm: number;
+  readonly musicalScale: readonly number[];
   readonly aspectRatio: number;
   readonly stems: readonly StemManifest[];
   readonly noteStemMapping: Readonly<Record<string, string | null>>;
@@ -92,6 +93,7 @@ export const ASSET_MANIFEST = {
       title: "잠든 악기점",
       background: assetPath("assets/textures/music-shop.webp"),
       bpm: 120,
+      musicalScale: [220, 261.63, 293.66, 329.63, 392, 440, 523.25, 587.33],
       aspectRatio: 2,
       stems: createStems("music-shop"),
       noteStemMapping: NOTE_STEM_MAPPING,
@@ -102,6 +104,7 @@ export const ASSET_MANIFEST = {
       title: "네온 숲",
       background: assetPath("assets/textures/abandoned-greenhouse.webp"),
       bpm: 96,
+      musicalScale: [146.83, 174.61, 196, 220, 261.63, 293.66, 349.23, 392],
       aspectRatio: 1456 / 720,
       stems: createStems("neon-forest"),
       noteStemMapping: GREENHOUSE_NOTE_STEM_MAPPING,

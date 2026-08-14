@@ -6,6 +6,8 @@ import { NoteField } from "./noteField";
 import { INPUT_LIMITS } from "../../core/constants";
 import { MinigameController } from "./minigames/controller";
 import { ReactiveLayer } from "./reactiveLayer";
+import { TapRipplePool } from "./tapRipplePool";
+import type { SfxPlayer } from "../../audio/sfx";
 
 const BACKGROUND_HEIGHT = 10;
 const MIN_ZOOM = 1;
@@ -19,7 +21,9 @@ export class RegionScene implements GameScene {
   private readonly noteField: NoteField;
   private readonly minigames: MinigameController;
   private readonly reactiveLayer: ReactiveLayer;
+  private readonly tapRipples = new TapRipplePool();
   private readonly pointers = new Map<number, THREE.Vector2>();
+  private readonly tapWorldPosition = new THREE.Vector3();
   private dragPointerId: number | null = null;
   private lastPointerX = 0;
   private lastPointerY = 0;
@@ -43,7 +47,7 @@ export class RegionScene implements GameScene {
     clearedMinigames: readonly string[],
     onClearMinigame: (gameId: string, rewardNoteId: string) => void,
     private readonly getTransportTime: () => number,
-    playTone: (index: number) => void,
+    private readonly sfxPlayer: SfxPlayer,
     getRhythmAssist: () => boolean,
   ) {
     const width = BACKGROUND_HEIGHT * manifest.aspectRatio;
@@ -66,7 +70,7 @@ export class RegionScene implements GameScene {
       BACKGROUND_HEIGHT,
       manifest.bpm,
       getTransportTime,
-      playTone,
+      (index) => this.sfxPlayer.playTone(index),
       getRhythmAssist,
       manifest.id,
       clearedMinigames,
@@ -84,6 +88,7 @@ export class RegionScene implements GameScene {
     this.scene.background = new THREE.Color(0x17142b);
     this.scene.add(this.background);
     this.scene.add(this.noteField.group);
+    this.scene.add(this.tapRipples.group);
     this.camera.position.set(0, 0, 10);
     this.canvas.addEventListener("pointerdown", this.onPointerDown);
     this.canvas.addEventListener("pointermove", this.onPointerMove);
@@ -94,8 +99,17 @@ export class RegionScene implements GameScene {
 
   update(deltaSeconds: number): void {
     this.noteField.update(deltaSeconds, this.camera);
+    this.tapRipples.update(deltaSeconds);
     this.minigames.update(this.camera, this.viewportWidth, this.viewportHeight);
     this.reactiveLayer.update(this.collectedNotes, this.getTransportTime(), this.manifest.bpm);
+    const nearestDistance = this.noteField.getNearestUnfoundScreenDistance(this.camera);
+    if (nearestDistance === null) {
+      this.sfxPlayer.stopHum();
+    } else {
+      const audibleRadius = Math.hypot(this.viewportWidth, this.viewportHeight) * 0.55;
+      const proximity = 1 - THREE.MathUtils.clamp(nearestDistance / audibleRadius, 0, 1);
+      this.sfxPlayer.setHum(this.manifest.musicalScale[0], proximity * proximity);
+    }
   }
 
   syncCollectedNotes(collectedNotes: readonly string[]): void {
@@ -146,6 +160,8 @@ export class RegionScene implements GameScene {
     this.background.material.map?.dispose();
     this.background.material.dispose();
     this.noteField.dispose();
+    this.tapRipples.dispose();
+    this.sfxPlayer.stopHum();
     this.minigames.dispose();
     this.reactiveLayer.dispose();
     this.scene.clear();
@@ -197,7 +213,8 @@ export class RegionScene implements GameScene {
       const distanceLimit = touch ? 14 : INPUT_LIMITS.TAP_DISTANCE_PX;
       const durationLimit = touch ? 420 : INPUT_LIMITS.TAP_DURATION_MS;
       if (distance < distanceLimit && duration < durationLimit) {
-        this.noteField.collectAt(event.clientX, event.clientY, this.camera);
+        const collected = this.noteField.collectAt(event.clientX, event.clientY, this.camera);
+        if (!collected) this.playBackgroundTap(event.clientX, event.clientY);
       }
     }
     this.pointers.delete(event.pointerId);
@@ -215,6 +232,21 @@ export class RegionScene implements GameScene {
     this.camera.zoom = THREE.MathUtils.clamp(zoom, MIN_ZOOM, MAX_ZOOM);
     this.camera.updateProjectionMatrix();
     this.clampCamera();
+  }
+
+  private playBackgroundTap(clientX: number, clientY: number): void {
+    const scale = this.manifest.musicalScale;
+    if (scale.length === 0) return;
+    this.tapWorldPosition.set(
+      (clientX / this.viewportWidth) * 2 - 1,
+      -(clientY / this.viewportHeight) * 2 + 1,
+      0,
+    ).unproject(this.camera);
+    this.tapWorldPosition.z = 0.22;
+    const backgroundV = THREE.MathUtils.clamp(0.5 - this.tapWorldPosition.y / BACKGROUND_HEIGHT, 0, 1);
+    const scaleIndex = Math.round((1 - backgroundV) * (scale.length - 1));
+    this.sfxPlayer.playPluck(scale[scaleIndex]);
+    this.tapRipples.play(this.tapWorldPosition);
   }
 
   private clampCamera(): void {

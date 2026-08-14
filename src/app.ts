@@ -123,7 +123,7 @@ export function bootstrap(root: HTMLElement): void {
           gameStore.clearMinigame(gameId, rewardNoteId);
         },
         () => stemPlayer.getTransportTime(),
-        (index) => sfxPlayer.playTone(index),
+        sfxPlayer,
         () => gameStore.snapshot.rhythmAssist,
       );
       sceneManager.transitionTo(activeRegionScene);

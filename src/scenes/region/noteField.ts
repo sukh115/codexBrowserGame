@@ -128,6 +128,20 @@ export class NoteField {
     return true;
   }
 
+  getNearestUnfoundScreenDistance(camera: THREE.OrthographicCamera): number | null {
+    let nearestDistance = Number.POSITIVE_INFINITY;
+    const centerX = this.viewportWidth * 0.5;
+    const centerY = this.viewportHeight * 0.5;
+    for (const note of this.notes) {
+      if (!note.active) continue;
+      this.projected.copy(note.sprite.position).project(camera);
+      const screenX = (this.projected.x * 0.5 + 0.5) * this.viewportWidth;
+      const screenY = (-this.projected.y * 0.5 + 0.5) * this.viewportHeight;
+      nearestDistance = Math.min(nearestDistance, Math.hypot(screenX - centerX, screenY - centerY));
+    }
+    return Number.isFinite(nearestDistance) ? nearestDistance : null;
+  }
+
   syncCollectedNotes(collectedNotes: readonly string[]): void {
     for (const note of this.notes) {
       note.active = !collectedNotes.includes(note.id);
