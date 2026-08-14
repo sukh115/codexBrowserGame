@@ -36,6 +36,7 @@ export function bootstrap(root: HTMLElement): void {
     () => gameStore.resetAll(),
   );
   let wasCompleted = gameStore.snapshot.completed;
+  let previousCollectedNotes = new Set(gameStore.snapshot.collectedNotes);
   overlay.append(loading.element);
 
   loader.addEventListener(GAME_EVENTS.ASSET_PROGRESS, (event) => {
@@ -144,6 +145,7 @@ export function bootstrap(root: HTMLElement): void {
 
   gameStore.addEventListener(GAME_EVENTS.STATE_CHANGE, (event) => {
     const state = (event as CustomEvent<typeof gameStore.snapshot>).detail;
+    const noteWasRemoved = [...previousCollectedNotes].some((noteId) => !state.collectedNotes.includes(noteId));
     hud?.update(state);
     settings.update(state);
     stemPlayer.setUserVolume(state.masterVolume);
@@ -154,7 +156,7 @@ export function bootstrap(root: HTMLElement): void {
     if (state.muted || state.currentScene === "region") {
       stemPlayer.setMasterVolume(state.muted ? 0 : 1);
     }
-    if (state.collectedNotes.length === 0) stemPlayer.lockAll();
+    if (noteWasRemoved || state.collectedNotes.length === 0) stemPlayer.lockAll();
     if (!wasCompleted && state.completed) {
       activeRegionScene?.setInputLocked(true);
       sfxPlayer.playComplete();
@@ -172,6 +174,7 @@ export function bootstrap(root: HTMLElement): void {
       const effect = region.noteEffectMapping[noteId];
       if (effect) stemPlayer.applyEffect(effect);
     }
+    previousCollectedNotes = new Set(state.collectedNotes);
   });
 
   // 실제 수집 오브젝트가 붙기 전 스템 조합을 빠르게 검증하기 위한 임시 입력이다.
