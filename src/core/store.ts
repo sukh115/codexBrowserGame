@@ -19,6 +19,19 @@ export interface GameState {
   readonly rhythmAssist: boolean;
 }
 
+export interface NoteCollectedDetail {
+  readonly noteId: string;
+  readonly regionId: RegionId;
+}
+
+export interface RegionProgressResetDetail {
+  readonly regionId: RegionId;
+}
+
+export interface RegionEnteredDetail {
+  readonly regionId: RegionId;
+}
+
 export function getRegionNoteCount(state: Pick<GameState, "collectedNotes" | "currentRegion">): number {
   return getNoteCountForRegion(state.collectedNotes, state.currentRegion);
 }
@@ -56,6 +69,14 @@ class GameStore extends EventTarget {
     this.dispatchEvent(new CustomEvent<GameState>(GAME_EVENTS.STATE_CHANGE, { detail: this.state }));
   }
 
+  enterRegion(regionId: RegionId): void {
+    const completed = getNoteCountForRegion(this.state.collectedNotes, regionId) >= 7;
+    this.setState({ currentScene: "region", currentRegion: regionId, completed });
+    this.dispatchEvent(new CustomEvent<RegionEnteredDetail>(GAME_EVENTS.REGION_ENTERED, {
+      detail: { regionId },
+    }));
+  }
+
   collectNote(noteId: string): void {
     if (this.state.collectedNotes.includes(noteId)) return;
     const collectedNotes = [...this.state.collectedNotes, noteId];
@@ -64,12 +85,16 @@ class GameStore extends EventTarget {
       ? [...this.state.completedRegions, this.state.currentRegion]
       : this.state.completedRegions;
     this.setState({ collectedNotes, completed, completedRegions });
+    this.dispatchEvent(new CustomEvent<NoteCollectedDetail>(GAME_EVENTS.NOTE_COLLECTED, {
+      detail: { noteId, regionId: this.state.currentRegion },
+    }));
   }
 
   clearMinigame(gameId: string, rewardNoteId: string): void {
     if (this.state.clearedMinigames.includes(gameId)) return;
     const clearedMinigames = [...this.state.clearedMinigames, gameId];
-    const collectedNotes = this.state.collectedNotes.includes(rewardNoteId)
+    const noteWasNew = !this.state.collectedNotes.includes(rewardNoteId);
+    const collectedNotes = !noteWasNew
       ? [...this.state.collectedNotes]
       : [...this.state.collectedNotes, rewardNoteId];
     const completed = getRegionNoteCount({ ...this.state, collectedNotes }) >= 7;
@@ -82,6 +107,11 @@ class GameStore extends EventTarget {
       completed,
       completedRegions,
     });
+    if (noteWasNew) {
+      this.dispatchEvent(new CustomEvent<NoteCollectedDetail>(GAME_EVENTS.NOTE_COLLECTED, {
+        detail: { noteId: rewardNoteId, regionId: this.state.currentRegion },
+      }));
+    }
   }
 
   resetCurrentRegion(): void {
@@ -96,6 +126,9 @@ class GameStore extends EventTarget {
       completed: false,
       completedRegions: this.state.completedRegions.filter((id) => id !== this.state.currentRegion),
     });
+    this.dispatchEvent(new CustomEvent<RegionProgressResetDetail>(GAME_EVENTS.REGION_PROGRESS_RESET, {
+      detail: { regionId: this.state.currentRegion },
+    }));
   }
 
   resetAll(): void {
@@ -106,6 +139,7 @@ class GameStore extends EventTarget {
     };
     localStorage.removeItem("lost-song-progress");
     this.dispatchEvent(new CustomEvent<GameState>(GAME_EVENTS.STATE_CHANGE, { detail: this.state }));
+    this.dispatchEvent(new Event(GAME_EVENTS.ALL_PROGRESS_RESET));
   }
 
   private load(): GameState {

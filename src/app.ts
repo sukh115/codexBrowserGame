@@ -1,7 +1,12 @@
 import { AssetLoader } from "./core/assets";
 import { Engine } from "./core/engine";
 import { GAME_EVENTS } from "./core/constants";
-import { gameStore, getRegionNoteCount } from "./core/store";
+import {
+  gameStore,
+  type NoteCollectedDetail,
+  type RegionEnteredDetail,
+  type RegionProgressResetDetail,
+} from "./core/store";
 import { SceneManager } from "./scenes/sceneManager";
 import { OverworldScene } from "./scenes/overworld/overworldScene";
 import { LoadingScreen } from "./ui/loading";
@@ -36,7 +41,6 @@ export function bootstrap(root: HTMLElement): void {
     () => gameStore.resetAll(),
   );
   let wasCompleted = gameStore.snapshot.completed;
-  let previousCollectedNotes = new Set(gameStore.snapshot.collectedNotes);
   overlay.append(loading.element);
 
   loader.addEventListener(GAME_EVENTS.ASSET_PROGRESS, (event) => {
@@ -80,20 +84,7 @@ export function bootstrap(root: HTMLElement): void {
     };
     const showRegion = (regionId: RegionId): void => {
       const region: RegionManifest = ASSET_MANIFEST.regions[regionId];
-      const completed = getRegionNoteCount({
-        collectedNotes: gameStore.snapshot.collectedNotes,
-        currentRegion: regionId,
-      }) >= 7;
-      gameStore.setState({ currentScene: "region", currentRegion: regionId, completed });
-      stemPlayer.lockAll();
-      void stemPlayer.setRegion(region.stems, region.bpm, region.id).then(() => {
-        for (const noteId of gameStore.snapshot.collectedNotes) {
-          const stemId = region.noteStemMapping[noteId];
-          if (stemId) stemPlayer.unlockStem(stemId, 0.05);
-          const effect = region.noteEffectMapping[noteId];
-          if (effect) stemPlayer.applyEffect(effect, 0.05);
-        }
-      });
+      gameStore.enterRegion(regionId);
       if (!gameStore.snapshot.muted) stemPlayer.setMasterVolume(1);
       activeRegionScene = new RegionScene(
         engine.renderer.domElement,
@@ -145,7 +136,6 @@ export function bootstrap(root: HTMLElement): void {
 
   gameStore.addEventListener(GAME_EVENTS.STATE_CHANGE, (event) => {
     const state = (event as CustomEvent<typeof gameStore.snapshot>).detail;
-    const noteWasRemoved = [...previousCollectedNotes].some((noteId) => !state.collectedNotes.includes(noteId));
     hud?.update(state);
     settings.update(state);
     stemPlayer.setUserVolume(state.masterVolume);
@@ -156,7 +146,6 @@ export function bootstrap(root: HTMLElement): void {
     if (state.muted || state.currentScene === "region") {
       stemPlayer.setMasterVolume(state.muted ? 0 : 1);
     }
-    if (noteWasRemoved || state.collectedNotes.length === 0) stemPlayer.lockAll();
     if (!wasCompleted && state.completed) {
       activeRegionScene?.setInputLocked(true);
       sfxPlayer.playComplete();
@@ -167,19 +156,45 @@ export function bootstrap(root: HTMLElement): void {
       activeRegionScene?.setInputLocked(false);
     }
     wasCompleted = state.completed;
-    const region: RegionManifest = ASSET_MANIFEST.regions[state.currentRegion];
-    for (const noteId of state.collectedNotes) {
-      const stemId = region.noteStemMapping[noteId];
-      if (stemId) stemPlayer.unlockStem(stemId);
-      const effect = region.noteEffectMapping[noteId];
-      if (effect) stemPlayer.applyEffect(effect);
-    }
-    previousCollectedNotes = new Set(state.collectedNotes);
   });
+
+  gameStore.addEventListener(GAME_EVENTS.NOTE_COLLECTED, (event) => {
+    const { noteId, regionId } = (event as CustomEvent<NoteCollectedDetail>).detail;
+    if (regionId !== gameStore.snapshot.currentRegion) return;
+    const region: RegionManifest = ASSET_MANIFEST.regions[regionId];
+    const stemId = region.noteStemMapping[noteId];
+    if (stemId) stemPlayer.unlockStem(stemId);
+    const effect = region.noteEffectMapping[noteId];
+    if (effect) stemPlayer.applyEffect(effect);
+  });
+
+  gameStore.addEventListener(GAME_EVENTS.REGION_ENTERED, (event) => {
+    const { regionId } = (event as CustomEvent<RegionEnteredDetail>).detail;
+    const region: RegionManifest = ASSET_MANIFEST.regions[regionId];
+    stemPlayer.lockAll();
+    void stemPlayer.setRegion(region.stems, region.bpm, region.id).then(() => {
+      for (const noteId of gameStore.snapshot.collectedNotes) {
+        const stemId = region.noteStemMapping[noteId];
+        if (stemId) stemPlayer.unlockStem(stemId, 0.05);
+        const effect = region.noteEffectMapping[noteId];
+        if (effect) stemPlayer.applyEffect(effect, 0.05);
+      }
+    });
+  });
+
+  gameStore.addEventListener(GAME_EVENTS.REGION_PROGRESS_RESET, (event) => {
+    const { regionId } = (event as CustomEvent<RegionProgressResetDetail>).detail;
+    if (regionId === gameStore.snapshot.currentRegion) stemPlayer.lockAll();
+  });
+
+  gameStore.addEventListener(GAME_EVENTS.ALL_PROGRESS_RESET, () => stemPlayer.lockAll());
 
   // 실제 수집 오브젝트가 붙기 전 스템 조합을 빠르게 검증하기 위한 임시 입력이다.
   window.addEventListener("keydown", (event) => {
     const number = Number(event.key);
-    if (number >= 1 && number <= 7) gameStore.collectNote(`note-${number}`);
+    if (number >= 1 && number <= 7) {
+      const prefix = gameStore.snapshot.currentRegion === "neon-forest" ? "greenhouse-note-" : "note-";
+      gameStore.collectNote(`${prefix}${number}`);
+    }
   });
 }
