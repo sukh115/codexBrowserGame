@@ -22,6 +22,7 @@ import { SettingsPanel } from "./ui/settings";
 export function bootstrap(root: HTMLElement): void {
   const overlay = document.createElement("div");
   overlay.className = "ui-layer";
+  overlay.dataset.scene = gameStore.snapshot.currentScene;
   root.append(overlay);
   const engine = new Engine(root);
   const sceneManager = new SceneManager(engine, overlay);
@@ -157,6 +158,7 @@ export function bootstrap(root: HTMLElement): void {
 
   gameStore.addEventListener(GAME_EVENTS.STATE_CHANGE, (event) => {
     const state = (event as CustomEvent<typeof gameStore.snapshot>).detail;
+    overlay.dataset.scene = state.currentScene;
     hud?.update(state);
     settings.update(state);
     stemPlayer.setUserVolume(state.masterVolume);

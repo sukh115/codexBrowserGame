@@ -120,7 +120,6 @@ button { font: inherit; }
 }
 
 .hud-button {
-  position: absolute;
   border: 1px solid rgb(255 255 255 / 28%);
   border-radius: 999px;
   color: #fff;
@@ -130,15 +129,24 @@ button { font: inherit; }
 }
 
 .hud-button {
-  top: max(18px, env(safe-area-inset-top));
   padding: 10px 14px;
   cursor: pointer;
   pointer-events: auto;
 }
 
-.mute-button { right: max(18px, env(safe-area-inset-right)); }
-.reset-button { right: max(108px, calc(env(safe-area-inset-right) + 108px)); }
-.replay-button { top: 68px; right: max(108px, calc(env(safe-area-inset-right) + 108px)); color: #17142b; background: #fff0a5; }
+.hud-actions {
+  position: absolute;
+  top: max(18px, env(safe-area-inset-top));
+  right: max(18px, env(safe-area-inset-right));
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.replay-button { color: #17142b; background: #fff0a5; }
+.hud.is-overworld .reset-button,
+.hud.is-overworld .replay-button { display: none; }
+.hud.is-region .hud-actions { top: max(68px, calc(env(safe-area-inset-top) + 68px)); flex-direction: column; }
 
 .completion-overlay {
   position: absolute;
@@ -308,9 +316,18 @@ button { font: inherit; }
 }
 
 .exit-button {
-  top: max(68px, calc(env(safe-area-inset-top) + 68px));
+  top: max(18px, env(safe-area-inset-top));
   right: max(18px, env(safe-area-inset-right));
   padding: 11px 17px;
+}
+
+.ui-layer[data-scene="region"] .world-progress {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.ui-layer[data-scene="region"] .settings-panel {
+  top: max(18px, env(safe-area-inset-top));
 }
 
 @media (max-width: 640px) {
@@ -323,12 +340,15 @@ button { font: inherit; }
   .loading-screen h1 { font-size: clamp(38px, 13vw, 62px); }
   .world-progress { top: max(10px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left)); max-width: calc(100vw - 110px); gap: 3px; }
   .world-progress span { padding: 4px 6px; font-size: 10px; }
-  .hud-button { top: max(10px, env(safe-area-inset-top)); padding: 8px 10px; font-size: 12px; }
-  .mute-button { right: max(10px, env(safe-area-inset-right)); }
-  .reset-button { top: max(52px, calc(env(safe-area-inset-top) + 52px)); right: max(10px, env(safe-area-inset-right)); }
-  .replay-button { top: max(94px, calc(env(safe-area-inset-top) + 94px)); right: max(10px, env(safe-area-inset-right)); }
+  .hud-button { padding: 8px 10px; font-size: 12px; }
+  .hud-actions { top: max(10px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right)); }
+  .hud.is-region .hud-actions { top: max(52px, calc(env(safe-area-inset-top) + 52px)); }
   .settings-panel { top: max(52px, calc(env(safe-area-inset-top) + 52px)); left: max(10px, env(safe-area-inset-left)); width: min(235px, calc(100vw - 20px)); }
   .exit-button { top: auto; right: max(10px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom)); padding: 10px 13px; font-size: 12px; }
+  .ui-layer[data-scene="region"] .world-progress { left: max(10px, env(safe-area-inset-left)); max-width: calc(100vw - 92px); transform: none; }
+  .ui-layer[data-scene="region"] .settings-panel { top: max(52px, calc(env(safe-area-inset-top) + 52px)); }
+  .hud.is-region .reset-button { position: fixed; bottom: max(14px, env(safe-area-inset-bottom)); left: max(10px, env(safe-area-inset-left)); }
+  .hud.is-region .replay-button { position: fixed; right: max(10px, env(safe-area-inset-right)); bottom: max(58px, calc(env(safe-area-inset-bottom) + 58px)); }
   .context-button { bottom: max(18px, env(safe-area-inset-bottom)); width: min(310px, calc(100vw - 30px)); }
   .portal-guide { bottom: max(72px, calc(env(safe-area-inset-bottom) + 72px)); left: max(10px, env(safe-area-inset-left)); }
   .portal-guide span { min-width: 130px; padding: 5px 8px; font-size: 10px; }
@@ -351,8 +371,12 @@ button { font: inherit; }
 
 @media (max-height: 520px) {
   .world-progress { top: 10px; left: 10px; }
-  .hud-button { top: 10px; padding: 8px 11px; font-size: 13px; }
-  .exit-button { top: 52px; right: 10px; padding: 8px 12px; font-size: 13px; }
+  .hud-button { padding: 8px 11px; font-size: 13px; }
+  .hud-actions { top: 10px; right: 10px; }
+  .hud.is-region .hud-actions { top: 52px; }
+  .exit-button { top: 10px; right: 10px; padding: 8px 12px; font-size: 13px; }
+  .ui-layer[data-scene="region"] .world-progress { left: 10px; transform: none; }
+  .ui-layer[data-scene="region"] .settings-panel { top: 52px; left: 10px; }
   .minigame-panel { min-height: 300px; padding: 18px; }
   .minigame-title { font-size: 24px; }
   .minigame-status { margin-bottom: 10px; }

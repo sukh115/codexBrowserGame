@@ -6,6 +6,7 @@ export class Hud {
   private readonly resetButton = document.createElement("button");
   private readonly replayButton = document.createElement("button");
   private readonly progress = document.createElement("div");
+  private readonly actions = document.createElement("div");
 
   constructor(
     overlayRoot: HTMLElement,
@@ -21,14 +22,18 @@ export class Hud {
     this.replayButton.textContent = "완성곡 감상";
     this.replayButton.hidden = true;
     this.progress.className = "world-progress";
+    this.actions.className = "hud-actions";
     this.muteButton.addEventListener("pointerup", onToggleMute);
     this.resetButton.addEventListener("pointerup", onResetRegion);
     this.replayButton.addEventListener("pointerup", onReplay);
-    this.element.append(this.progress, this.muteButton, this.resetButton, this.replayButton);
+    this.actions.append(this.muteButton, this.resetButton, this.replayButton);
+    this.element.append(this.progress, this.actions);
     overlayRoot.append(this.element);
   }
 
   update(state: GameState): void {
+    this.element.classList.toggle("is-overworld", state.currentScene === "overworld");
+    this.element.classList.toggle("is-region", state.currentScene === "region");
     const shopCount = getNoteCountForRegion(state.collectedNotes, "music-shop");
     const greenhouseCount = getNoteCountForRegion(state.collectedNotes, "neon-forest");
     const shopComplete = state.completedRegions.includes("music-shop");
