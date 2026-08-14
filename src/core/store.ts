@@ -68,7 +68,12 @@ class GameStore extends EventTarget {
   }
 
   reset(): void {
-    this.state = { ...this.initialState, currentScene: this.state.currentScene };
+    // 진행도 초기화 중 현재 씬과 지역이 바뀌면 활성 씬의 ID 체계와 HUD 계산이 어긋난다.
+    this.state = {
+      ...this.initialState,
+      currentScene: this.state.currentScene,
+      currentRegion: this.state.currentRegion,
+    };
     localStorage.removeItem("lost-song-progress");
     this.dispatchEvent(new CustomEvent<GameState>(GAME_EVENTS.STATE_CHANGE, { detail: this.state }));
   }

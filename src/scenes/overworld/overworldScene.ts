@@ -94,8 +94,10 @@ export class OverworldScene implements GameScene {
     this.createFootsteps();
     this.propLoader.load(ASSET_MANIFEST.overworldProps);
     this.destination.copy(this.character.position);
-    this.camera.position.copy(this.cameraOffset);
-    this.camera.lookAt(this.character.position);
+    // 지역에서 돌아올 때 월드 원점이 아니라 실제 캐릭터 출구 위치에서 카메라를 시작한다.
+    this.camera.position.copy(this.character.position).add(this.cameraOffset);
+    this.cameraTarget.set(this.character.position.x, 0.7, this.character.position.z);
+    this.camera.lookAt(this.cameraTarget);
   }
 
   update(deltaSeconds: number): void {
