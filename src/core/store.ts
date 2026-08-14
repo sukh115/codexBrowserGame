@@ -119,7 +119,8 @@ class GameStore extends EventTarget {
     const notePrefix = greenhouse ? "greenhouse-note-" : "note-";
     const gamePrefix = greenhouse ? "greenhouse-" : "";
     this.setState({
-      collectedNotes: this.state.collectedNotes.filter((id) => !id.startsWith(notePrefix)),
+      collectedNotes: this.state.collectedNotes.filter((id) => !id.startsWith(notePrefix)
+        && id !== `secret-${this.state.currentRegion}`),
       clearedMinigames: this.state.clearedMinigames.filter((id) => greenhouse
         ? !id.startsWith(gamePrefix)
         : id.startsWith("greenhouse-")),

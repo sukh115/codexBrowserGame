@@ -99,6 +99,8 @@ export function bootstrap(root: HTMLElement): void {
         gameStore.snapshot.currentRegion,
         updateOverworldAudio,
         gameStore.snapshot.completedRegions,
+        () => stemPlayer.getTransportTime(),
+        () => gameStore.snapshot.reducedMotion,
       );
       sceneManager.transitionTo(activeOverworldScene);
     };
@@ -114,7 +116,8 @@ export function bootstrap(root: HTMLElement): void {
         showOverworld,
         gameStore.snapshot.collectedNotes,
         (noteId) => {
-          sfxPlayer.playFound();
+          if (noteId.startsWith("secret-")) sfxPlayer.playArpeggio(region.musicalScale);
+          else sfxPlayer.playFound();
           gameStore.collectNote(noteId);
         },
         gameStore.snapshot.clearedMinigames,
@@ -125,6 +128,7 @@ export function bootstrap(root: HTMLElement): void {
         () => stemPlayer.getTransportTime(),
         sfxPlayer,
         () => gameStore.snapshot.rhythmAssist,
+        () => gameStore.snapshot.reducedMotion,
       );
       sceneManager.transitionTo(activeRegionScene);
       if (!gameStore.snapshot.tutorialCompleted) tutorial.showRegion();
@@ -159,6 +163,8 @@ export function bootstrap(root: HTMLElement): void {
       null,
       updateOverworldAudio,
       gameStore.snapshot.completedRegions,
+      () => stemPlayer.getTransportTime(),
+      () => gameStore.snapshot.reducedMotion,
     );
     sceneManager.show(activeOverworldScene);
     loading.hide();

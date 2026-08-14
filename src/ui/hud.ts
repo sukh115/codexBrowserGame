@@ -46,7 +46,9 @@ export class Hud {
     const greenhouseCount = getNoteCountForRegion(state.collectedNotes, "neon-forest");
     const shopComplete = state.completedRegions.includes("music-shop");
     const greenhouseComplete = state.completedRegions.includes("neon-forest");
-    this.progress.innerHTML = `<span class="${state.currentRegion === "music-shop" ? "is-current" : ""} ${shopComplete ? "is-complete" : ""}">${shopComplete ? "✓ " : ""}악기점 ${shopCount}/7</span><span class="${state.currentRegion === "neon-forest" ? "is-current" : ""} ${greenhouseComplete ? "is-complete" : ""}">${greenhouseComplete ? "✓ " : ""}온실 ${greenhouseCount}/7</span>`;
+    const shopSecret = state.collectedNotes.includes("secret-music-shop") ? " ★" : "";
+    const greenhouseSecret = state.collectedNotes.includes("secret-neon-forest") ? " ★" : "";
+    this.progress.innerHTML = `<span class="${state.currentRegion === "music-shop" ? "is-current" : ""} ${shopComplete ? "is-complete" : ""}">${shopComplete ? "✓ " : ""}악기점 ${shopCount}/7${shopSecret}</span><span class="${state.currentRegion === "neon-forest" ? "is-current" : ""} ${greenhouseComplete ? "is-complete" : ""}">${greenhouseComplete ? "✓ " : ""}온실 ${greenhouseCount}/7${greenhouseSecret}</span>`;
     this.muteButton.textContent = state.muted ? "소리 켜기" : "음소거";
   }
 

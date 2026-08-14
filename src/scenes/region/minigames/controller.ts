@@ -3,6 +3,7 @@ import { MinigameFrame } from "./frame";
 import { startMinigame, type StopGame } from "./games";
 import { GREENHOUSE_MINIGAME_SPOTS, MINIGAME_SPOTS, type MinigameSpot } from "./types";
 import type { RegionId } from "../../../core/assetManifest";
+import { beatPhase } from "../../../core/music";
 
 export class MinigameController {
   private readonly buttons: HTMLButtonElement[] = [];
@@ -49,7 +50,15 @@ export class MinigameController {
     });
   }
 
-  update(camera: THREE.OrthographicCamera, width: number, height: number): void {
+  update(
+    camera: THREE.OrthographicCamera,
+    width: number,
+    height: number,
+    transportTime: number,
+    reducedMotion: boolean,
+  ): void {
+    const phase = beatPhase(transportTime, this.bpm);
+    const pulse = reducedMotion ? 1 : 1 + Math.sin(phase * Math.PI) * 0.035;
     this.spots.forEach((spot, index) => {
       this.worldPosition.set(
         (spot.u - 0.5) * this.backgroundWidth,
@@ -60,6 +69,7 @@ export class MinigameController {
       const button = this.buttons[index];
       button.style.left = `${(this.projected.x * 0.5 + 0.5) * width}px`;
       button.style.top = `${(-this.projected.y * 0.5 + 0.5) * height}px`;
+      button.style.setProperty("--beat-pulse", pulse.toFixed(4));
       button.hidden = Math.abs(this.projected.x) > 1.1 || Math.abs(this.projected.y) > 1.1;
     });
   }

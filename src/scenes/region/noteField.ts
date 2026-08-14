@@ -1,11 +1,13 @@
 import * as THREE from "three";
 import type { NoteSpot } from "./noteSpots";
+import { beatPhase } from "../../core/music";
 
 interface NoteObject {
   readonly id: string;
   readonly sprite: THREE.Sprite;
   readonly texture: THREE.Texture;
   readonly size: number;
+  readonly secret: boolean;
   active: boolean;
 }
 
@@ -24,6 +26,9 @@ export class NoteField {
   private idleSeconds = 0;
   private hintNote: NoteObject | null = null;
   private hintElapsed = 0;
+  private entryElapsed = 0;
+  private entryNote: NoteObject | null = null;
+  private readonly regularPrefix: string;
 
   constructor(
     private readonly spots: readonly NoteSpot[],
@@ -32,6 +37,9 @@ export class NoteField {
     backgroundHeight: number,
     private readonly onCollect: (noteId: string) => void,
   ) {
+    this.regularPrefix = this.spots.some((spot) => spot.id.startsWith("greenhouse-note-"))
+      ? "greenhouse-note-"
+      : "note-";
     for (const spot of this.spots) {
       const texture = this.createNoteTexture(spot);
       const material = new THREE.SpriteMaterial({
@@ -48,19 +56,40 @@ export class NoteField {
         (0.5 - spot.v) * backgroundHeight,
         0.15,
       );
-      const active = !collectedNotes.includes(spot.id);
+      const active = !collectedNotes.includes(spot.id) && (!spot.secret || this.regularCount(collectedNotes) >= 7);
       sprite.visible = active;
-      this.notes.push({ id: spot.id, sprite, texture, size: spot.size, active });
+      const note = { id: spot.id, sprite, texture, size: spot.size, secret: spot.secret === true, active };
+      this.notes.push(note);
+      if (!spot.secret && spot.id.endsWith("note-1") && active) this.entryNote = note;
       this.group.add(sprite);
     }
   }
 
-  update(deltaSeconds: number, camera: THREE.OrthographicCamera): void {
+  update(
+    deltaSeconds: number,
+    camera: THREE.OrthographicCamera,
+    transportTime: number,
+    bpm: number,
+    reducedMotion: boolean,
+  ): void {
     const worldSize = (20 * (camera.top - camera.bottom)) / (this.viewportHeight * camera.zoom);
+    const phase = beatPhase(transportTime, bpm);
+    const beatBounce = reducedMotion ? 1 : 1 + Math.sin(phase * Math.PI) * 0.08;
     for (const note of this.notes) {
       if (!note.active) continue;
       const pulse = note === this.hintNote ? 1 + Math.sin(this.hintElapsed * 7) * 0.28 : 1;
-      note.sprite.scale.setScalar(worldSize * note.size * pulse);
+      const entryPulse = note === this.entryNote && this.entryElapsed < 3 && !reducedMotion
+        ? 1 + Math.sin(this.entryElapsed * 9) * 0.08
+        : 1;
+      note.sprite.scale.setScalar(worldSize * note.size * pulse * beatBounce * entryPulse);
+    }
+
+    if (this.entryNote && this.entryElapsed < 3) {
+      this.entryElapsed += deltaSeconds;
+      const glow = reducedMotion ? 0.88 : 0.78 + Math.sin(this.entryElapsed * 9) * 0.12;
+      this.entryNote.sprite.material.opacity = glow;
+      this.entryNote.sprite.material.color.setHex(0xfff3b0);
+      if (this.entryElapsed >= 3) this.restoreNoteAppearance(this.entryNote);
     }
 
     this.idleSeconds += deltaSeconds;
@@ -124,6 +153,7 @@ export class NoteField {
     this.createBurst(nearest.sprite.position);
     this.idleSeconds = 0;
     this.hintNote = null;
+    if (nearest === this.entryNote) this.entryNote = null;
     this.onCollect(nearest.id);
     return true;
   }
@@ -144,7 +174,7 @@ export class NoteField {
 
   syncCollectedNotes(collectedNotes: readonly string[]): void {
     for (const note of this.notes) {
-      note.active = !collectedNotes.includes(note.id);
+      note.active = !collectedNotes.includes(note.id) && (!note.secret || this.regularCount(collectedNotes) >= 7);
       note.sprite.visible = note.active;
       note.sprite.material.opacity = 0.84;
       const spot = this.getSpotById(note.id);
@@ -189,7 +219,13 @@ export class NoteField {
     context.shadowColor = "#ffffff";
     context.shadowBlur = 5;
     context.fillStyle = "#ffffff";
-    if (spot.kind === "seed") {
+    if (spot.kind === "secret") {
+      context.font = "bold 82px serif";
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillStyle = "#fff3a5";
+      context.fillText("★", 64, 67);
+    } else if (spot.kind === "seed") {
       const glow = context.createRadialGradient(64, 68, 5, 64, 68, 50);
       glow.addColorStop(0, "rgba(255,255,220,1)");
       glow.addColorStop(0.35, "rgba(232,220,140,.85)");
@@ -225,5 +261,15 @@ export class NoteField {
 
   private getSpotById(noteId: string): NoteSpot | undefined {
     return this.spots.find((spot) => spot.id === noteId);
+  }
+
+  private regularCount(collectedNotes: readonly string[]): number {
+    return collectedNotes.filter((id) => id.startsWith(this.regularPrefix)).length;
+  }
+
+  private restoreNoteAppearance(note: NoteObject): void {
+    note.sprite.material.opacity = 0.84;
+    const spot = this.getSpotById(note.id);
+    if (spot) note.sprite.material.color.setHex(spot.color);
   }
 }

@@ -6,6 +6,7 @@ import { ASSET_MANIFEST, type RegionId } from "../../core/assetManifest";
 import { gsap } from "gsap";
 import { OverworldCharacterController } from "./characterController";
 import { OverworldPropLoader } from "./propLoader";
+import { beatPhase } from "../../core/music";
 
 export class OverworldScene implements GameScene {
   readonly scene = new THREE.Scene();
@@ -63,6 +64,8 @@ export class OverworldScene implements GameScene {
     private readonly spawnAtRegion: RegionId | null = null,
     private readonly onRegionProximityChange: (regionId: RegionId, proximity: number) => void = () => {},
     private completedRegions: readonly RegionId[] = [],
+    private readonly getTransportTime: () => number = () => 0,
+    private readonly getReducedMotion: () => boolean = () => false,
   ) {
     this.input = new PointerInput(canvas);
     this.input.addEventListener(GAME_EVENTS.POINT, this.onPoint as EventListener);
@@ -148,15 +151,18 @@ export class OverworldScene implements GameScene {
     }
     this.entrance.rotation.y += deltaSeconds * 0.45;
     this.secondEntrance.rotation.y -= deltaSeconds * 0.38;
+    const transportTime = this.getTransportTime();
+    const shopBeat = this.getReducedMotion() ? 0 : beatPhase(transportTime, ASSET_MANIFEST.regions["music-shop"].bpm);
+    const greenhouseBeat = this.getReducedMotion() ? 0 : beatPhase(transportTime, ASSET_MANIFEST.regions["neon-forest"].bpm);
     for (let index = 0; index < this.entranceWaves.length; index += 1) {
       const wave = this.entranceWaves[index];
-      const phase = (this.walkTime * 0.35 + index / this.entranceWaves.length) % 1;
+      const phase = (shopBeat + index / this.entranceWaves.length) % 1;
       wave.scale.setScalar(0.7 + phase * 1.45);
       wave.material.opacity = (1 - phase) * 0.42;
     }
     for (let index = 0; index < this.secondEntranceWaves.length; index += 1) {
       const wave = this.secondEntranceWaves[index];
-      const phase = (this.walkTime * 0.3 + index / this.secondEntranceWaves.length) % 1;
+      const phase = (greenhouseBeat + index / this.secondEntranceWaves.length) % 1;
       wave.scale.setScalar(0.7 + phase * 1.45);
       wave.material.opacity = (1 - phase) * 0.42;
     }

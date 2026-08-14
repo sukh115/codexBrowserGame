@@ -95,6 +95,28 @@ export class SfxPlayer {
     oscillator.stop(now + 0.38);
   }
 
+  playArpeggio(scale: readonly number[]): void {
+    if (!this.context || this.muted || scale.length === 0) return;
+    const context = this.context;
+    const now = context.currentTime;
+    const noteIndexes = [0, 2, 4, 7] as const;
+    noteIndexes.forEach((scaleIndex, index) => {
+      const frequency = scale[Math.min(scaleIndex, scale.length - 1)];
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      if (!oscillator || !gain || frequency === undefined) return;
+      const start = now + index * 0.09;
+      oscillator.type = "triangle";
+      oscillator.frequency.value = frequency;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.11 * this.volume, start + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.28);
+      oscillator.connect(gain).connect(context.destination);
+      oscillator.start(start);
+      oscillator.stop(start + 0.3);
+    });
+  }
+
   setHum(frequency: number, intensity: number): void {
     if (!this.context) return;
     if (!this.humGain || !this.humRoot || !this.humOvertone) this.startHum(frequency);

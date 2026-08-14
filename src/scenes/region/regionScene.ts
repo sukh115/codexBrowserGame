@@ -16,7 +16,7 @@ const MAX_ZOOM = 5;
 export class RegionScene implements GameScene {
   readonly scene = new THREE.Scene();
   readonly camera = new THREE.OrthographicCamera(-10, 10, 5, -5, 0.1, 20);
-  private readonly background: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
+  private readonly background: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
   private readonly exitButton = document.createElement("button");
   private readonly noteField: NoteField;
   private readonly minigames: MinigameController;
@@ -49,11 +49,13 @@ export class RegionScene implements GameScene {
     private readonly getTransportTime: () => number,
     private readonly sfxPlayer: SfxPlayer,
     getRhythmAssist: () => boolean,
+    private readonly getReducedMotion: () => boolean,
   ) {
     const width = BACKGROUND_HEIGHT * manifest.aspectRatio;
+    this.reactiveLayer = new ReactiveLayer(overlayRoot, manifest.id, this.createPlaceholderTexture());
     this.background = new THREE.Mesh(
       new THREE.PlaneGeometry(width, BACKGROUND_HEIGHT),
-      new THREE.MeshBasicMaterial({ map: this.createPlaceholderTexture() }),
+      this.reactiveLayer.background.material,
     );
     this.noteField = new NoteField(
       NOTE_SPOTS[manifest.id],
@@ -63,7 +65,6 @@ export class RegionScene implements GameScene {
       onCollectNote,
     );
     this.collectedNotes = collectedNotes;
-    this.reactiveLayer = new ReactiveLayer(overlayRoot, manifest.id);
     this.minigames = new MinigameController(
       overlayRoot,
       width,
@@ -98,10 +99,12 @@ export class RegionScene implements GameScene {
   }
 
   update(deltaSeconds: number): void {
-    this.noteField.update(deltaSeconds, this.camera);
+    const transportTime = this.getTransportTime();
+    const reducedMotion = this.getReducedMotion();
+    this.noteField.update(deltaSeconds, this.camera, transportTime, this.manifest.bpm, reducedMotion);
     this.tapRipples.update(deltaSeconds);
-    this.minigames.update(this.camera, this.viewportWidth, this.viewportHeight);
-    this.reactiveLayer.update(this.collectedNotes, this.getTransportTime(), this.manifest.bpm);
+    this.minigames.update(this.camera, this.viewportWidth, this.viewportHeight, transportTime, reducedMotion);
+    this.reactiveLayer.update(this.collectedNotes, transportTime, this.manifest.bpm, reducedMotion);
     const nearestDistance = this.noteField.getNearestUnfoundScreenDistance(this.camera);
     if (nearestDistance === null) {
       this.sfxPlayer.stopHum();
@@ -157,8 +160,8 @@ export class RegionScene implements GameScene {
     this.exitButton.removeEventListener("pointerup", this.onExit);
     this.exitButton.remove();
     this.background.geometry.dispose();
-    this.background.material.map?.dispose();
-    this.background.material.dispose();
+    const backgroundTexture = this.background.material.uniforms.map.value as THREE.Texture;
+    backgroundTexture.dispose();
     this.noteField.dispose();
     this.tapRipples.dispose();
     this.sfxPlayer.stopHum();
@@ -315,10 +318,7 @@ export class RegionScene implements GameScene {
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.magFilter = THREE.NearestFilter;
         texture.minFilter = THREE.LinearMipmapLinearFilter;
-        const placeholder = this.background.material.map;
-        this.background.material.map = texture;
-        this.background.material.needsUpdate = true;
-        placeholder?.dispose();
+        this.reactiveLayer.background.setTexture(texture).dispose();
       },
       undefined,
       () => {
