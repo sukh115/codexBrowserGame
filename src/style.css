@@ -156,9 +156,7 @@ button { font: inherit; }
 
 .ui-layer.is-menu-open .hud-actions { opacity: 1; visibility: visible; transform: none; }
 .ui-layer.is-settings-open .hud-actions { opacity: 0; visibility: hidden; pointer-events: none; }
-.replay-button { color: #17142b; background: #fff0a5; }
-.hud.is-overworld .reset-button,
-.hud.is-overworld .replay-button { display: none; }
+.hud.is-overworld .reset-button { display: none; }
 .hud.is-overworld .hud-actions,
 .hud.is-region .hud-actions { flex-direction: column; }
 

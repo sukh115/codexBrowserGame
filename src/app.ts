@@ -65,10 +65,6 @@ export function bootstrap(root: HTMLElement): void {
       overlay,
       () => gameStore.setState({ muted: !gameStore.snapshot.muted }),
       () => gameStore.resetCurrentRegion(),
-      () => {
-        stemPlayer.setMasterVolume(1);
-        completionOverlay.show(gameStore.snapshot.currentRegion, () => {});
-      },
     );
     hud.update(gameStore.snapshot);
     settings.update(gameStore.snapshot);
