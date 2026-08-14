@@ -14,10 +14,15 @@ export class Engine {
   private activeScene: GameScene | null = null;
   private readonly clock = new THREE.Clock();
   private animationFrame = 0;
+  private readonly preferredPixelRatio: number;
+  private frameTimeTotal = 0;
+  private frameSamples = 0;
 
   constructor(container: HTMLElement) {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const lowPower = window.innerWidth <= 820 || navigator.hardwareConcurrency <= 4;
+    this.preferredPixelRatio = Math.min(window.devicePixelRatio, lowPower ? 1.25 : 2);
+    this.renderer.setPixelRatio(this.preferredPixelRatio);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.domElement.className = "game-canvas";
@@ -49,6 +54,15 @@ export class Engine {
 
   private readonly tick = (): void => {
     const delta = Math.min(this.clock.getDelta(), 0.1);
+    this.frameTimeTotal += delta;
+    this.frameSamples += 1;
+    if (this.frameSamples >= 120) {
+      const averageFrameTime = this.frameTimeTotal / this.frameSamples;
+      const targetRatio = averageFrameTime > 1 / 40 ? Math.min(1, this.preferredPixelRatio) : this.preferredPixelRatio;
+      if (Math.abs(this.renderer.getPixelRatio() - targetRatio) > 0.05) this.renderer.setPixelRatio(targetRatio);
+      this.frameTimeTotal = 0;
+      this.frameSamples = 0;
+    }
     if (this.activeScene) {
       this.activeScene.update(delta);
       this.renderer.render(this.activeScene.scene, this.activeScene.camera);
@@ -58,7 +72,7 @@ export class Engine {
 
   private readonly handleResize = (): void => {
     const { width, height } = this.getViewportSize();
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.min(this.renderer.getPixelRatio(), this.preferredPixelRatio));
     this.renderer.setSize(width, height);
     this.activeScene?.resize(width, height);
   };

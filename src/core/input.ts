@@ -3,6 +3,7 @@ import { GAME_EVENTS, INPUT_LIMITS } from "./constants";
 export interface TapDetail {
   readonly clientX: number;
   readonly clientY: number;
+  readonly pointerType: string;
 }
 
 export class PointerInput extends EventTarget {
@@ -45,8 +46,11 @@ export class PointerInput extends EventTarget {
     if (event.pointerId !== this.pointerId) return;
     const distance = Math.hypot(event.clientX - this.startX, event.clientY - this.startY);
     const duration = performance.now() - this.startTime;
-    if (distance < INPUT_LIMITS.TAP_DISTANCE_PX && duration < INPUT_LIMITS.TAP_DURATION_MS) {
-      const detail: TapDetail = { clientX: event.clientX, clientY: event.clientY };
+    const touch = event.pointerType === "touch";
+    const distanceLimit = touch ? 14 : INPUT_LIMITS.TAP_DISTANCE_PX;
+    const durationLimit = touch ? 420 : INPUT_LIMITS.TAP_DURATION_MS;
+    if (distance < distanceLimit && duration < durationLimit) {
+      const detail: TapDetail = { clientX: event.clientX, clientY: event.clientY, pointerType: event.pointerType };
       this.dispatchEvent(new CustomEvent<TapDetail>(GAME_EVENTS.TAP, { detail }));
     }
     this.pointerId = null;
@@ -57,7 +61,7 @@ export class PointerInput extends EventTarget {
   };
 
   private dispatchPoint(event: PointerEvent): void {
-    const detail: TapDetail = { clientX: event.clientX, clientY: event.clientY };
+    const detail: TapDetail = { clientX: event.clientX, clientY: event.clientY, pointerType: event.pointerType };
     this.dispatchEvent(new CustomEvent<TapDetail>(GAME_EVENTS.POINT, { detail }));
   }
 }

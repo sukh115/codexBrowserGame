@@ -106,7 +106,7 @@ export class NoteField {
 
   collectAt(clientX: number, clientY: number, camera: THREE.OrthographicCamera): boolean {
     let nearest: NoteObject | null = null;
-    let nearestDistance = 24;
+    let nearestDistance = this.viewportWidth <= 820 ? 38 : 24;
     for (const note of this.notes) {
       if (!note.active) continue;
       this.projected.copy(note.sprite.position).project(camera);

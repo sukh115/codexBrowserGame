@@ -3,6 +3,12 @@ import type { MinigameType } from "./types";
 
 export type StopGame = () => void;
 
+function flashFeedback(frame: MinigameFrame, type: "success" | "error"): void {
+  frame.element.classList.remove("feedback-success", "feedback-error");
+  requestAnimationFrame(() => frame.element.classList.add(`feedback-${type}`));
+  window.setTimeout(() => frame.element.classList.remove(`feedback-${type}`), 280);
+}
+
 export function startMinigame(
   type: MinigameType,
   frame: MinigameFrame,
@@ -41,16 +47,20 @@ function startTiming(frame: MinigameFrame, greenhouse: boolean, onClear: () => v
     const targetCenter = greenhouse ? vineTargets[success] : 50;
     if (position >= targetCenter - 8 && position <= targetCenter + 8) {
       success += 1;
-      frame.status.textContent = `성공 ${success}/3`;
+      frame.status.textContent = greenhouse ? `덩굴 공명 ${success}/3` : `성공 ${success}/3`;
+      flashFeedback(frame, "success");
       start = performance.now();
       if (greenhouse && target && success < vineTargets.length) target.style.left = `${vineTargets[success]}%`;
       if (success >= 3) {
         cancelAnimationFrame(frameId);
-        frame.status.textContent = "조율 완료! ♪ 획득";
+        frame.status.textContent = greenhouse ? "덩굴에 새싹이 돋았어요! 소리 씨앗 획득" : "조율 완료! ♪ 획득";
         track.disabled = true;
         window.setTimeout(onClear, 500);
       }
-    } else frame.status.textContent = "조금 더 정확하게!";
+    } else {
+      frame.status.textContent = greenhouse ? "빛이 꽃봉오리 중앙에 닿을 때 눌러요" : "조금 더 정확하게!";
+      flashFeedback(frame, "error");
+    }
   };
   track.addEventListener("pointerdown", tap);
   if (greenhouse && target) target.style.left = `${vineTargets[0]}%`;
@@ -108,10 +118,14 @@ function startRhythm(
     finished = true;
     const accuracy = score / scoredCount;
     if (accuracy >= 0.7) {
-      frame.status.textContent = `정확도 ${Math.round(accuracy * 100)}% · 클리어!`;
+      frame.status.textContent = greenhouse
+        ? `빗방울 공명 ${Math.round(accuracy * 100)}% · 소리 씨앗 획득!`
+        : `정확도 ${Math.round(accuracy * 100)}% · 클리어!`;
+      flashFeedback(frame, "success");
       window.setTimeout(onClear, 650);
     } else {
       frame.status.textContent = `정확도 ${Math.round(accuracy * 100)}% · 닫고 다시 도전하세요`;
+      flashFeedback(frame, "error");
     }
   };
   const animate = (): void => {
@@ -149,7 +163,8 @@ function startRhythm(
       }
     });
     if (nearestIndex < 0 || nearestError > (assist ? 0.28 : 0.2)) {
-      frame.status.textContent = "Miss · 판정선에서 탭하세요";
+      frame.status.textContent = greenhouse ? "빗방울이 물결선에 닿을 때 눌러요" : "Miss · 판정선에서 탭하세요";
+      flashFeedback(frame, "error");
       return;
     }
     const result = nearestError <= (assist ? 0.12 : 0.08) ? "Perfect" : "Good";
@@ -169,7 +184,9 @@ function startRhythm(
     finish();
   };
   pad.addEventListener("pointerdown", tap);
-  frame.status.textContent = "첫 4노트는 연습입니다 · 판정선에서 탭하세요";
+  frame.status.textContent = greenhouse
+    ? "첫 네 방울은 연습입니다 · 물결선에 닿을 때 눌러요"
+    : "첫 4노트는 연습입니다 · 판정선에서 탭하세요";
   animationFrame = requestAnimationFrame(animate);
   return () => {
     cancelAnimationFrame(animationFrame);
@@ -207,7 +224,9 @@ function startMemory(
     sequence = Array.from({ length: round + 2 }, () => Math.floor(Math.random() * 4));
     inputIndex = 0;
     accepting = false;
-    frame.status.textContent = `라운드 ${round}/3 · 순서를 기억하세요`;
+    frame.status.textContent = greenhouse
+      ? `발광 순서 ${round}/3 · 빛나는 식물을 기억하세요`
+      : `라운드 ${round}/3 · 순서를 기억하세요`;
     sequence.forEach((value, index) => {
       timers.push(window.setTimeout(() => flashKey(value, "is-lit", 300), 550 + index * 520));
     });
@@ -222,6 +241,7 @@ function startMemory(
       if (sequence[inputIndex] !== value) {
         flashKey(value, "is-wrong");
         frame.status.textContent = `순서가 달라요 · ${inputIndex}/${sequence.length}까지 성공`;
+        flashFeedback(frame, "error");
         timers.push(window.setTimeout(playRound, 650));
         accepting = false;
         return;
@@ -229,10 +249,11 @@ function startMemory(
       flashKey(value);
       inputIndex += 1;
       frame.status.textContent = `좋아요 · ${inputIndex}/${sequence.length}`;
+      flashFeedback(frame, "success");
       if (inputIndex === sequence.length) {
         round += 1;
         if (round > 3) {
-          frame.status.textContent = "기억 완료! ♪ 획득";
+          frame.status.textContent = greenhouse ? "발광 식물이 깨어났어요! 소리 씨앗 획득" : "기억 완료! ♪ 획득";
           timers.push(window.setTimeout(onClear, 500));
         } else timers.push(window.setTimeout(playRound, 550));
       }

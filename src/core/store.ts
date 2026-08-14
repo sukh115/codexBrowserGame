@@ -4,12 +4,14 @@ import type { RegionId } from "./assetManifest";
 export type SceneId = "loading" | "overworld" | "region";
 
 export interface GameState {
+  readonly saveVersion: number;
   readonly collectedNotes: readonly string[];
   readonly clearedMinigames: readonly string[];
   readonly currentScene: SceneId;
   readonly currentRegion: RegionId;
   readonly muted: boolean;
   readonly completed: boolean;
+  readonly completedRegions: readonly RegionId[];
   readonly tutorialCompleted: boolean;
   readonly masterVolume: number;
   readonly sfxVolume: number;
@@ -28,12 +30,14 @@ export function getNoteCountForRegion(collectedNotes: readonly string[], regionI
 
 class GameStore extends EventTarget {
   private readonly initialState: GameState = {
+    saveVersion: 2,
     collectedNotes: [],
     clearedMinigames: [],
     currentScene: "loading",
     currentRegion: "music-shop",
     muted: false,
     completed: false,
+    completedRegions: [],
     tutorialCompleted: false,
     masterVolume: 1,
     sfxVolume: 1,
@@ -55,7 +59,11 @@ class GameStore extends EventTarget {
   collectNote(noteId: string): void {
     if (this.state.collectedNotes.includes(noteId)) return;
     const collectedNotes = [...this.state.collectedNotes, noteId];
-    this.setState({ collectedNotes, completed: getRegionNoteCount({ ...this.state, collectedNotes }) >= 7 });
+    const completed = getRegionNoteCount({ ...this.state, collectedNotes }) >= 7;
+    const completedRegions = completed && !this.state.completedRegions.includes(this.state.currentRegion)
+      ? [...this.state.completedRegions, this.state.currentRegion]
+      : this.state.completedRegions;
+    this.setState({ collectedNotes, completed, completedRegions });
   }
 
   clearMinigame(gameId: string, rewardNoteId: string): void {
@@ -64,15 +72,33 @@ class GameStore extends EventTarget {
     const collectedNotes = this.state.collectedNotes.includes(rewardNoteId)
       ? [...this.state.collectedNotes]
       : [...this.state.collectedNotes, rewardNoteId];
+    const completed = getRegionNoteCount({ ...this.state, collectedNotes }) >= 7;
+    const completedRegions = completed && !this.state.completedRegions.includes(this.state.currentRegion)
+      ? [...this.state.completedRegions, this.state.currentRegion]
+      : this.state.completedRegions;
     this.setState({
       clearedMinigames,
       collectedNotes,
-      completed: getRegionNoteCount({ ...this.state, collectedNotes }) >= 7,
+      completed,
+      completedRegions,
     });
   }
 
-  reset(): void {
-    // 진행도 초기화 중 현재 씬과 지역이 바뀌면 활성 씬의 ID 체계와 HUD 계산이 어긋난다.
+  resetCurrentRegion(): void {
+    const greenhouse = this.state.currentRegion === "neon-forest";
+    const notePrefix = greenhouse ? "greenhouse-note-" : "note-";
+    const gamePrefix = greenhouse ? "greenhouse-" : "";
+    this.setState({
+      collectedNotes: this.state.collectedNotes.filter((id) => !id.startsWith(notePrefix)),
+      clearedMinigames: this.state.clearedMinigames.filter((id) => greenhouse
+        ? !id.startsWith(gamePrefix)
+        : id.startsWith("greenhouse-")),
+      completed: false,
+      completedRegions: this.state.completedRegions.filter((id) => id !== this.state.currentRegion),
+    });
+  }
+
+  resetAll(): void {
     this.state = {
       ...this.initialState,
       currentScene: this.state.currentScene,
@@ -90,11 +116,20 @@ class GameStore extends EventTarget {
       if (!Array.isArray(stored.collectedNotes) || !Array.isArray(stored.clearedMinigames)) {
         return this.initialState;
       }
+      const collectedNotes = stored.collectedNotes.filter((item): item is string => typeof item === "string");
+      const completedRegions: RegionId[] = [];
+      if (getNoteCountForRegion(collectedNotes, "music-shop") >= 7) completedRegions.push("music-shop");
+      if (getNoteCountForRegion(collectedNotes, "neon-forest") >= 7) completedRegions.push("neon-forest");
+      const currentRegion = stored.currentRegion === "neon-forest" ? "neon-forest" : "music-shop";
       return {
         ...this.initialState,
         ...stored,
-        collectedNotes: stored.collectedNotes.filter((item): item is string => typeof item === "string"),
+        saveVersion: 2,
+        collectedNotes,
         clearedMinigames: stored.clearedMinigames.filter((item): item is string => typeof item === "string"),
+        currentRegion,
+        completedRegions,
+        completed: completedRegions.includes(currentRegion),
         currentScene: "loading",
       };
     } catch {

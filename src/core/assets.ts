@@ -17,4 +17,25 @@ export class AssetLoader extends EventTarget {
   complete(): void {
     this.dispatchEvent(new Event(GAME_EVENTS.ASSET_COMPLETE));
   }
+
+  async preloadImages(urls: readonly string[]): Promise<void> {
+    if (urls.length === 0) {
+      this.complete();
+      return;
+    }
+    await Promise.all(urls.map((url) => new Promise<void>((resolve) => {
+      this.manager.itemStart(url);
+      const image = new Image();
+      image.onload = () => {
+        this.manager.itemEnd(url);
+        resolve();
+      };
+      image.onerror = () => {
+        this.manager.itemError(url);
+        this.manager.itemEnd(url);
+        resolve();
+      };
+      image.src = url;
+    })));
+  }
 }

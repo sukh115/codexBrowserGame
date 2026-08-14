@@ -99,7 +99,7 @@ export const ASSET_MANIFEST = {
     "neon-forest": {
       id: "neon-forest",
       title: "네온 숲",
-      background: assetPath("assets/textures/abandoned-greenhouse.png"),
+      background: assetPath("assets/textures/abandoned-greenhouse.webp"),
       bpm: 96,
       aspectRatio: 1456 / 720,
       stems: PLACEHOLDER_STEMS,

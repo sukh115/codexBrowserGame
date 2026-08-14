@@ -193,7 +193,10 @@ export class RegionScene implements GameScene {
     if (this.pointers.size === 1) {
       const distance = Math.hypot(event.clientX - this.tapStartX, event.clientY - this.tapStartY);
       const duration = performance.now() - this.tapStartTime;
-      if (distance < INPUT_LIMITS.TAP_DISTANCE_PX && duration < INPUT_LIMITS.TAP_DURATION_MS) {
+      const touch = event.pointerType === "touch";
+      const distanceLimit = touch ? 14 : INPUT_LIMITS.TAP_DISTANCE_PX;
+      const durationLimit = touch ? 420 : INPUT_LIMITS.TAP_DURATION_MS;
+      if (distance < distanceLimit && duration < durationLimit) {
         this.noteField.collectAt(event.clientX, event.clientY, this.camera);
       }
     }

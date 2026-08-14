@@ -28,8 +28,13 @@ export function bootstrap(root: HTMLElement): void {
   let hud: Hud | null = null;
   let activeRegionScene: RegionScene | null = null;
   const completionOverlay = new CompletionOverlay(overlay);
-  const settings = new SettingsPanel(overlay, (patch) => gameStore.setState(patch));
   const tutorial = new Tutorial(overlay, () => gameStore.setState({ tutorialCompleted: true }));
+  const settings = new SettingsPanel(
+    overlay,
+    (patch) => gameStore.setState(patch),
+    () => tutorial.replay(),
+    () => gameStore.resetAll(),
+  );
   let wasCompleted = gameStore.snapshot.completed;
   overlay.append(loading.element);
 
@@ -50,7 +55,7 @@ export function bootstrap(root: HTMLElement): void {
     hud = new Hud(
       overlay,
       () => gameStore.setState({ muted: !gameStore.snapshot.muted }),
-      () => gameStore.reset(),
+      () => gameStore.resetCurrentRegion(),
       () => {
         stemPlayer.setMasterVolume(1);
         completionOverlay.show(gameStore.snapshot.currentRegion, () => {});
@@ -69,6 +74,7 @@ export function bootstrap(root: HTMLElement): void {
         showRegion,
         gameStore.snapshot.currentRegion,
         updateOverworldAudio,
+        gameStore.snapshot.completedRegions,
       ));
     };
     const showRegion = (regionId: RegionId): void => {
@@ -124,6 +130,7 @@ export function bootstrap(root: HTMLElement): void {
       showRegion,
       null,
       updateOverworldAudio,
+      gameStore.snapshot.completedRegions,
     ));
     loading.hide();
     engine.start();
@@ -131,7 +138,9 @@ export function bootstrap(root: HTMLElement): void {
   });
 
   // 외부 에셋이 없는 현재 단계도 동일한 로딩 흐름을 유지한다.
-  requestAnimationFrame(() => loader.complete());
+  void loader.preloadImages(Object.values(ASSET_MANIFEST.regions)
+    .map((region) => region.background)
+    .filter((background): background is string => background !== null));
 
   gameStore.addEventListener(GAME_EVENTS.STATE_CHANGE, (event) => {
     const state = (event as CustomEvent<typeof gameStore.snapshot>).detail;

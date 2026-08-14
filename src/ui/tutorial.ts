@@ -6,7 +6,7 @@ export class Tutorial {
 
   constructor(overlayRoot: HTMLElement, private readonly onComplete: () => void) {
     this.element.className = "tutorial-tip";
-    this.button.textContent = "알겠어요";
+    this.button.textContent = "다음";
     this.button.addEventListener("pointerup", this.advance);
     this.element.append(this.text, this.button);
     overlayRoot.append(this.element);
@@ -14,20 +14,25 @@ export class Tutorial {
 
   showMovement(): void {
     if (this.step > 0) return;
-    this.text.textContent = "바닥을 누르거나 드래그해 이동하세요. 음악이 커지는 방향에 입구가 있어요.";
+    this.text.textContent = "바닥을 짧게 누르면 이동합니다. 포털 안내에서 악기점과 버려진 온실의 거리와 진행도를 확인하세요.";
     this.element.classList.add("is-visible");
   }
 
   showRegion(): void {
     if (this.step > 1) return;
     this.step = 1;
-    this.text.textContent = "화면을 드래그하고 확대해 숨은 음표 4개와 네온 장비 3개를 찾아보세요.";
+    this.text.textContent = "악기점에서는 음표, 온실에서는 빛나는 소리 씨앗을 찾으세요. 표시된 오브젝트는 서로 다른 미니게임 입구입니다.";
     this.element.classList.add("is-visible");
   }
 
   dispose(): void {
     this.button.removeEventListener("pointerup", this.advance);
     this.element.remove();
+  }
+
+  replay(): void {
+    this.step = 0;
+    this.showMovement();
   }
 
   private readonly advance = (): void => {

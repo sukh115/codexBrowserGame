@@ -10,19 +10,19 @@ export class Hud {
   constructor(
     overlayRoot: HTMLElement,
     onToggleMute: () => void,
-    onReset: () => void,
+    onResetRegion: () => void,
     onReplay: () => void,
   ) {
     this.element.className = "hud";
     this.muteButton.className = "hud-button mute-button";
     this.resetButton.className = "hud-button reset-button";
-    this.resetButton.textContent = "처음부터";
+    this.resetButton.textContent = "현재 지역 초기화";
     this.replayButton.className = "hud-button replay-button";
     this.replayButton.textContent = "완성곡 감상";
     this.replayButton.hidden = true;
     this.progress.className = "world-progress";
     this.muteButton.addEventListener("pointerup", onToggleMute);
-    this.resetButton.addEventListener("pointerup", onReset);
+    this.resetButton.addEventListener("pointerup", onResetRegion);
     this.replayButton.addEventListener("pointerup", onReplay);
     this.element.append(this.progress, this.muteButton, this.resetButton, this.replayButton);
     overlayRoot.append(this.element);
@@ -31,7 +31,9 @@ export class Hud {
   update(state: GameState): void {
     const shopCount = getNoteCountForRegion(state.collectedNotes, "music-shop");
     const greenhouseCount = getNoteCountForRegion(state.collectedNotes, "neon-forest");
-    this.progress.innerHTML = `<span class="${state.currentRegion === "music-shop" ? "is-current" : ""}">악기점 ${shopCount}/7</span><span class="${state.currentRegion === "neon-forest" ? "is-current" : ""}">온실 ${greenhouseCount}/7</span>`;
+    const shopComplete = state.completedRegions.includes("music-shop");
+    const greenhouseComplete = state.completedRegions.includes("neon-forest");
+    this.progress.innerHTML = `<span class="${state.currentRegion === "music-shop" ? "is-current" : ""} ${shopComplete ? "is-complete" : ""}">${shopComplete ? "✓ " : ""}악기점 ${shopCount}/7</span><span class="${state.currentRegion === "neon-forest" ? "is-current" : ""} ${greenhouseComplete ? "is-complete" : ""}">${greenhouseComplete ? "✓ " : ""}온실 ${greenhouseCount}/7</span>`;
     this.replayButton.hidden = !state.completed;
     this.muteButton.textContent = state.muted ? "소리 켜기" : "음소거";
   }

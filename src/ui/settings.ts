@@ -7,7 +7,12 @@ export class SettingsPanel {
   private readonly motion = this.createCheck("애니메이션 줄이기", "reduced-motion");
   private readonly assist = this.createCheck("리듬 판정 넓게", "rhythm-assist");
 
-  constructor(overlayRoot: HTMLElement, onChange: (patch: Partial<GameState>) => void) {
+  constructor(
+    overlayRoot: HTMLElement,
+    onChange: (patch: Partial<GameState>) => void,
+    onReplayTutorial: () => void,
+    onResetAll: () => void,
+  ) {
     this.element.className = "settings-panel";
     this.element.hidden = true;
     const open = document.createElement("button");
@@ -16,13 +21,33 @@ export class SettingsPanel {
     const close = document.createElement("button");
     close.className = "settings-close";
     close.textContent = "닫기";
+    const replayTutorial = document.createElement("button");
+    replayTutorial.className = "settings-action";
+    replayTutorial.textContent = "튜토리얼 다시 보기";
+    const resetAll = document.createElement("button");
+    resetAll.className = "settings-action is-danger";
+    resetAll.textContent = "전체 진행 초기화";
     open.addEventListener("pointerup", () => this.element.classList.add("is-open"));
     close.addEventListener("pointerup", () => this.element.classList.remove("is-open"));
+    replayTutorial.addEventListener("pointerup", () => {
+      this.element.classList.remove("is-open");
+      onReplayTutorial();
+    });
+    resetAll.addEventListener("pointerup", onResetAll);
     this.master.input.addEventListener("input", () => onChange({ masterVolume: Number(this.master.input.value) }));
     this.sfx.input.addEventListener("input", () => onChange({ sfxVolume: Number(this.sfx.input.value) }));
     this.motion.input.addEventListener("change", () => onChange({ reducedMotion: this.motion.input.checked }));
     this.assist.input.addEventListener("change", () => onChange({ rhythmAssist: this.assist.input.checked }));
-    this.element.append(open, this.master.label, this.sfx.label, this.motion.label, this.assist.label, close);
+    this.element.append(
+      open,
+      this.master.label,
+      this.sfx.label,
+      this.motion.label,
+      this.assist.label,
+      replayTutorial,
+      resetAll,
+      close,
+    );
     overlayRoot.append(this.element);
   }
 

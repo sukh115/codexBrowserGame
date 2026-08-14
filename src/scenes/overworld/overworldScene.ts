@@ -28,6 +28,7 @@ export class OverworldScene implements GameScene {
   private readonly secondEntranceWaves: Array<THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>> = [];
   private readonly footsteps: Array<THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>> = [];
   private readonly portalLabelTextures: THREE.CanvasTexture[] = [];
+  private readonly portalGuide = document.createElement("div");
   private readonly entrancePosition = new THREE.Vector3(
     ASSET_MANIFEST.overworldEntrance.position.x,
     0,
@@ -42,6 +43,7 @@ export class OverworldScene implements GameScene {
   private entering = false;
   private footstepIndex = 0;
   private footstepDistance = 0;
+  private guideElapsed = 0;
   private readonly previousCharacterPosition = new THREE.Vector3();
   private readonly propLoader = new OverworldPropLoader(this.scene);
 
@@ -51,6 +53,7 @@ export class OverworldScene implements GameScene {
     private readonly onEnterRegion: (regionId: RegionId) => void,
     private readonly spawnAtRegion: RegionId | null = null,
     private readonly onRegionProximityChange: (proximity: number) => void = () => {},
+    private readonly completedRegions: readonly RegionId[] = [],
   ) {
     this.input = new PointerInput(canvas);
     this.input.addEventListener(GAME_EVENTS.POINT, this.onPoint as EventListener);
@@ -74,6 +77,8 @@ export class OverworldScene implements GameScene {
     this.enterButton.hidden = true;
     this.enterButton.addEventListener("pointerup", this.startEntrance);
     overlayRoot.append(this.enterButton);
+    this.portalGuide.className = "portal-guide";
+    overlayRoot.append(this.portalGuide);
   }
 
   init(): void {
@@ -92,6 +97,7 @@ export class OverworldScene implements GameScene {
     this.createBoundary();
     this.createEntrance();
     this.createSecondEntrance();
+    this.createPortalProps();
     this.createFootsteps();
     this.propLoader.load(ASSET_MANIFEST.overworldProps);
     this.destination.copy(this.character.position);
@@ -158,6 +164,11 @@ export class OverworldScene implements GameScene {
     this.enterButton.hidden = !nearEntrance || this.entering;
     this.enterButton.textContent = this.activeRegionId === "neon-forest" ? "버려진 온실로 들어가기" : "악기점으로 들어가기";
     const distanceToEntrance = Math.sqrt(nearestDistanceSquared);
+    this.guideElapsed += deltaSeconds;
+    if (this.guideElapsed >= 0.2) {
+      this.guideElapsed = 0;
+      this.updatePortalGuide(Math.sqrt(firstDistanceSquared), Math.sqrt(secondDistanceSquared));
+    }
     const linearProximity = THREE.MathUtils.clamp(
       1 - distanceToEntrance / ASSET_MANIFEST.overworldEntrance.audioRadius,
       0,
@@ -189,6 +200,7 @@ export class OverworldScene implements GameScene {
     this.portalLabelTextures.forEach((texture) => texture.dispose());
     this.enterButton.removeEventListener("pointerup", this.startEntrance);
     this.enterButton.remove();
+    this.portalGuide.remove();
     this.scene.traverse((object) => {
       if (!(object instanceof THREE.Mesh) && !(object instanceof THREE.Line)) return;
       object.geometry.dispose();
@@ -267,11 +279,27 @@ export class OverworldScene implements GameScene {
   }
 
   private createEntrance(): void {
-    this.createPortal(this.entrance, this.entranceWaves, this.entrancePosition, 0xf08a5d, 0x67e8d2, "악기점");
+    this.createPortal(
+      this.entrance,
+      this.entranceWaves,
+      this.entrancePosition,
+      0xf08a5d,
+      0x67e8d2,
+      "악기점",
+      this.completedRegions.includes("music-shop"),
+    );
   }
 
   private createSecondEntrance(): void {
-    this.createPortal(this.secondEntrance, this.secondEntranceWaves, this.secondEntrancePosition, 0x718b61, 0xc5a96b, "버려진 온실");
+    this.createPortal(
+      this.secondEntrance,
+      this.secondEntranceWaves,
+      this.secondEntrancePosition,
+      0x718b61,
+      0xc5a96b,
+      "버려진 온실",
+      this.completedRegions.includes("neon-forest"),
+    );
   }
 
   private createPortal(
@@ -281,10 +309,15 @@ export class OverworldScene implements GameScene {
     primaryColor: number,
     accentColor: number,
     label: string,
+    completed: boolean,
   ): void {
     const base = new THREE.Mesh(
       new THREE.CylinderGeometry(1.1, 1.1, 0.12, 32),
-      new THREE.MeshStandardMaterial({ color: primaryColor, emissive: primaryColor, emissiveIntensity: 0.2 }),
+      new THREE.MeshStandardMaterial({
+        color: completed ? 0xf3df8d : primaryColor,
+        emissive: completed ? 0xf3df8d : primaryColor,
+        emissiveIntensity: completed ? 0.65 : 0.2,
+      }),
     );
     base.position.y = 0.06;
     const ring = new THREE.Mesh(
@@ -299,7 +332,7 @@ export class OverworldScene implements GameScene {
       new THREE.MeshBasicMaterial({ color: accentColor, transparent: true, opacity: 0.12, side: THREE.DoubleSide }),
     );
     beacon.position.y = 3.55;
-    const labelTexture = this.createPortalLabelTexture(label, primaryColor);
+    const labelTexture = this.createPortalLabelTexture(`${completed ? "✓ " : ""}${label}`, completed ? 0xf3df8d : primaryColor);
     const labelSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: labelTexture, transparent: true, depthTest: false }));
     labelSprite.position.y = 4.8;
     labelSprite.scale.set(3.8, 0.95, 1);
@@ -317,6 +350,39 @@ export class OverworldScene implements GameScene {
     }
     group.position.copy(position);
     this.scene.add(group);
+  }
+
+  private updatePortalGuide(shopDistance: number, greenhouseDistance: number): void {
+    const shopComplete = this.completedRegions.includes("music-shop");
+    const greenhouseComplete = this.completedRegions.includes("neon-forest");
+    this.portalGuide.innerHTML = `
+      <span class="${this.activeRegionId === "music-shop" ? "is-nearest" : ""}">${shopComplete ? "✓" : "♪"} 악기점 <b>${shopDistance.toFixed(1)}m</b></span>
+      <span class="${this.activeRegionId === "neon-forest" ? "is-nearest" : ""}">${greenhouseComplete ? "✓" : "♧"} 온실 <b>${greenhouseDistance.toFixed(1)}m</b></span>
+    `;
+  }
+
+  private createPortalProps(): void {
+    const speakerMaterial = new THREE.MeshStandardMaterial({ color: 0x43384e, roughness: 0.8 });
+    const speakerGeometry = new THREE.BoxGeometry(0.8, 1.15, 0.55);
+    for (const offset of [-1.8, 1.8]) {
+      const speaker = new THREE.Mesh(speakerGeometry.clone(), speakerMaterial.clone());
+      speaker.position.set(this.entrancePosition.x + offset, 0.58, this.entrancePosition.z + 0.4);
+      this.scene.add(speaker);
+    }
+    const potGeometry = new THREE.CylinderGeometry(0.24, 0.34, 0.48, 10);
+    const potMaterial = new THREE.MeshStandardMaterial({ color: 0x8b5d42, roughness: 1 });
+    const pots = new THREE.InstancedMesh(potGeometry, potMaterial, 6);
+    const matrix = new THREE.Matrix4();
+    for (let index = 0; index < 6; index += 1) {
+      const angle = (index / 6) * Math.PI * 2;
+      matrix.makeTranslation(
+        this.secondEntrancePosition.x + Math.cos(angle) * 2.1,
+        0.24,
+        this.secondEntrancePosition.z + Math.sin(angle) * 2.1,
+      );
+      pots.setMatrixAt(index, matrix);
+    }
+    this.scene.add(pots);
   }
 
   private createPortalLabelTexture(label: string, color: number): THREE.CanvasTexture {
@@ -398,6 +464,37 @@ export class OverworldScene implements GameScene {
       context.beginPath();
       context.moveTo(0, position);
       context.lineTo(canvas.width, position);
+      context.stroke();
+    }
+    const worldToCanvas = (value: number): number => ((value + WORLD.HALF_SIZE) / WORLD.SIZE) * canvas.width;
+    context.lineCap = "round";
+    context.setLineDash([22, 16]);
+    context.lineWidth = 11;
+    context.strokeStyle = "rgba(230, 132, 89, .5)";
+    context.beginPath();
+    context.moveTo(512, 512);
+    context.quadraticCurveTo(650, 430, worldToCanvas(this.entrancePosition.x), worldToCanvas(this.entrancePosition.z));
+    context.stroke();
+    context.strokeStyle = "rgba(104, 145, 91, .55)";
+    context.beginPath();
+    context.moveTo(512, 512);
+    context.quadraticCurveTo(380, 600, worldToCanvas(this.secondEntrancePosition.x), worldToCanvas(this.secondEntrancePosition.z));
+    context.stroke();
+    context.setLineDash([]);
+    context.fillStyle = "rgba(82, 91, 91, .62)";
+    context.font = "700 25px sans-serif";
+    context.fillText("악기점 →", worldToCanvas(6), worldToCanvas(-3));
+    context.fillText("← 버려진 온실", worldToCanvas(-8), worldToCanvas(6));
+    context.strokeStyle = "rgba(109, 137, 102, .35)";
+    context.lineWidth = 4;
+    for (let index = 0; index < 18; index += 1) {
+      const x = 90 + ((index * 157) % 840);
+      const y = 80 + ((index * 223) % 840);
+      context.beginPath();
+      context.moveTo(x, y + 18);
+      context.quadraticCurveTo(x - 14, y, x - 25, y + 6);
+      context.moveTo(x, y + 18);
+      context.quadraticCurveTo(x + 14, y, x + 25, y + 6);
       context.stroke();
     }
     context.fillStyle = "#9aa9ad";

@@ -181,6 +181,11 @@ button { font: inherit; }
 .world-progress { position: absolute; top: max(18px, env(safe-area-inset-top)); left: max(18px, env(safe-area-inset-left)); display: flex; gap: 6px; padding: 5px; border-radius: 12px; color: #d9d5e4; background: rgb(18 17 35 / 78%); backdrop-filter: blur(8px); pointer-events: none; }
 .world-progress span { padding: 5px 8px; border-radius: 8px; font-size: 12px; white-space: nowrap; }
 .world-progress span.is-current { color: #171426; background: linear-gradient(120deg, #fff2a5, #79e0cf); font-weight: 800; }
+.world-progress span.is-complete:not(.is-current) { color: #cfe9ba; border: 1px solid rgb(166 211 134 / 35%); }
+.portal-guide { position: absolute; bottom: max(24px, env(safe-area-inset-bottom)); left: max(18px, env(safe-area-inset-left)); z-index: 8; display: grid; gap: 5px; color: #e8e4dc; pointer-events: none; }
+.portal-guide span { min-width: 150px; padding: 7px 10px; border: 1px solid rgb(255 255 255 / 14%); border-radius: 10px; font-size: 12px; background: rgb(28 29 31 / 72%); backdrop-filter: blur(7px); }
+.portal-guide span.is-nearest { color: #171426; border-color: transparent; background: linear-gradient(120deg, #fff0a5, #83d9bd); }
+.portal-guide b { float: right; margin-left: 12px; }
 
 @keyframes particle-rise {
   0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(0); }
@@ -219,6 +224,8 @@ button { font: inherit; }
 .minigame-entrance:disabled span { opacity: .8; transform: none; }
 .minigame-overlay { position: absolute; inset: 0; z-index: 40; display: none; place-content: center; padding: 20px; background: rgb(7 6 20 / 80%); pointer-events: auto; }
 .minigame-overlay.is-open { display: grid; }
+.minigame-overlay.feedback-success .minigame-panel { animation: feedback-success 280ms ease; }
+.minigame-overlay.feedback-error .minigame-panel { animation: feedback-error 280ms ease; }
 .minigame-panel { width: min(560px, 92vw); min-height: 380px; padding: 28px; border: 2px solid #67e8d2; border-radius: 22px; color: #fff; text-align: center; background: linear-gradient(145deg, #211740, #101d35); box-shadow: 0 0 50px rgb(103 232 210 / 20%); }
 .minigame-title { margin: 0 0 8px; font-size: 30px; }
 .minigame-status { min-height: 24px; margin: 0 0 22px; color: #f0a2d7; }
@@ -254,6 +261,8 @@ button { font: inherit; }
 .key-2, .key-3 { border-color: #e97ac7; }
 @keyframes rhythm-hit { 50% { transform: scale(.88); background: #67e8d2; } }
 @keyframes memory-wrong { 33% { transform: translateX(-7px); } 66% { transform: translateX(7px); } }
+@keyframes feedback-success { 45% { border-color: #eff69c; box-shadow: 0 0 55px rgb(225 239 133 / 55%); transform: scale(1.015); } }
+@keyframes feedback-error { 30% { border-color: #ef7183; transform: translateX(-5px); } 65% { transform: translateX(5px); } }
 @keyframes entrance-breathe { 50% { filter: brightness(1.25); } }
 
 .tutorial-tip { position: absolute; bottom: 86px; left: 50%; z-index: 50; display: none; width: min(520px, 88vw); padding: 16px 18px; border: 1px solid #67e8d2; border-radius: 16px; color: #fff; text-align: center; background: rgb(15 15 35 / 94%); box-shadow: 0 0 30px rgb(103 232 210 / 20%); transform: translateX(-50%); pointer-events: auto; }
@@ -269,6 +278,9 @@ button { font: inherit; }
 .settings-panel.is-open { padding: 48px 16px 16px; border: 1px solid #776d8e; gap: 13px; }
 .settings-panel.is-open > label { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; }
 .settings-panel.is-open .settings-close { display: block; padding: 7px; border: 0; border-radius: 8px; cursor: pointer; }
+.settings-action { display: none; padding: 8px; border: 1px solid #706786; border-radius: 8px; color: #eee9f8; background: #29243e; cursor: pointer; }
+.settings-panel.is-open .settings-action { display: block; }
+.settings-action.is-danger { color: #ffd7d7; border-color: #8c515b; background: #42252d; }
 .settings-panel input[type="range"] { width: 105px; }
 
 .region-reactive-layer { position: absolute; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; }
@@ -318,6 +330,8 @@ button { font: inherit; }
   .settings-panel { top: max(52px, calc(env(safe-area-inset-top) + 52px)); left: max(10px, env(safe-area-inset-left)); width: min(235px, calc(100vw - 20px)); }
   .exit-button { top: auto; right: max(10px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom)); padding: 10px 13px; font-size: 12px; }
   .context-button { bottom: max(18px, env(safe-area-inset-bottom)); width: min(310px, calc(100vw - 30px)); }
+  .portal-guide { bottom: max(72px, calc(env(safe-area-inset-bottom) + 72px)); left: max(10px, env(safe-area-inset-left)); }
+  .portal-guide span { min-width: 130px; padding: 5px 8px; font-size: 10px; }
   .tutorial-tip { bottom: max(74px, calc(env(safe-area-inset-bottom) + 74px)); padding: 13px; font-size: 13px; }
   .minigame-overlay { align-items: center; overflow-y: auto; padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); }
   .minigame-panel { width: min(100%, 440px); min-height: 0; max-height: calc(100dvh - 24px); padding: 18px 14px; overflow-y: auto; }
