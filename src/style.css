@@ -332,7 +332,7 @@ button { font: inherit; }
   .mute-button { right: max(10px, env(safe-area-inset-right)); }
   .reset-button { top: max(52px, calc(env(safe-area-inset-top) + 52px)); right: max(10px, env(safe-area-inset-right)); }
   .replay-button { top: max(94px, calc(env(safe-area-inset-top) + 94px)); right: max(10px, env(safe-area-inset-right)); }
-  .settings-panel { top: max(52px, calc(env(safe-area-inset-top) + 52px)); left: max(10px, env(safe-area-inset-left)); width: min(235px, calc(100vw - 20px)); }
+  .settings-panel { top: max(94px, calc(env(safe-area-inset-top) + 94px)); left: max(10px, env(safe-area-inset-left)); width: min(235px, calc(100vw - 20px)); }
   .exit-button { top: auto; right: max(10px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom)); padding: 10px 13px; font-size: 12px; }
   .context-button { bottom: max(18px, env(safe-area-inset-bottom)); width: min(310px, calc(100vw - 30px)); }
   .tutorial-tip { bottom: max(74px, calc(env(safe-area-inset-bottom) + 74px)); padding: 13px; font-size: 13px; }
