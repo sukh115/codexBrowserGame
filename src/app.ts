@@ -39,7 +39,7 @@ export function bootstrap(root: HTMLElement): void {
   loader.addEventListener(GAME_EVENTS.ASSET_COMPLETE, () => loading.complete());
   loading.onStart(() => {
     void Promise.all([stemPlayer.unlock(), sfxPlayer.unlock()]).then(async () => {
-      await stemPlayer.start(initialRegion.stems);
+      await stemPlayer.start(initialRegion.stems, initialRegion.id);
       for (const noteId of gameStore.snapshot.collectedNotes) {
         const stemId = initialRegion.noteStemMapping[noteId];
         if (stemId) stemPlayer.unlockStem(stemId, 0.05);
@@ -53,7 +53,7 @@ export function bootstrap(root: HTMLElement): void {
       () => gameStore.reset(),
       () => {
         stemPlayer.setMasterVolume(1);
-        completionOverlay.show(() => {});
+        completionOverlay.show(gameStore.snapshot.currentRegion, () => {});
       },
     );
     hud.update(gameStore.snapshot);
@@ -79,12 +79,14 @@ export function bootstrap(root: HTMLElement): void {
       }) >= 7;
       gameStore.setState({ currentScene: "region", currentRegion: regionId, completed });
       stemPlayer.lockAll();
-      for (const noteId of gameStore.snapshot.collectedNotes) {
-        const stemId = region.noteStemMapping[noteId];
-        if (stemId) stemPlayer.unlockStem(stemId, 0.05);
-        const effect = region.noteEffectMapping[noteId];
-        if (effect) stemPlayer.applyEffect(effect, 0.05);
-      }
+      void stemPlayer.setRegion(region.stems, region.bpm, region.id).then(() => {
+        for (const noteId of gameStore.snapshot.collectedNotes) {
+          const stemId = region.noteStemMapping[noteId];
+          if (stemId) stemPlayer.unlockStem(stemId, 0.05);
+          const effect = region.noteEffectMapping[noteId];
+          if (effect) stemPlayer.applyEffect(effect, 0.05);
+        }
+      });
       if (!gameStore.snapshot.muted) stemPlayer.setMasterVolume(1);
       activeRegionScene = new RegionScene(
         engine.renderer.domElement,
@@ -147,7 +149,7 @@ export function bootstrap(root: HTMLElement): void {
     if (!wasCompleted && state.completed) {
       activeRegionScene?.setInputLocked(true);
       sfxPlayer.playComplete();
-      completionOverlay.show(() => activeRegionScene?.setInputLocked(false));
+      completionOverlay.show(state.currentRegion, () => activeRegionScene?.setInputLocked(false));
     }
     if (wasCompleted && !state.completed) {
       completionOverlay.hide();

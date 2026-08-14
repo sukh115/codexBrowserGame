@@ -190,6 +190,13 @@ button { font: inherit; }
   box-shadow: 0 0 12px var(--particle-color);
   animation: particle-rise 2.6s var(--particle-delay) ease-out infinite;
 }
+.completion-overlay.is-greenhouse { background: radial-gradient(circle at 50% 65%, rgb(165 201 113 / 35%), rgb(12 26 20 / 92%) 58%); }
+.completion-overlay.is-greenhouse .completion-beat-flash { background: radial-gradient(circle, rgb(239 232 158 / 55%), transparent 62%); }
+.completion-overlay.is-greenhouse .completion-particles i { width: 12px; height: 12px; border-radius: 65% 10% 65% 10%; background: #cde59a; box-shadow: 0 0 14px #dff2a8; }
+
+.world-progress { position: absolute; top: 58px; left: 18px; display: flex; gap: 6px; padding: 5px; border-radius: 12px; color: #d9d5e4; background: rgb(18 17 35 / 78%); backdrop-filter: blur(8px); pointer-events: none; }
+.world-progress span { padding: 5px 8px; border-radius: 8px; font-size: 12px; white-space: nowrap; }
+.world-progress span.is-current { color: #171426; background: linear-gradient(120deg, #fff2a5, #79e0cf); font-weight: 800; }
 
 @keyframes particle-rise {
   0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(0); }
@@ -319,6 +326,8 @@ button { font: inherit; }
   .loading-screen { padding: max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom)); }
   .loading-screen h1 { font-size: clamp(38px, 13vw, 62px); }
   .note-counter { top: max(10px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left)); padding: 8px 12px; font-size: 15px; }
+  .world-progress { top: max(50px, calc(env(safe-area-inset-top) + 50px)); left: max(10px, env(safe-area-inset-left)); max-width: calc(100vw - 110px); gap: 3px; }
+  .world-progress span { padding: 4px 6px; font-size: 10px; }
   .hud-button { top: max(10px, env(safe-area-inset-top)); padding: 8px 10px; font-size: 12px; }
   .mute-button { right: max(10px, env(safe-area-inset-right)); }
   .reset-button { top: max(52px, calc(env(safe-area-inset-top) + 52px)); right: max(10px, env(safe-area-inset-right)); }
@@ -336,11 +345,16 @@ button { font: inherit; }
   .rhythm-track { width: 145px; height: 190px; }
   .rhythm-pad { width: 125px; }
   .memory-key { width: min(140px, 38vw); height: 68px; }
+  .memory-key.is-plant { height: 76px; font-size: 15px; }
+  .rhythm-track.is-rain { width: min(170px, 46vw); }
   .minigame-entrance { min-width: 48px; min-height: 44px; transform: translate(-50%, -50%) scale(.86); }
+  .completion-overlay h2 { max-width: 88vw; font-size: clamp(28px, 9vw, 48px); text-align: center; }
+  .completion-overlay p { max-width: 82vw; text-align: center; }
 }
 
 @media (max-height: 520px) {
   .note-counter { top: 10px; left: 10px; padding: 8px 13px; font-size: 15px; }
+  .world-progress { top: 52px; left: 10px; }
   .hud-button { top: 10px; padding: 8px 11px; font-size: 13px; }
   .exit-button { top: 52px; right: 10px; padding: 8px 12px; font-size: 13px; }
   .minigame-panel { min-height: 300px; padding: 18px; }

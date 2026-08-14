@@ -1,5 +1,6 @@
 import type { StemManifest } from "../core/assetManifest";
 import type { MusicEffect } from "../core/assetManifest";
+import type { RegionId } from "../core/assetManifest";
 
 interface ActiveStem {
   readonly source: AudioBufferSourceNode;
@@ -20,8 +21,9 @@ export class StemPlayer {
   private targetMasterVolume = -1;
   private transportStartTime = 0;
   private userVolume = 1;
+  private regionId: RegionId = "music-shop";
 
-  constructor(private readonly bpm: number) {}
+  constructor(private bpm: number) {}
 
   async unlock(): Promise<void> {
     if (!this.context) {
@@ -40,8 +42,9 @@ export class StemPlayer {
     this.unlocked = true;
   }
 
-  async start(stems: readonly StemManifest[]): Promise<void> {
+  async start(stems: readonly StemManifest[], regionId: RegionId = "music-shop"): Promise<void> {
     if (!this.unlocked || !this.context || !this.masterGain || this.started) return;
+    this.regionId = regionId;
     const buffers = await Promise.all(stems.map((stem, index) => this.loadBuffer(stem, index)));
     const startTime = this.context.currentTime + 0.08;
     this.transportStartTime = startTime;
@@ -58,6 +61,23 @@ export class StemPlayer {
       this.stemLevels.set(stem.id, 1);
     });
     this.started = true;
+  }
+
+  async setRegion(stems: readonly StemManifest[], bpm: number, regionId: RegionId): Promise<void> {
+    if (this.regionId === regionId && this.bpm === bpm && this.started) return;
+    for (const { source, gain } of this.activeStems.values()) {
+      source.stop();
+      source.disconnect();
+      gain.disconnect();
+    }
+    this.activeStems.clear();
+    this.unlockedStemIds.clear();
+    this.appliedEffects.clear();
+    this.stemLevels.clear();
+    this.started = false;
+    this.bpm = bpm;
+    this.regionId = regionId;
+    await this.start(stems, regionId);
   }
 
   unlockStem(id: string, fadeSeconds = 2): void {
@@ -195,11 +215,47 @@ export class StemPlayer {
     output.gain.value = trackIndex === 0 ? 0.22 : 0.12;
     output.connect(offline.destination);
 
-    if (trackIndex === 0) this.scheduleRhythm(offline, output, beatDuration);
-    if (trackIndex === 1) this.scheduleBass(offline, output, beatDuration);
-    if (trackIndex === 2) this.scheduleHarmony(offline, output, beatDuration);
-    if (trackIndex === 3) this.scheduleMelody(offline, output, beatDuration);
+    if (this.regionId === "neon-forest") {
+      if (trackIndex === 0) this.scheduleGreenhouseRain(offline, output, beatDuration);
+      if (trackIndex === 1) this.scheduleGreenhouseRoots(offline, output, beatDuration);
+      if (trackIndex === 2) this.scheduleGreenhouseGlass(offline, output, beatDuration);
+      if (trackIndex === 3) this.scheduleGreenhouseBloom(offline, output, beatDuration);
+    } else {
+      if (trackIndex === 0) this.scheduleRhythm(offline, output, beatDuration);
+      if (trackIndex === 1) this.scheduleBass(offline, output, beatDuration);
+      if (trackIndex === 2) this.scheduleHarmony(offline, output, beatDuration);
+      if (trackIndex === 3) this.scheduleMelody(offline, output, beatDuration);
+    }
     return offline.startRendering();
+  }
+
+  private scheduleGreenhouseRain(context: OfflineAudioContext, output: GainNode, beat: number): void {
+    for (let step = 0; step < 32; step += 1) {
+      const frequency = [1650, 2100, 2750, 1900][step % 4];
+      this.scheduleTone(context, output, frequency, step * beat * 0.5, 0.045, "sine", step % 4 === 0 ? 0.34 : 0.18);
+    }
+  }
+
+  private scheduleGreenhouseRoots(context: OfflineAudioContext, output: GainNode, beat: number): void {
+    const notes = [73.42, 82.41, 65.41, 55];
+    for (let step = 0; step < 16; step += 1) {
+      this.scheduleTone(context, output, notes[Math.floor(step / 4)], step * beat, beat * 0.82, "triangle", 0.5);
+    }
+  }
+
+  private scheduleGreenhouseGlass(context: OfflineAudioContext, output: GainNode, beat: number): void {
+    const chords = [[293.66, 440], [329.63, 493.88], [261.63, 392], [220, 329.63]];
+    chords.forEach((chord, index) => chord.forEach((frequency) => {
+      this.scheduleTone(context, output, frequency, index * beat * 4, beat * 3.5, "sine", 0.2);
+      this.scheduleTone(context, output, frequency * 2, index * beat * 4 + 0.03, beat * 2.4, "sine", 0.06);
+    }));
+  }
+
+  private scheduleGreenhouseBloom(context: OfflineAudioContext, output: GainNode, beat: number): void {
+    const notes = [587.33, 659.25, 783.99, 739.99, 659.25, 523.25, 493.88, 587.33];
+    for (let step = 0; step < 16; step += 1) {
+      this.scheduleTone(context, output, notes[step % notes.length], step * beat, beat * 0.55, "sine", 0.38);
+    }
   }
 
   private scheduleRhythm(context: OfflineAudioContext, output: GainNode, beat: number): void {

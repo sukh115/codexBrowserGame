@@ -18,8 +18,12 @@ export interface GameState {
 }
 
 export function getRegionNoteCount(state: Pick<GameState, "collectedNotes" | "currentRegion">): number {
-  const prefix = state.currentRegion === "neon-forest" ? "greenhouse-note-" : "note-";
-  return state.collectedNotes.filter((id) => id.startsWith(prefix)).length;
+  return getNoteCountForRegion(state.collectedNotes, state.currentRegion);
+}
+
+export function getNoteCountForRegion(collectedNotes: readonly string[], regionId: RegionId): number {
+  const prefix = regionId === "neon-forest" ? "greenhouse-note-" : "note-";
+  return collectedNotes.filter((id) => id.startsWith(prefix)).length;
 }
 
 class GameStore extends EventTarget {

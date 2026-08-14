@@ -1,4 +1,5 @@
 import { gsap } from "gsap";
+import type { RegionId } from "../core/assetManifest";
 
 export class CompletionOverlay {
   readonly element = document.createElement("section");
@@ -25,8 +26,14 @@ export class CompletionOverlay {
     overlayRoot.append(this.element);
   }
 
-  show(onUnlock: () => void): void {
+  show(regionId: RegionId, onUnlock: () => void): void {
     this.timeline?.kill();
+    const greenhouse = regionId === "neon-forest";
+    this.element.classList.toggle("is-greenhouse", greenhouse);
+    this.title.textContent = greenhouse ? "버려진 온실이 다시 숨을 쉬어요" : "악기점의 노래가 완성됐어요";
+    this.subtitle.textContent = greenhouse
+      ? "꽃과 빛, 빗방울이 하나의 생명 음악이 되었습니다"
+      : "흩어졌던 모든 악기의 소리가 다시 이어졌습니다";
     this.element.classList.add("is-visible");
     this.timeline = gsap.timeline({
       onComplete: () => {
