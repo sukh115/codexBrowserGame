@@ -68,7 +68,8 @@ const GREENHOUSE_NOTE_EFFECT_MAPPING = {
 } as const;
 
 export const ASSET_MANIFEST = {
-  characterModel: null as string | null,
+  characterModel: assetPath("assets/models/robot-expressive.glb") as string | null,
+  dracoDecoderPath: assetPath("assets/draco/"),
   overworldGround: null as string | null,
   overworldProps: [
     {

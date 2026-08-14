@@ -2,6 +2,9 @@ import * as THREE from "three";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { disposeObject3D } from "./resourceDisposal";
 
 export interface PropConfig {
   readonly id: string;
@@ -13,14 +16,26 @@ export interface PropConfig {
 
 export class OverworldPropLoader {
   private readonly props: THREE.Group[] = [];
+  private readonly dracoLoader = new DRACOLoader();
   private disposed = false;
 
-  constructor(private readonly scene: THREE.Scene) {}
+  constructor(private readonly scene: THREE.Scene, dracoDecoderPath: string) {
+    this.dracoLoader.setDecoderPath(dracoDecoderPath);
+  }
 
   load(configs: readonly PropConfig[]): void {
     for (const config of configs) {
       if (config.path.toLowerCase().endsWith(".obj")) {
         this.loadObj(config);
+      } else if (config.path.toLowerCase().endsWith(".glb")) {
+        const loader = new GLTFLoader();
+        loader.setDRACOLoader(this.dracoLoader);
+        loader.load(
+          config.path,
+          (gltf) => this.addProp(gltf.scene, config, false),
+          undefined,
+          (error) => console.warn(`[Overworld] GLB 소품 로드 실패: ${config.id}`, error),
+        );
       } else {
         new FBXLoader().load(
           config.path,
@@ -63,29 +78,19 @@ export class OverworldPropLoader {
 
   dispose(): void {
     this.disposed = true;
+    this.dracoLoader.dispose();
     for (const prop of this.props) {
       this.scene.remove(prop);
-      prop.traverse((object) => {
-        if (!(object instanceof THREE.Mesh)) return;
-        object.geometry.dispose();
-        const materials = Array.isArray(object.material) ? object.material : [object.material];
-        for (const material of materials) {
-          if (material instanceof THREE.MeshStandardMaterial) {
-            material.map?.dispose();
-            material.normalMap?.dispose();
-          }
-          material.dispose();
-        }
-      });
+      disposeObject3D(prop);
+      prop.clear();
     }
     this.props.length = 0;
   }
 
   private addProp(object: THREE.Group, config: PropConfig, useFallbackMaterial: boolean): void {
     if (this.disposed) {
-      object.traverse((child) => {
-        if (child instanceof THREE.Mesh) child.geometry.dispose();
-      });
+      disposeObject3D(object);
+      object.clear();
       return;
     }
     const box = new THREE.Box3().setFromObject(object);
