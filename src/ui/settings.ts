@@ -27,10 +27,17 @@ export class SettingsPanel {
     const resetAll = document.createElement("button");
     resetAll.className = "settings-action is-danger";
     resetAll.textContent = "전체 진행 초기화";
-    open.addEventListener("pointerup", () => this.element.classList.add("is-open"));
-    close.addEventListener("pointerup", () => this.element.classList.remove("is-open"));
+    open.addEventListener("pointerup", () => {
+      this.element.classList.add("is-open");
+      overlayRoot.classList.add("is-settings-open");
+    });
+    close.addEventListener("pointerup", () => {
+      this.element.classList.remove("is-open");
+      overlayRoot.classList.remove("is-settings-open");
+    });
     replayTutorial.addEventListener("pointerup", () => {
       this.element.classList.remove("is-open");
+      overlayRoot.classList.remove("is-settings-open");
       onReplayTutorial();
     });
     resetAll.addEventListener("pointerup", onResetAll);
