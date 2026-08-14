@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { MinigameFrame } from "./frame";
 import { startMinigame, type StopGame } from "./games";
-import { MINIGAME_SPOTS, type MinigameSpot } from "./types";
+import { GREENHOUSE_MINIGAME_SPOTS, MINIGAME_SPOTS, type MinigameSpot } from "./types";
 import type { RegionId } from "../../../core/assetManifest";
 
 export class MinigameController {
@@ -12,6 +12,7 @@ export class MinigameController {
   private readonly worldPosition = new THREE.Vector3();
   private readonly projected = new THREE.Vector3();
   private readonly spots: readonly MinigameSpot[];
+  private readonly greenhouse: boolean;
 
   constructor(
     overlayRoot: HTMLElement,
@@ -26,13 +27,16 @@ export class MinigameController {
     private readonly onModalChange: (open: boolean) => void,
     private readonly onClear: (gameId: string, rewardNoteId: string) => void,
   ) {
-    const prefix = regionId === "neon-forest" ? "greenhouse-" : "";
-    this.spots = MINIGAME_SPOTS.map((spot) => ({
+    this.greenhouse = regionId === "neon-forest";
+    const prefix = this.greenhouse ? "greenhouse-" : "";
+    const sourceSpots = this.greenhouse ? GREENHOUSE_MINIGAME_SPOTS : MINIGAME_SPOTS;
+    this.spots = sourceSpots.map((spot) => ({
       ...spot,
       id: `${prefix}${spot.id}`,
       rewardNoteId: `${prefix}${spot.rewardNoteId}`,
     }));
     this.frame = new MinigameFrame(overlayRoot, () => this.close());
+    this.frame.element.classList.toggle("is-greenhouse", this.greenhouse);
     this.spots.forEach((spot) => {
       const button = document.createElement("button");
       button.className = `minigame-entrance entrance-${spot.type}`;
@@ -86,6 +90,7 @@ export class MinigameController {
       this.getTransportTime,
       this.playTone,
       this.getRhythmAssist(),
+      this.greenhouse,
       () => {
       this.onClear(spot.id, spot.rewardNoteId);
       this.close();
@@ -103,9 +108,9 @@ export class MinigameController {
 
   private setButtonContent(button: HTMLButtonElement, spot: MinigameSpot, complete: boolean): void {
     const icons: Record<MinigameSpot["type"], string> = {
-      timing: "AMP",
-      rhythm: "BEAT",
-      memory: "CRT",
+      timing: this.greenhouse ? "VINE" : "AMP",
+      rhythm: this.greenhouse ? "RAIN" : "BEAT",
+      memory: this.greenhouse ? "BLOOM" : "CRT",
     };
     button.innerHTML = `<b>${complete ? "✓" : icons[spot.type]}</b><span>${complete ? "완료" : spot.label}</span>`;
   }

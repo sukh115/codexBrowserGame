@@ -10,19 +10,23 @@ export function startMinigame(
   getTransportTime: () => number,
   playTone: (index: number) => void,
   rhythmAssist: boolean,
+  greenhouse: boolean,
   onClear: () => void,
 ): StopGame {
-  if (type === "timing") return startTiming(frame, onClear);
-  if (type === "rhythm") return startRhythm(frame, bpm, getTransportTime, rhythmAssist, onClear);
-  return startMemory(frame, playTone, onClear);
+  if (type === "timing") return startTiming(frame, greenhouse, onClear);
+  if (type === "rhythm") return startRhythm(frame, bpm, getTransportTime, rhythmAssist, greenhouse, onClear);
+  return startMemory(frame, playTone, greenhouse, onClear);
 }
 
-function startTiming(frame: MinigameFrame, onClear: () => void): StopGame {
+function startTiming(frame: MinigameFrame, greenhouse: boolean, onClear: () => void): StopGame {
   const track = document.createElement("button");
   track.className = "timing-track";
+  track.classList.toggle("is-vine", greenhouse);
   track.innerHTML = "<i class=\"timing-target\"></i><i class=\"timing-cursor\"></i>";
   frame.stage.append(track);
   const cursor = track.querySelector<HTMLElement>(".timing-cursor");
+  const target = track.querySelector<HTMLElement>(".timing-target");
+  const vineTargets = [26, 68, 45];
   let success = 0;
   let start = performance.now();
   let frameId = 0;
@@ -34,10 +38,12 @@ function startTiming(frame: MinigameFrame, onClear: () => void): StopGame {
   };
   const tap = (): void => {
     const position = Number.parseFloat(cursor?.style.left ?? "0");
-    if (position >= 42 && position <= 58) {
+    const targetCenter = greenhouse ? vineTargets[success] : 50;
+    if (position >= targetCenter - 8 && position <= targetCenter + 8) {
       success += 1;
       frame.status.textContent = `성공 ${success}/3`;
       start = performance.now();
+      if (greenhouse && target && success < vineTargets.length) target.style.left = `${vineTargets[success]}%`;
       if (success >= 3) {
         cancelAnimationFrame(frameId);
         frame.status.textContent = "조율 완료! ♪ 획득";
@@ -47,6 +53,7 @@ function startTiming(frame: MinigameFrame, onClear: () => void): StopGame {
     } else frame.status.textContent = "조금 더 정확하게!";
   };
   track.addEventListener("pointerdown", tap);
+  if (greenhouse && target) target.style.left = `${vineTargets[0]}%`;
   frameId = requestAnimationFrame(loop);
   return () => {
     cancelAnimationFrame(frameId);
@@ -59,15 +66,17 @@ function startRhythm(
   bpm: number,
   getTransportTime: () => number,
   assist: boolean,
+  greenhouse: boolean,
   onClear: () => void,
 ): StopGame {
   const track = document.createElement("div");
   track.className = "rhythm-track";
+  track.classList.toggle("is-rain", greenhouse);
   const line = document.createElement("i");
   line.className = "rhythm-judge-line";
   const pad = document.createElement("button");
   pad.className = "rhythm-pad";
-  pad.textContent = "TAP";
+  pad.textContent = greenhouse ? "물결" : "TAP";
   track.append(line);
   frame.stage.append(track, pad);
   const beatSeconds = 60 / bpm;
@@ -81,6 +90,12 @@ function startRhythm(
     track.append(note);
     return note;
   });
+  if (greenhouse) {
+    notes.forEach((note, index) => {
+      note.style.left = `${20 + (index % 4) * 20}%`;
+      note.textContent = "●";
+    });
+  }
   notes.slice(0, practiceCount).forEach((note) => note.classList.add("is-practice"));
   const judged = Array.from({ length: targets.length }, () => false);
   let judgedCount = 0;
@@ -162,11 +177,17 @@ function startRhythm(
   };
 }
 
-function startMemory(frame: MinigameFrame, playTone: (index: number) => void, onClear: () => void): StopGame {
+function startMemory(
+  frame: MinigameFrame,
+  playTone: (index: number) => void,
+  greenhouse: boolean,
+  onClear: () => void,
+): StopGame {
   const buttons = Array.from({ length: 4 }, (_, index) => {
     const button = document.createElement("button");
     button.className = `memory-key key-${index + 1}`;
-    button.textContent = `${index + 1}`;
+    button.classList.toggle("is-plant", greenhouse);
+    button.textContent = greenhouse ? ["잎", "꽃", "이끼", "버섯"][index] : `${index + 1}`;
     frame.stage.append(button);
     return button;
   });

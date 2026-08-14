@@ -8,6 +8,7 @@ export interface NoteSpot {
   readonly color: number;
   readonly rotation: number;
   readonly size: number;
+  readonly kind?: "note" | "seed";
 }
 
 const DEFAULT_NOTE_SPOTS: readonly NoteSpot[] = [
@@ -21,9 +22,9 @@ const DEFAULT_NOTE_SPOTS: readonly NoteSpot[] = [
 export const NOTE_SPOTS: Readonly<Record<RegionId, readonly NoteSpot[]>> = {
   "music-shop": DEFAULT_NOTE_SPOTS,
   "neon-forest": [
-    { id: "greenhouse-note-1", u: 0.13, v: 0.31, glyph: "♪", color: 0xd7c38b, rotation: -0.18, size: 0.82 },
-    { id: "greenhouse-note-2", u: 0.32, v: 0.18, glyph: "♫", color: 0x91b993, rotation: 0.15, size: 0.75 },
-    { id: "greenhouse-note-3", u: 0.47, v: 0.58, glyph: "♩", color: 0xb59aaa, rotation: -0.12, size: 0.78 },
-    { id: "greenhouse-note-4", u: 0.83, v: 0.38, glyph: "♪", color: 0xa8c59d, rotation: 0.22, size: 0.8 },
+    { id: "greenhouse-note-1", u: 0.13, v: 0.31, glyph: "♪", kind: "seed", color: 0xe5cf83, rotation: -0.18, size: 0.82 },
+    { id: "greenhouse-note-2", u: 0.32, v: 0.18, glyph: "♫", kind: "seed", color: 0x9ac49a, rotation: 0.15, size: 0.75 },
+    { id: "greenhouse-note-3", u: 0.47, v: 0.58, glyph: "♩", kind: "seed", color: 0xc2a4b1, rotation: -0.12, size: 0.78 },
+    { id: "greenhouse-note-4", u: 0.83, v: 0.38, glyph: "♪", kind: "seed", color: 0xafd19c, rotation: 0.22, size: 0.8 },
   ],
 };

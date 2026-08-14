@@ -249,6 +249,17 @@ button { font: inherit; }
 .memory-key.is-lit { background: #67e8d2; box-shadow: 0 0 28px #67e8d2; transform: scale(1.06); }
 .memory-key.is-pressed { background: #f4d978; border-color: #fff4b8; box-shadow: 0 0 30px #f4d978; transform: scale(.94); }
 .memory-key.is-wrong { background: #e85278; border-color: #ffb3c6; box-shadow: 0 0 30px #e85278; animation: memory-wrong 190ms ease; }
+.minigame-overlay.is-greenhouse .minigame-panel { border-color: #9dbb78; background: linear-gradient(145deg, #283022, #111a18); box-shadow: 0 0 55px rgb(157 187 120 / 22%); }
+.minigame-overlay.is-greenhouse .minigame-title { color: #e3d5a2; }
+.timing-track.is-vine { border-color: #829d62; background: repeating-linear-gradient(115deg, #172219 0 15px, #1f3020 15px 30px); }
+.timing-track.is-vine::before { content: ""; position: absolute; inset: 31px 0; border-top: 7px solid #617a45; border-radius: 50%; filter: drop-shadow(0 0 8px #a9c66f); }
+.timing-track.is-vine .timing-target { width: 18%; margin-left: -9%; border-radius: 50%; background: radial-gradient(circle, #f5e59c 0 22%, #85aa5f 25% 48%, transparent 52%); box-shadow: 0 0 22px #c7d981; transition: left 220ms ease; }
+.timing-track.is-vine .timing-cursor { width: 13px; background: #e7cf77; box-shadow: 0 0 18px #f4e5a5; }
+.rhythm-track.is-rain { width: 250px; border-color: #829d8f; background: linear-gradient(rgb(112 140 125 / 20%), rgb(23 42 39 / 92%)), repeating-linear-gradient(90deg, transparent 0 59px, rgb(203 226 210 / 9%) 60px 62px); }
+.rhythm-track.is-rain .rhythm-note { width: 15px; height: 24px; color: transparent; border-radius: 55% 45% 60% 40%; background: #a8d6cd; box-shadow: 0 0 14px #c8eee5; transform: translate(-50%, -50%) rotate(45deg); }
+.minigame-overlay.is-greenhouse .rhythm-pad { border-color: #8eb593; background: radial-gradient(circle, #56745c, #263b30); box-shadow: 0 0 30px rgb(174 217 177 / 28%); }
+.memory-key.is-plant { height: 105px; border-color: #718f68; border-radius: 50% 50% 42% 42%; color: #f0e6bd; background: radial-gradient(circle at 50% 25%, #526f4e, #223427 65%); }
+.memory-key.is-plant.is-lit { background: radial-gradient(circle at 50% 25%, #fbefab, #83ad65 45%, #29432e); box-shadow: 0 0 35px #dce795; }
 .key-2, .key-3 { border-color: #e97ac7; }
 @keyframes rhythm-hit { 50% { transform: scale(.88); background: #67e8d2; } }
 @keyframes memory-wrong { 33% { transform: translateX(-7px); } 66% { transform: translateX(7px); } }
@@ -278,6 +289,9 @@ button { font: inherit; }
 .region-reactive-layer.has-harmony .reactive-neon { opacity: 1; }
 .region-reactive-layer.has-bass.on-beat .reactive-bass { animation: bass-pulse 280ms ease; }
 .region-reactive-layer.has-rhythm.on-beat { filter: brightness(1.08); }
+.region-reactive-layer.is-greenhouse .reactive-crt { top: auto; right: auto; bottom: 0; left: 0; width: 100%; height: 42%; background: radial-gradient(ellipse at 25% 100%, rgb(195 227 126 / 22%), transparent 35%), radial-gradient(ellipse at 75% 100%, rgb(136 198 124 / 18%), transparent 32%); }
+.region-reactive-layer.is-greenhouse .reactive-neon { background: radial-gradient(circle at 58% 18%, rgb(207 231 168 / 20%), transparent 43%); }
+.region-reactive-layer.is-greenhouse .reactive-bass { border-color: rgb(154 191 120 / 0%); }
 @keyframes crt-flicker { 50% { opacity: .45; transform: translateX(1px); } }
 @keyframes bass-pulse { 20% { border-color: rgb(103 232 210 / 24%); transform: scale(.98); } }
 

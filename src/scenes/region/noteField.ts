@@ -33,7 +33,7 @@ export class NoteField {
     private readonly onCollect: (noteId: string) => void,
   ) {
     for (const spot of this.spots) {
-      const texture = this.createNoteTexture(spot.glyph);
+      const texture = this.createNoteTexture(spot);
       const material = new THREE.SpriteMaterial({
         map: texture,
         color: spot.color,
@@ -166,7 +166,7 @@ export class NoteField {
     this.bursts.push({ mesh, elapsed: 0 });
   }
 
-  private createNoteTexture(glyph: NoteSpot["glyph"]): THREE.CanvasTexture {
+  private createNoteTexture(spot: NoteSpot): THREE.CanvasTexture {
     const canvas = document.createElement("canvas");
     canvas.width = 128;
     canvas.height = 128;
@@ -175,10 +175,35 @@ export class NoteField {
     context.shadowColor = "#ffffff";
     context.shadowBlur = 5;
     context.fillStyle = "#ffffff";
-    context.font = glyph === "♫" ? "bold 78px serif" : "bold 94px serif";
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-    context.fillText(glyph, 64, 67);
+    if (spot.kind === "seed") {
+      const glow = context.createRadialGradient(64, 68, 5, 64, 68, 50);
+      glow.addColorStop(0, "rgba(255,255,220,1)");
+      glow.addColorStop(0.35, "rgba(232,220,140,.85)");
+      glow.addColorStop(1, "rgba(255,255,255,0)");
+      context.fillStyle = glow;
+      context.fillRect(8, 8, 112, 112);
+      context.fillStyle = "white";
+      context.beginPath();
+      context.ellipse(64, 72, 15, 23, -0.25, 0, Math.PI * 2);
+      context.fill();
+      context.beginPath();
+      context.ellipse(47, 48, 9, 19, -0.8, 0, Math.PI * 2);
+      context.ellipse(80, 45, 8, 18, 0.75, 0, Math.PI * 2);
+      context.fill();
+      context.strokeStyle = "rgba(65,82,54,.8)";
+      context.lineWidth = 4;
+      context.beginPath();
+      context.moveTo(64, 80);
+      context.quadraticCurveTo(62, 59, 48, 47);
+      context.moveTo(64, 65);
+      context.quadraticCurveTo(70, 52, 80, 44);
+      context.stroke();
+    } else {
+      context.font = spot.glyph === "♫" ? "bold 78px serif" : "bold 94px serif";
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillText(spot.glyph, 64, 67);
+    }
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
     return texture;

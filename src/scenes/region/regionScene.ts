@@ -59,7 +59,7 @@ export class RegionScene implements GameScene {
       onCollectNote,
     );
     this.collectedNotes = collectedNotes;
-    this.reactiveLayer = new ReactiveLayer(overlayRoot);
+    this.reactiveLayer = new ReactiveLayer(overlayRoot, manifest.id);
     this.minigames = new MinigameController(
       overlayRoot,
       width,
