@@ -24,7 +24,15 @@ export function bootstrap(root: HTMLElement): void {
   overlay.className = "ui-layer";
   overlay.dataset.scene = gameStore.snapshot.currentScene;
   root.append(overlay);
-  const engine = new Engine(root);
+  let engine: Engine;
+  try {
+    engine = new Engine(root);
+  } catch (error) {
+    overlay.remove();
+    showWebGlFallback(root);
+    console.error("[App] WebGLRenderer 생성 실패", error);
+    return;
+  }
   const sceneManager = new SceneManager(engine, overlay);
   const loader = new AssetLoader();
   const loading = new LoadingScreen();
@@ -45,12 +53,23 @@ export function bootstrap(root: HTMLElement): void {
   let wasCompleted = gameStore.snapshot.completed;
   let overworldAudioRegion: RegionId = initialRegion.id;
   let audioSwitchToken = 0;
+  let imageProgress = 0;
+  let audioProgress = 0;
+  const backgrounds = Object.values(ASSET_MANIFEST.regions)
+    .map((region) => region.background)
+    .filter((background): background is string => background !== null);
+  const updatePreloadProgress = (): void => {
+    const total = backgrounds.length + initialRegion.stems.length;
+    loading.setProgress(total === 0
+      ? 1
+      : (imageProgress * backgrounds.length + audioProgress * initialRegion.stems.length) / total);
+  };
   overlay.append(loading.element);
 
   loader.addEventListener(GAME_EVENTS.ASSET_PROGRESS, (event) => {
-    loading.setProgress((event as CustomEvent<number>).detail);
+    imageProgress = (event as CustomEvent<number>).detail;
+    updatePreloadProgress();
   });
-  loader.addEventListener(GAME_EVENTS.ASSET_COMPLETE, () => loading.complete());
   loading.onStart(() => {
     void Promise.all([stemPlayer.unlock(), sfxPlayer.unlock()]).then(async () => {
       await stemPlayer.start(initialRegion.stems, initialRegion.id);
@@ -148,9 +167,17 @@ export function bootstrap(root: HTMLElement): void {
   });
 
   // 외부 에셋이 없는 현재 단계도 동일한 로딩 흐름을 유지한다.
-  void loader.preloadImages(Object.values(ASSET_MANIFEST.regions)
-    .map((region) => region.background)
-    .filter((background): background is string => background !== null));
+  void Promise.all([
+    loader.preloadImages(backgrounds),
+    stemPlayer.preload(initialRegion.stems, initialRegion.id, initialRegion.bpm, (progress) => {
+      audioProgress = progress;
+      updatePreloadProgress();
+    }),
+  ]).then(() => loading.complete());
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") void stemPlayer.resumeAndRestore();
+  });
 
   gameStore.addEventListener(GAME_EVENTS.STATE_CHANGE, (event) => {
     const state = (event as CustomEvent<typeof gameStore.snapshot>).detail;
@@ -212,11 +239,20 @@ export function bootstrap(root: HTMLElement): void {
   gameStore.addEventListener(GAME_EVENTS.ALL_PROGRESS_RESET, () => stemPlayer.lockAll());
 
   // 실제 수집 오브젝트가 붙기 전 스템 조합을 빠르게 검증하기 위한 임시 입력이다.
-  window.addEventListener("keydown", (event) => {
-    const number = Number(event.key);
-    if (number >= 1 && number <= 7) {
-      const prefix = gameStore.snapshot.currentRegion === "neon-forest" ? "greenhouse-note-" : "note-";
-      gameStore.collectNote(`${prefix}${number}`);
-    }
-  });
+  if (new URLSearchParams(window.location.search).has("debug")) {
+    window.addEventListener("keydown", (event) => {
+      const number = Number(event.key);
+      if (number >= 1 && number <= 7) {
+        const prefix = gameStore.snapshot.currentRegion === "neon-forest" ? "greenhouse-note-" : "note-";
+        gameStore.collectNote(`${prefix}${number}`);
+      }
+    });
+  }
+}
+
+function showWebGlFallback(root: HTMLElement): void {
+  const fallback = document.createElement("main");
+  fallback.className = "webgl-fallback";
+  fallback.innerHTML = "<h1>그래픽을 시작할 수 없어요</h1><p>WebGL을 지원하는 최신 브라우저에서 다시 열거나 하드웨어 가속을 켜주세요.</p>";
+  root.replaceChildren(fallback);
 }

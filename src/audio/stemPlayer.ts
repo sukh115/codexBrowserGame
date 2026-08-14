@@ -7,6 +7,8 @@ interface ActiveStem {
   readonly gain: GainNode;
 }
 
+const AUDIO_FORMATS = ["ogg", "m4a", "wav"] as const;
+
 export class StemPlayer {
   private context: AudioContext | null = null;
   private masterGain: GainNode | null = null;
@@ -16,38 +18,55 @@ export class StemPlayer {
   private readonly unlockedStemIds = new Set<string>();
   private readonly appliedEffects = new Set<MusicEffect>();
   private readonly stemLevels = new Map<string, number>();
+  private readonly bufferCache = new Map<string, AudioBuffer>();
   private unlocked = false;
   private started = false;
   private targetMasterVolume = -1;
   private transportStartTime = 0;
   private userVolume = 1;
+  private requestedMasterVolume = 1;
   private regionId: RegionId = "music-shop";
   private regionGeneration = 0;
 
   constructor(private bpm: number) {}
 
   async unlock(): Promise<void> {
-    if (!this.context) {
-      this.context = new AudioContext();
-      this.masterGain = this.context.createGain();
-      this.masterFilter = this.context.createBiquadFilter();
-      this.outputBoost = this.context.createGain();
-      this.masterGain.gain.value = 0.3;
-      this.masterFilter.type = "lowpass";
-      this.masterFilter.frequency.value = 2400;
-      this.masterFilter.Q.value = 0.7;
-      this.outputBoost.gain.value = 1;
-      this.masterGain.connect(this.masterFilter).connect(this.outputBoost).connect(this.context.destination);
-    }
+    this.ensureContext();
+    if (!this.context) return;
     await this.context.resume();
     this.unlocked = true;
+  }
+
+  async preload(
+    stems: readonly StemManifest[],
+    regionId: RegionId,
+    bpm: number,
+    onProgress?: (progress: number) => void,
+  ): Promise<void> {
+    this.ensureContext();
+    let loaded = 0;
+    await Promise.all(stems.map(async (stem, index) => {
+      await this.loadBuffer(stem, index, regionId, bpm);
+      loaded += 1;
+      onProgress?.(loaded / stems.length);
+    }));
+  }
+
+  async resumeAndRestore(): Promise<void> {
+    if (!this.context || !this.masterGain || document.visibilityState !== "visible") return;
+    await this.context.resume();
+    const restoredVolume = this.requestedMasterVolume * this.userVolume;
+    const now = this.context.currentTime;
+    this.masterGain.gain.cancelScheduledValues(now);
+    this.masterGain.gain.setValueAtTime(restoredVolume, now);
+    this.targetMasterVolume = restoredVolume;
   }
 
   async start(stems: readonly StemManifest[], regionId: RegionId = "music-shop"): Promise<void> {
     if (!this.unlocked || !this.context || !this.masterGain || this.started) return;
     const generation = ++this.regionGeneration;
     this.regionId = regionId;
-    const buffers = await Promise.all(stems.map((stem, index) => this.loadBuffer(stem, index)));
+    const buffers = await Promise.all(stems.map((stem, index) => this.loadBuffer(stem, index, regionId, this.bpm)));
     if (generation !== this.regionGeneration) return;
     this.activateStems(stems, buffers);
   }
@@ -86,7 +105,7 @@ export class StemPlayer {
     this.started = false;
     this.bpm = bpm;
     this.regionId = regionId;
-    const buffers = await Promise.all(stems.map((stem, index) => this.loadBuffer(stem, index)));
+    const buffers = await Promise.all(stems.map((stem, index) => this.loadBuffer(stem, index, regionId, bpm)));
     if (generation !== this.regionGeneration) return;
     this.activateStems(stems, buffers);
   }
@@ -152,8 +171,9 @@ export class StemPlayer {
   }
 
   setMasterVolume(volume: number, fadeSeconds = 0.35): void {
+    this.requestedMasterVolume = Math.max(0, volume);
     if (!this.context || !this.masterGain) return;
-    const normalizedVolume = Math.max(0, volume) * this.userVolume;
+    const normalizedVolume = this.requestedMasterVolume * this.userVolume;
     if (Math.abs(normalizedVolume - this.targetMasterVolume) < 0.008) return;
     this.targetMasterVolume = normalizedVolume;
     const now = this.context.currentTime;
@@ -202,31 +222,49 @@ export class StemPlayer {
     this.transportStartTime = 0;
     this.appliedEffects.clear();
     this.stemLevels.clear();
+    this.bufferCache.clear();
   }
 
-  private async loadBuffer(stem: StemManifest, index: number): Promise<AudioBuffer> {
-    if (!this.context) throw new Error("AudioContext가 준비되지 않았습니다.");
-    if (!stem.path) return this.renderPlaceholder(index);
-    try {
-      const response = await fetch(stem.path);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return await this.context.decodeAudioData(await response.arrayBuffer());
-    } catch (error) {
-      console.warn(`[StemPlayer] ${stem.id} 로드 실패, 플레이스홀더 사용`, error);
-      return this.renderPlaceholder(index);
+  private async loadBuffer(
+    stem: StemManifest,
+    index: number,
+    regionId: RegionId,
+    bpm: number,
+  ): Promise<AudioBuffer> {
+    this.ensureContext();
+    if (!this.context) throw new Error("AudioContext를 준비할 수 없습니다.");
+    const cacheKey = `${regionId}:${bpm}:${stem.id}:${stem.path ?? "placeholder"}`;
+    const cached = this.bufferCache.get(cacheKey);
+    if (cached) return cached;
+    if (stem.path) {
+      for (const extension of AUDIO_FORMATS) {
+        try {
+          const response = await fetch(`${stem.path}.${extension}`);
+          if (!response.ok) continue;
+          const buffer = await this.context.decodeAudioData(await response.arrayBuffer());
+          this.bufferCache.set(cacheKey, buffer);
+          return buffer;
+        } catch {
+          // 브라우저별 디코더 차이를 다음 포맷으로 흡수한다.
+        }
+      }
+      console.warn(`[StemPlayer] ${stem.id}의 ogg/m4a/wav 로드 실패, 플레이스홀더 사용`);
     }
+    const buffer = await this.renderPlaceholder(index, regionId, bpm);
+    this.bufferCache.set(cacheKey, buffer);
+    return buffer;
   }
 
-  private async renderPlaceholder(trackIndex: number): Promise<AudioBuffer> {
+  private async renderPlaceholder(trackIndex: number, regionId = this.regionId, bpm = this.bpm): Promise<AudioBuffer> {
     const sampleRate = 44_100;
-    const beatDuration = 60 / this.bpm;
+    const beatDuration = 60 / bpm;
     const duration = beatDuration * 16;
     const offline = new OfflineAudioContext(2, Math.ceil(sampleRate * duration), sampleRate);
     const output = offline.createGain();
     output.gain.value = trackIndex === 0 ? 0.22 : 0.12;
     output.connect(offline.destination);
 
-    if (this.regionId === "neon-forest") {
+    if (regionId === "neon-forest") {
       if (trackIndex === 0) this.scheduleGreenhouseRain(offline, output, beatDuration);
       if (trackIndex === 1) this.scheduleGreenhouseRoots(offline, output, beatDuration);
       if (trackIndex === 2) this.scheduleGreenhouseGlass(offline, output, beatDuration);
@@ -319,5 +357,19 @@ export class StemPlayer {
     oscillator.connect(envelope).connect(output);
     oscillator.start(start);
     oscillator.stop(start + duration + 0.01);
+  }
+
+  private ensureContext(): void {
+    if (this.context) return;
+    this.context = new AudioContext();
+    this.masterGain = this.context.createGain();
+    this.masterFilter = this.context.createBiquadFilter();
+    this.outputBoost = this.context.createGain();
+    this.masterGain.gain.value = 0.3;
+    this.masterFilter.type = "lowpass";
+    this.masterFilter.frequency.value = 2400;
+    this.masterFilter.Q.value = 0.7;
+    this.outputBoost.gain.value = 1;
+    this.masterGain.connect(this.masterFilter).connect(this.outputBoost).connect(this.context.destination);
   }
 }

@@ -408,3 +408,18 @@ button { font: inherit; }
   .minigame-close { margin-top: 10px; }
   .minigame-entrance { min-width: 44px; min-height: 44px; font-size: 12px; }
 }
+.webgl-fallback {
+  display: grid;
+  min-height: 100dvh;
+  place-content: center;
+  gap: 12px;
+  padding: 32px;
+  color: #f7f1ff;
+  text-align: center;
+  background: linear-gradient(145deg, #21183d, #18384b);
+}
+
+.webgl-fallback h1,
+.webgl-fallback p { margin: 0; }
+
+.webgl-fallback p { max-width: 34rem; color: #d9d1e6; line-height: 1.6; }

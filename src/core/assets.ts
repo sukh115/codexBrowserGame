@@ -20,7 +20,6 @@ export class AssetLoader extends EventTarget {
 
   async preloadImages(urls: readonly string[]): Promise<void> {
     if (urls.length === 0) {
-      this.complete();
       return;
     }
     await Promise.all(urls.map((url) => new Promise<void>((resolve) => {

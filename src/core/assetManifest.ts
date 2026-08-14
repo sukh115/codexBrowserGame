@@ -20,12 +20,12 @@ export interface StemManifest {
   readonly path: string | null;
 }
 
-const PLACEHOLDER_STEMS = [
-  { id: "rhythm", path: null },
-  { id: "bass", path: null },
-  { id: "harmony", path: null },
-  { id: "melody", path: null },
-] as const;
+const createStems = (regionId: RegionId): readonly StemManifest[] => [
+  { id: "rhythm", path: assetPath(`assets/audio/stems/${regionId}/rhythm`) },
+  { id: "bass", path: assetPath(`assets/audio/stems/${regionId}/bass`) },
+  { id: "harmony", path: assetPath(`assets/audio/stems/${regionId}/harmony`) },
+  { id: "melody", path: assetPath(`assets/audio/stems/${regionId}/melody`) },
+];
 
 const NOTE_STEM_MAPPING = {
   "note-1": "rhythm",
@@ -93,7 +93,7 @@ export const ASSET_MANIFEST = {
       background: assetPath("assets/textures/music-shop.webp"),
       bpm: 120,
       aspectRatio: 2,
-      stems: PLACEHOLDER_STEMS,
+      stems: createStems("music-shop"),
       noteStemMapping: NOTE_STEM_MAPPING,
       noteEffectMapping: NOTE_EFFECT_MAPPING,
     },
@@ -103,7 +103,7 @@ export const ASSET_MANIFEST = {
       background: assetPath("assets/textures/abandoned-greenhouse.webp"),
       bpm: 96,
       aspectRatio: 1456 / 720,
-      stems: PLACEHOLDER_STEMS,
+      stems: createStems("neon-forest"),
       noteStemMapping: GREENHOUSE_NOTE_STEM_MAPPING,
       noteEffectMapping: GREENHOUSE_NOTE_EFFECT_MAPPING,
     },
