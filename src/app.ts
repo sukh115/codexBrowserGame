@@ -41,6 +41,8 @@ export function bootstrap(root: HTMLElement): void {
     () => gameStore.resetAll(),
   );
   let wasCompleted = gameStore.snapshot.completed;
+  let overworldAudioRegion: RegionId = initialRegion.id;
+  let audioSwitchToken = 0;
   overlay.append(loading.element);
 
   loader.addEventListener(GAME_EVENTS.ASSET_PROGRESS, (event) => {
@@ -108,8 +110,23 @@ export function bootstrap(root: HTMLElement): void {
       sceneManager.transitionTo(activeRegionScene);
       if (!gameStore.snapshot.tutorialCompleted) tutorial.showRegion();
     };
-    const updateOverworldAudio = (proximity: number): void => {
+    const updateOverworldAudio = (regionId: RegionId, proximity: number): void => {
       if (gameStore.snapshot.muted || gameStore.snapshot.currentScene !== "overworld") return;
+      if (overworldAudioRegion !== regionId) {
+        overworldAudioRegion = regionId;
+        const switchToken = ++audioSwitchToken;
+        const region: RegionManifest = ASSET_MANIFEST.regions[regionId];
+        stemPlayer.lockAll();
+        void stemPlayer.setRegion(region.stems, region.bpm, region.id).then(() => {
+          if (switchToken !== audioSwitchToken || gameStore.snapshot.currentScene !== "overworld") return;
+          for (const noteId of gameStore.snapshot.collectedNotes) {
+            const stemId = region.noteStemMapping[noteId];
+            if (stemId) stemPlayer.unlockStem(stemId, 0.12);
+            const effect = region.noteEffectMapping[noteId];
+            if (effect) stemPlayer.applyEffect(effect, 0.12);
+          }
+        });
+      }
       const { minimumVolume, maximumVolume } = ASSET_MANIFEST.overworldEntrance;
       stemPlayer.setMasterVolume(
         minimumVolume + (maximumVolume - minimumVolume) * proximity,
@@ -170,6 +187,8 @@ export function bootstrap(root: HTMLElement): void {
 
   gameStore.addEventListener(GAME_EVENTS.REGION_ENTERED, (event) => {
     const { regionId } = (event as CustomEvent<RegionEnteredDetail>).detail;
+    audioSwitchToken += 1;
+    overworldAudioRegion = regionId;
     const region: RegionManifest = ASSET_MANIFEST.regions[regionId];
     stemPlayer.lockAll();
     void stemPlayer.setRegion(region.stems, region.bpm, region.id).then(() => {

@@ -22,6 +22,7 @@ export class StemPlayer {
   private transportStartTime = 0;
   private userVolume = 1;
   private regionId: RegionId = "music-shop";
+  private regionGeneration = 0;
 
   constructor(private bpm: number) {}
 
@@ -44,8 +45,15 @@ export class StemPlayer {
 
   async start(stems: readonly StemManifest[], regionId: RegionId = "music-shop"): Promise<void> {
     if (!this.unlocked || !this.context || !this.masterGain || this.started) return;
+    const generation = ++this.regionGeneration;
     this.regionId = regionId;
     const buffers = await Promise.all(stems.map((stem, index) => this.loadBuffer(stem, index)));
+    if (generation !== this.regionGeneration) return;
+    this.activateStems(stems, buffers);
+  }
+
+  private activateStems(stems: readonly StemManifest[], buffers: readonly AudioBuffer[]): void {
+    if (!this.context || !this.masterGain) return;
     const startTime = this.context.currentTime + 0.08;
     this.transportStartTime = startTime;
     stems.forEach((stem, index) => {
@@ -65,6 +73,7 @@ export class StemPlayer {
 
   async setRegion(stems: readonly StemManifest[], bpm: number, regionId: RegionId): Promise<void> {
     if (this.regionId === regionId && this.bpm === bpm && this.started) return;
+    const generation = ++this.regionGeneration;
     for (const { source, gain } of this.activeStems.values()) {
       source.stop();
       source.disconnect();
@@ -77,7 +86,9 @@ export class StemPlayer {
     this.started = false;
     this.bpm = bpm;
     this.regionId = regionId;
-    await this.start(stems, regionId);
+    const buffers = await Promise.all(stems.map((stem, index) => this.loadBuffer(stem, index)));
+    if (generation !== this.regionGeneration) return;
+    this.activateStems(stems, buffers);
   }
 
   unlockStem(id: string, fadeSeconds = 2): void {

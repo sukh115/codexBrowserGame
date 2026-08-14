@@ -52,7 +52,7 @@ export class OverworldScene implements GameScene {
     overlayRoot: HTMLElement,
     private readonly onEnterRegion: (regionId: RegionId) => void,
     private readonly spawnAtRegion: RegionId | null = null,
-    private readonly onRegionProximityChange: (proximity: number) => void = () => {},
+    private readonly onRegionProximityChange: (regionId: RegionId, proximity: number) => void = () => {},
     private readonly completedRegions: readonly RegionId[] = [],
   ) {
     this.input = new PointerInput(canvas);
@@ -175,7 +175,10 @@ export class OverworldScene implements GameScene {
       1,
     );
     // 가장자리에서 볼륨이 갑자기 튀지 않도록 부드러운 감쇠 곡선을 쓴다.
-    this.onRegionProximityChange(linearProximity * linearProximity * (3 - 2 * linearProximity));
+    this.onRegionProximityChange(
+      this.activeRegionId,
+      linearProximity * linearProximity * (3 - 2 * linearProximity),
+    );
 
     if (this.entering) return;
     // 캐릭터의 보행 바운스는 연출용이며 카메라 추적 높이에는 반영하지 않는다.
@@ -193,7 +196,7 @@ export class OverworldScene implements GameScene {
   }
 
   dispose(): void {
-    this.onRegionProximityChange(0);
+    this.onRegionProximityChange(this.activeRegionId, 0);
     this.input.removeEventListener(GAME_EVENTS.POINT, this.onPoint as EventListener);
     this.input.dispose();
     this.propLoader.dispose();
