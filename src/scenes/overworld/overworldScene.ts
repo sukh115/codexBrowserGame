@@ -2,7 +2,7 @@ import * as THREE from "three";
 import type { GameScene } from "../../core/engine";
 import { GAME_EVENTS, WORLD } from "../../core/constants";
 import { PointerInput, type TapDetail } from "../../core/input";
-import { ASSET_MANIFEST } from "../../core/assetManifest";
+import { ASSET_MANIFEST, type RegionId } from "../../core/assetManifest";
 import { gsap } from "gsap";
 import { createPlaceholderCharacter } from "./placeholderCharacter";
 import { OverworldPropLoader } from "./propLoader";
@@ -24,12 +24,17 @@ export class OverworldScene implements GameScene {
   private readonly marker: THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>;
   private readonly entrance = new THREE.Group();
   private readonly entranceWaves: Array<THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>> = [];
+  private readonly secondEntrance = new THREE.Group();
+  private readonly secondEntranceWaves: Array<THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>> = [];
   private readonly footsteps: Array<THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>> = [];
   private readonly entrancePosition = new THREE.Vector3(
     ASSET_MANIFEST.overworldEntrance.position.x,
     0,
     ASSET_MANIFEST.overworldEntrance.position.z,
   );
+  private readonly secondEntrancePosition = new THREE.Vector3(-11, 0, 8);
+  private readonly activeEntrancePosition = new THREE.Vector3();
+  private activeRegionId: RegionId = "music-shop";
   private readonly enterButton = document.createElement("button");
   private moving = false;
   private walkTime = 0;
@@ -42,8 +47,8 @@ export class OverworldScene implements GameScene {
   constructor(
     private readonly canvas: HTMLCanvasElement,
     overlayRoot: HTMLElement,
-    private readonly onEnterRegion: () => void,
-    private readonly spawnAtEntrance = false,
+    private readonly onEnterRegion: (regionId: RegionId) => void,
+    private readonly spawnAtRegion: RegionId | null = null,
     private readonly onRegionProximityChange: (proximity: number) => void = () => {},
   ) {
     this.input = new PointerInput(canvas);
@@ -77,12 +82,15 @@ export class OverworldScene implements GameScene {
     sun.position.set(8, 15, 6);
     this.scene.add(sun, this.ground, this.marker);
     this.createCharacter();
-    if (this.spawnAtEntrance) {
-      this.character.position.copy(this.entrancePosition);
+    if (this.spawnAtRegion) {
+      this.character.position.copy(
+        this.spawnAtRegion === "neon-forest" ? this.secondEntrancePosition : this.entrancePosition,
+      );
       this.character.position.z += 2.7;
     }
     this.createBoundary();
     this.createEntrance();
+    this.createSecondEntrance();
     this.createFootsteps();
     this.propLoader.load(ASSET_MANIFEST.overworldProps);
     this.destination.copy(this.character.position);
@@ -124,16 +132,29 @@ export class OverworldScene implements GameScene {
       footstep.scale.multiplyScalar(1 + deltaSeconds * 0.35);
     }
     this.entrance.rotation.y += deltaSeconds * 0.45;
+    this.secondEntrance.rotation.y -= deltaSeconds * 0.38;
     for (let index = 0; index < this.entranceWaves.length; index += 1) {
       const wave = this.entranceWaves[index];
       const phase = (this.walkTime * 0.35 + index / this.entranceWaves.length) % 1;
       wave.scale.setScalar(0.7 + phase * 1.45);
       wave.material.opacity = (1 - phase) * 0.42;
     }
-    const nearEntrance = this.character.position.distanceToSquared(this.entrancePosition)
-      <= ASSET_MANIFEST.overworldEntrance.activationRadius ** 2;
+    for (let index = 0; index < this.secondEntranceWaves.length; index += 1) {
+      const wave = this.secondEntranceWaves[index];
+      const phase = (this.walkTime * 0.3 + index / this.secondEntranceWaves.length) % 1;
+      wave.scale.setScalar(0.7 + phase * 1.45);
+      wave.material.opacity = (1 - phase) * 0.42;
+    }
+    const firstDistanceSquared = this.character.position.distanceToSquared(this.entrancePosition);
+    const secondDistanceSquared = this.character.position.distanceToSquared(this.secondEntrancePosition);
+    const useSecondEntrance = secondDistanceSquared < firstDistanceSquared;
+    this.activeEntrancePosition.copy(useSecondEntrance ? this.secondEntrancePosition : this.entrancePosition);
+    this.activeRegionId = useSecondEntrance ? "neon-forest" : "music-shop";
+    const nearestDistanceSquared = Math.min(firstDistanceSquared, secondDistanceSquared);
+    const nearEntrance = nearestDistanceSquared <= ASSET_MANIFEST.overworldEntrance.activationRadius ** 2;
     this.enterButton.hidden = !nearEntrance || this.entering;
-    const distanceToEntrance = Math.sqrt(this.character.position.distanceToSquared(this.entrancePosition));
+    this.enterButton.textContent = this.activeRegionId === "neon-forest" ? "버려진 온실로 들어가기" : "악기점으로 들어가기";
+    const distanceToEntrance = Math.sqrt(nearestDistanceSquared);
     const linearProximity = THREE.MathUtils.clamp(
       1 - distanceToEntrance / ASSET_MANIFEST.overworldEntrance.audioRadius,
       0,
@@ -242,36 +263,50 @@ export class OverworldScene implements GameScene {
   }
 
   private createEntrance(): void {
+    this.createPortal(this.entrance, this.entranceWaves, this.entrancePosition, 0xf08a5d, 0x67e8d2);
+  }
+
+  private createSecondEntrance(): void {
+    this.createPortal(this.secondEntrance, this.secondEntranceWaves, this.secondEntrancePosition, 0x718b61, 0xc5a96b);
+  }
+
+  private createPortal(
+    group: THREE.Group,
+    waves: Array<THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>>,
+    position: THREE.Vector3,
+    primaryColor: number,
+    accentColor: number,
+  ): void {
     const base = new THREE.Mesh(
       new THREE.CylinderGeometry(1.1, 1.1, 0.12, 32),
-      new THREE.MeshStandardMaterial({ color: 0xf08a5d, emissive: 0x6d2411, emissiveIntensity: 0.35 }),
+      new THREE.MeshStandardMaterial({ color: primaryColor, emissive: primaryColor, emissiveIntensity: 0.2 }),
     );
     base.position.y = 0.06;
     const ring = new THREE.Mesh(
       new THREE.TorusGeometry(0.82, 0.09, 10, 40),
-      new THREE.MeshBasicMaterial({ color: 0x78b58b }),
+      new THREE.MeshBasicMaterial({ color: accentColor }),
     );
     ring.position.y = 1.15;
-    const glow = new THREE.PointLight(0xf08a5d, 2.5, 7);
+    const glow = new THREE.PointLight(primaryColor, 2.5, 7);
     glow.position.y = 1.3;
     const beacon = new THREE.Mesh(
       new THREE.CylinderGeometry(0.32, 0.85, 7, 18, 1, true),
-      new THREE.MeshBasicMaterial({ color: 0x67e8d2, transparent: true, opacity: 0.12, side: THREE.DoubleSide }),
+      new THREE.MeshBasicMaterial({ color: accentColor, transparent: true, opacity: 0.12, side: THREE.DoubleSide }),
     );
     beacon.position.y = 3.55;
-    this.entrance.add(base, ring, glow, beacon);
+    group.add(base, ring, glow, beacon);
     for (let index = 0; index < 3; index += 1) {
       const wave = new THREE.Mesh(
         new THREE.RingGeometry(0.75, 0.82, 32),
-        new THREE.MeshBasicMaterial({ color: index % 2 === 0 ? 0x67e8d2 : 0xe97ac7, transparent: true }),
+        new THREE.MeshBasicMaterial({ color: index % 2 === 0 ? accentColor : primaryColor, transparent: true }),
       );
       wave.rotation.x = -Math.PI / 2;
       wave.position.y = 0.04;
-      this.entranceWaves.push(wave);
-      this.entrance.add(wave);
+      waves.push(wave);
+      group.add(wave);
     }
-    this.entrance.position.copy(this.entrancePosition);
-    this.scene.add(this.entrance);
+    group.position.copy(position);
+    this.scene.add(group);
   }
 
   private createFootsteps(): void {
@@ -301,13 +336,13 @@ export class OverworldScene implements GameScene {
     this.moving = false;
     this.enterButton.hidden = true;
     gsap.to(this.camera.position, {
-      x: this.entrancePosition.x + 3.5,
+      x: this.activeEntrancePosition.x + 3.5,
       y: 4.5,
-      z: this.entrancePosition.z + 3.5,
+      z: this.activeEntrancePosition.z + 3.5,
       duration: 0.55,
       ease: "power2.inOut",
-      onUpdate: () => this.camera.lookAt(this.entrancePosition.x, 0.8, this.entrancePosition.z),
-      onComplete: this.onEnterRegion,
+      onUpdate: () => this.camera.lookAt(this.activeEntrancePosition.x, 0.8, this.activeEntrancePosition.z),
+      onComplete: () => this.onEnterRegion(this.activeRegionId),
     });
   };
 

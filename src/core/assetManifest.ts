@@ -47,6 +47,26 @@ const NOTE_EFFECT_MAPPING = {
   "note-7": "completion-boost",
 } as const;
 
+const GREENHOUSE_NOTE_STEM_MAPPING = {
+  "greenhouse-note-1": "rhythm",
+  "greenhouse-note-2": null,
+  "greenhouse-note-3": "bass",
+  "greenhouse-note-4": "harmony",
+  "greenhouse-note-5": null,
+  "greenhouse-note-6": "melody",
+  "greenhouse-note-7": null,
+} as const;
+
+const GREENHOUSE_NOTE_EFFECT_MAPPING = {
+  "greenhouse-note-1": null,
+  "greenhouse-note-2": "rhythm-accent",
+  "greenhouse-note-3": null,
+  "greenhouse-note-4": null,
+  "greenhouse-note-5": "open-filter",
+  "greenhouse-note-6": null,
+  "greenhouse-note-7": "completion-boost",
+} as const;
+
 export const ASSET_MANIFEST = {
   characterModel: null as string | null,
   overworldGround: null as string | null,
@@ -79,12 +99,12 @@ export const ASSET_MANIFEST = {
     "neon-forest": {
       id: "neon-forest",
       title: "네온 숲",
-      background: null,
-      bpm: 120,
-      aspectRatio: 2,
+      background: assetPath("assets/textures/abandoned-greenhouse.png"),
+      bpm: 96,
+      aspectRatio: 1456 / 720,
       stems: PLACEHOLDER_STEMS,
-      noteStemMapping: NOTE_STEM_MAPPING,
-      noteEffectMapping: NOTE_EFFECT_MAPPING,
+      noteStemMapping: GREENHOUSE_NOTE_STEM_MAPPING,
+      noteEffectMapping: GREENHOUSE_NOTE_EFFECT_MAPPING,
     },
   } satisfies Record<RegionId, RegionManifest>,
   overworldEntrance: {
@@ -95,4 +115,22 @@ export const ASSET_MANIFEST = {
     minimumVolume: 0.02,
     maximumVolume: 0.42,
   },
+  overworldEntrances: [
+    {
+      regionId: "music-shop" as RegionId,
+      position: { x: 7, z: -5 },
+      activationRadius: 2,
+      audioRadius: 16,
+      minimumVolume: 0.02,
+      maximumVolume: 0.42,
+    },
+    {
+      regionId: "neon-forest" as RegionId,
+      position: { x: -11, z: 8 },
+      activationRadius: 2,
+      audioRadius: 16,
+      minimumVolume: 0.02,
+      maximumVolume: 0.42,
+    },
+  ],
 } as const;

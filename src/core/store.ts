@@ -17,6 +17,11 @@ export interface GameState {
   readonly rhythmAssist: boolean;
 }
 
+export function getRegionNoteCount(state: Pick<GameState, "collectedNotes" | "currentRegion">): number {
+  const prefix = state.currentRegion === "neon-forest" ? "greenhouse-note-" : "note-";
+  return state.collectedNotes.filter((id) => id.startsWith(prefix)).length;
+}
+
 class GameStore extends EventTarget {
   private readonly initialState: GameState = {
     collectedNotes: [],
@@ -46,10 +51,7 @@ class GameStore extends EventTarget {
   collectNote(noteId: string): void {
     if (this.state.collectedNotes.includes(noteId)) return;
     const collectedNotes = [...this.state.collectedNotes, noteId];
-    this.setState({
-      collectedNotes,
-      completed: collectedNotes.length >= 7,
-    });
+    this.setState({ collectedNotes, completed: getRegionNoteCount({ ...this.state, collectedNotes }) >= 7 });
   }
 
   clearMinigame(gameId: string, rewardNoteId: string): void {
@@ -58,7 +60,11 @@ class GameStore extends EventTarget {
     const collectedNotes = this.state.collectedNotes.includes(rewardNoteId)
       ? [...this.state.collectedNotes]
       : [...this.state.collectedNotes, rewardNoteId];
-    this.setState({ clearedMinigames, collectedNotes, completed: collectedNotes.length >= 7 });
+    this.setState({
+      clearedMinigames,
+      collectedNotes,
+      completed: getRegionNoteCount({ ...this.state, collectedNotes }) >= 7,
+    });
   }
 
   reset(): void {

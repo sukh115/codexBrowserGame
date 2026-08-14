@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { MinigameFrame } from "./frame";
 import { startMinigame, type StopGame } from "./games";
 import { MINIGAME_SPOTS, type MinigameSpot } from "./types";
+import type { RegionId } from "../../../core/assetManifest";
 
 export class MinigameController {
   private readonly buttons: HTMLButtonElement[] = [];
@@ -10,6 +11,7 @@ export class MinigameController {
   private stopGame: StopGame | null = null;
   private readonly worldPosition = new THREE.Vector3();
   private readonly projected = new THREE.Vector3();
+  private readonly spots: readonly MinigameSpot[];
 
   constructor(
     overlayRoot: HTMLElement,
@@ -19,12 +21,19 @@ export class MinigameController {
     private readonly getTransportTime: () => number,
     private readonly playTone: (index: number) => void,
     private readonly getRhythmAssist: () => boolean,
+    regionId: RegionId,
     cleared: readonly string[],
     private readonly onModalChange: (open: boolean) => void,
     private readonly onClear: (gameId: string, rewardNoteId: string) => void,
   ) {
+    const prefix = regionId === "neon-forest" ? "greenhouse-" : "";
+    this.spots = MINIGAME_SPOTS.map((spot) => ({
+      ...spot,
+      id: `${prefix}${spot.id}`,
+      rewardNoteId: `${prefix}${spot.rewardNoteId}`,
+    }));
     this.frame = new MinigameFrame(overlayRoot, () => this.close());
-    MINIGAME_SPOTS.forEach((spot) => {
+    this.spots.forEach((spot) => {
       const button = document.createElement("button");
       button.className = `minigame-entrance entrance-${spot.type}`;
       button.dataset.gameId = spot.id;
@@ -37,7 +46,7 @@ export class MinigameController {
   }
 
   update(camera: THREE.OrthographicCamera, width: number, height: number): void {
-    MINIGAME_SPOTS.forEach((spot, index) => {
+    this.spots.forEach((spot, index) => {
       this.worldPosition.set(
         (spot.u - 0.5) * this.backgroundWidth,
         (0.5 - spot.v) * this.backgroundHeight,
@@ -52,7 +61,7 @@ export class MinigameController {
   }
 
   syncCleared(cleared: readonly string[]): void {
-    MINIGAME_SPOTS.forEach((spot, index) => {
+    this.spots.forEach((spot, index) => {
       const complete = cleared.includes(spot.id);
       this.buttons[index].disabled = complete;
       this.setButtonContent(this.buttons[index], spot, complete);

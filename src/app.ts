@@ -1,12 +1,12 @@
 import { AssetLoader } from "./core/assets";
 import { Engine } from "./core/engine";
 import { GAME_EVENTS } from "./core/constants";
-import { gameStore } from "./core/store";
+import { gameStore, getRegionNoteCount } from "./core/store";
 import { SceneManager } from "./scenes/sceneManager";
 import { OverworldScene } from "./scenes/overworld/overworldScene";
 import { LoadingScreen } from "./ui/loading";
 import { RegionScene } from "./scenes/region/regionScene";
-import { ASSET_MANIFEST, type RegionManifest } from "./core/assetManifest";
+import { ASSET_MANIFEST, type RegionId, type RegionManifest } from "./core/assetManifest";
 import { StemPlayer } from "./audio/stemPlayer";
 import { SfxPlayer } from "./audio/sfx";
 import { Hud } from "./ui/hud";
@@ -67,13 +67,24 @@ export function bootstrap(root: HTMLElement): void {
         engine.renderer.domElement,
         overlay,
         showRegion,
-        true,
+        gameStore.snapshot.currentRegion,
         updateOverworldAudio,
       ));
     };
-    const showRegion = (): void => {
-      const region = ASSET_MANIFEST.regions[gameStore.snapshot.currentRegion];
-      gameStore.setState({ currentScene: "region" });
+    const showRegion = (regionId: RegionId): void => {
+      const region: RegionManifest = ASSET_MANIFEST.regions[regionId];
+      const completed = getRegionNoteCount({
+        collectedNotes: gameStore.snapshot.collectedNotes,
+        currentRegion: regionId,
+      }) >= 7;
+      gameStore.setState({ currentScene: "region", currentRegion: regionId, completed });
+      stemPlayer.lockAll();
+      for (const noteId of gameStore.snapshot.collectedNotes) {
+        const stemId = region.noteStemMapping[noteId];
+        if (stemId) stemPlayer.unlockStem(stemId, 0.05);
+        const effect = region.noteEffectMapping[noteId];
+        if (effect) stemPlayer.applyEffect(effect, 0.05);
+      }
       if (!gameStore.snapshot.muted) stemPlayer.setMasterVolume(1);
       activeRegionScene = new RegionScene(
         engine.renderer.domElement,
@@ -109,7 +120,7 @@ export function bootstrap(root: HTMLElement): void {
       engine.renderer.domElement,
       overlay,
       showRegion,
-      false,
+      null,
       updateOverworldAudio,
     ));
     loading.hide();

@@ -68,6 +68,7 @@ export class RegionScene implements GameScene {
       getTransportTime,
       playTone,
       getRhythmAssist,
+      manifest.id,
       clearedMinigames,
       (open) => this.setInputLocked(open),
       onClearMinigame,

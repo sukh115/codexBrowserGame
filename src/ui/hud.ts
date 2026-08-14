@@ -1,4 +1,4 @@
-import type { GameState } from "../core/store";
+import { getRegionNoteCount, type GameState } from "../core/store";
 
 export class Hud {
   readonly element = document.createElement("aside");
@@ -30,14 +30,15 @@ export class Hud {
   }
 
   update(state: GameState): void {
-    this.counter.textContent = state.completed ? "♪ 노래 완성" : `♪ ${state.collectedNotes.length}/7`;
+    const regionCount = getRegionNoteCount(state);
+    this.counter.textContent = state.completed ? "♪ 지역 노래 완성" : `♪ ${regionCount}/7`;
     this.counter.classList.toggle("is-complete", state.completed);
     this.replayButton.hidden = !state.completed;
     this.muteButton.textContent = state.muted ? "소리 켜기" : "음소거";
-    if (state.collectedNotes.length > this.previousCount) {
+    if (regionCount > this.previousCount) {
       this.counter.classList.remove("is-pulsing");
       requestAnimationFrame(() => this.counter.classList.add("is-pulsing"));
     }
-    this.previousCount = state.collectedNotes.length;
+    this.previousCount = regionCount;
   }
 }
