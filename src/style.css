@@ -129,14 +129,16 @@ button { font: inherit; }
 }
 
 .hud-button {
-  padding: 10px 14px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 14px;
   cursor: pointer;
   pointer-events: auto;
 }
 
 .hud-actions {
   position: absolute;
-  top: max(108px, calc(env(safe-area-inset-top) + 108px));
+  top: max(114px, calc(env(safe-area-inset-top) + 114px));
   right: max(18px, env(safe-area-inset-right));
   display: flex;
   align-items: flex-end;
@@ -146,6 +148,8 @@ button { font: inherit; }
   transform: translateY(-8px);
   transition: opacity 160ms ease, transform 160ms ease, visibility 160ms;
 }
+
+.hud-actions .hud-button { min-width: 132px; text-align: center; }
 
 .menu-toggle {
   position: absolute;
@@ -291,9 +295,9 @@ button { font: inherit; }
 .tutorial-tip button { padding: 8px 15px; border: 0; border-radius: 999px; cursor: pointer; }
 @keyframes tutorial-in { from { opacity: 0; transform: translate(-50%, 15px); } }
 
-.settings-panel { position: absolute; top: max(64px, calc(env(safe-area-inset-top) + 64px)); right: max(18px, env(safe-area-inset-right)); z-index: 20; display: grid; width: 235px; padding: 0; border-radius: 14px; color: #fff; background: rgb(16 15 34 / 95%); opacity: 0; visibility: hidden; transform: translateY(-8px); transition: opacity 160ms ease, transform 160ms ease, visibility 160ms; pointer-events: none; }
+.settings-panel { position: absolute; top: max(66px, calc(env(safe-area-inset-top) + 66px)); right: max(18px, env(safe-area-inset-right)); z-index: 20; display: grid; width: 235px; padding: 0; border-radius: 14px; color: #fff; background: rgb(16 15 34 / 95%); opacity: 0; visibility: hidden; transform: translateY(-8px); transition: opacity 160ms ease, transform 160ms ease, visibility 160ms; pointer-events: none; }
 .settings-panel[hidden] { display: none; }
-.settings-open { position: absolute; top: 0; right: 0; padding: 8px 13px; border: 1px solid #776d8e; border-radius: 999px; color: #fff; background: #25213b; cursor: pointer; }
+.settings-open { position: absolute; top: 0; right: 0; min-width: 132px; height: 40px; padding: 0 13px; border: 1px solid #776d8e; border-radius: 999px; color: #fff; text-align: center; background: #25213b; cursor: pointer; }
 .ui-layer.is-menu-open .settings-panel { opacity: 1; visibility: visible; transform: none; pointer-events: auto; }
 .settings-panel > label, .settings-close { display: none; }
 .settings-panel.is-open { padding: 48px 16px 16px; border: 1px solid #776d8e; gap: 13px; }
@@ -329,9 +333,12 @@ button { font: inherit; }
 }
 
 .exit-button {
-  top: max(240px, calc(env(safe-area-inset-top) + 240px));
+  top: max(210px, calc(env(safe-area-inset-top) + 210px));
   right: max(18px, env(safe-area-inset-right));
-  padding: 11px 17px;
+  min-width: 132px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 17px;
   opacity: 0;
   visibility: hidden;
   transform: translateY(-8px);
@@ -356,11 +363,13 @@ button { font: inherit; }
   .loading-screen h1 { font-size: clamp(38px, 13vw, 62px); }
   .world-progress { top: max(10px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left)); max-width: calc(100vw - 110px); gap: 3px; }
   .world-progress span { padding: 4px 6px; font-size: 10px; }
-  .hud-button { padding: 8px 10px; font-size: 12px; }
+  .hud-button { height: 36px; min-height: 36px; padding: 0 10px; font-size: 12px; }
   .menu-toggle { top: max(10px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right)); min-width: 64px; }
-  .hud-actions { top: max(94px, calc(env(safe-area-inset-top) + 94px)); right: max(10px, env(safe-area-inset-right)); }
+  .hud-actions { top: max(94px, calc(env(safe-area-inset-top) + 94px)); right: max(10px, env(safe-area-inset-right)); gap: 6px; }
+  .hud-actions .hud-button { min-width: 122px; }
   .settings-panel { top: max(52px, calc(env(safe-area-inset-top) + 52px)); right: max(10px, env(safe-area-inset-right)); width: min(235px, calc(100vw - 20px)); }
-  .exit-button { top: max(220px, calc(env(safe-area-inset-top) + 220px)); right: max(10px, env(safe-area-inset-right)); padding: 10px 13px; font-size: 12px; }
+  .settings-open { min-width: 122px; height: 36px; }
+  .exit-button { top: max(178px, calc(env(safe-area-inset-top) + 178px)); right: max(10px, env(safe-area-inset-right)); min-width: 122px; height: 36px; min-height: 36px; padding: 0 11px; font-size: 12px; }
   .ui-layer[data-scene="region"] .world-progress { left: max(10px, env(safe-area-inset-left)); max-width: calc(100vw - 92px); transform: none; }
   .context-button { bottom: max(18px, env(safe-area-inset-bottom)); width: min(310px, calc(100vw - 30px)); }
   .portal-guide { bottom: max(72px, calc(env(safe-area-inset-bottom) + 72px)); left: max(10px, env(safe-area-inset-left)); }
@@ -386,9 +395,9 @@ button { font: inherit; }
   .world-progress { top: 10px; left: 10px; }
   .hud-button { padding: 8px 11px; font-size: 13px; }
   .menu-toggle { top: 10px; right: 10px; }
-  .hud-actions { top: 94px; right: 10px; }
+  .hud-actions { top: 94px; right: 10px; gap: 6px; }
   .settings-panel { top: 52px; right: 10px; left: auto; }
-  .exit-button { top: 220px; right: 10px; padding: 8px 12px; font-size: 13px; }
+  .exit-button { top: 178px; right: 10px; padding: 0 12px; font-size: 13px; }
   .ui-layer[data-scene="region"] .world-progress { left: 10px; transform: none; }
   .minigame-panel { min-height: 300px; padding: 18px; }
   .minigame-title { font-size: 24px; }
