@@ -32,6 +32,7 @@ export function bootstrap(root: HTMLElement): void {
   const sfxPlayer = new SfxPlayer();
   let hud: Hud | null = null;
   let activeRegionScene: RegionScene | null = null;
+  let activeOverworldScene: OverworldScene | null = null;
   const completionOverlay = new CompletionOverlay(overlay);
   const tutorial = new Tutorial(overlay, () => gameStore.setState({ tutorialCompleted: true }));
   const settings = new SettingsPanel(
@@ -75,16 +76,18 @@ export function bootstrap(root: HTMLElement): void {
     const showOverworld = (): void => {
       activeRegionScene = null;
       gameStore.setState({ currentScene: "overworld" });
-      sceneManager.transitionTo(new OverworldScene(
+      activeOverworldScene = new OverworldScene(
         engine.renderer.domElement,
         overlay,
         showRegion,
         gameStore.snapshot.currentRegion,
         updateOverworldAudio,
         gameStore.snapshot.completedRegions,
-      ));
+      );
+      sceneManager.transitionTo(activeOverworldScene);
     };
     const showRegion = (regionId: RegionId): void => {
+      activeOverworldScene = null;
       const region: RegionManifest = ASSET_MANIFEST.regions[regionId];
       gameStore.enterRegion(regionId);
       if (!gameStore.snapshot.muted) stemPlayer.setMasterVolume(1);
@@ -133,14 +136,15 @@ export function bootstrap(root: HTMLElement): void {
         0.12,
       );
     };
-    sceneManager.show(new OverworldScene(
+    activeOverworldScene = new OverworldScene(
       engine.renderer.domElement,
       overlay,
       showRegion,
       null,
       updateOverworldAudio,
       gameStore.snapshot.completedRegions,
-    ));
+    );
+    sceneManager.show(activeOverworldScene);
     loading.hide();
     engine.start();
     if (!gameStore.snapshot.tutorialCompleted) tutorial.showMovement();
@@ -159,6 +163,7 @@ export function bootstrap(root: HTMLElement): void {
     sfxPlayer.setVolume(state.sfxVolume);
     activeRegionScene?.syncCollectedNotes(state.collectedNotes);
     activeRegionScene?.syncClearedMinigames(state.clearedMinigames);
+    activeOverworldScene?.syncCompletedRegions(state.completedRegions);
     sfxPlayer.setMuted(state.muted);
     if (state.muted || state.currentScene === "region") {
       stemPlayer.setMasterVolume(state.muted ? 0 : 1);

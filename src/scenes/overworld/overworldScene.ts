@@ -28,6 +28,12 @@ export class OverworldScene implements GameScene {
   private readonly secondEntranceWaves: Array<THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>> = [];
   private readonly footsteps: Array<THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>> = [];
   private readonly portalLabelTextures: THREE.CanvasTexture[] = [];
+  private readonly portalVisuals = new Map<RegionId, {
+    readonly base: THREE.Mesh<THREE.CylinderGeometry, THREE.MeshStandardMaterial>;
+    readonly label: string;
+    readonly primaryColor: number;
+    readonly sprite: THREE.Sprite;
+  }>();
   private readonly portalGuide = document.createElement("div");
   private readonly entrancePosition = new THREE.Vector3(
     ASSET_MANIFEST.overworldEntrance.position.x,
@@ -53,7 +59,7 @@ export class OverworldScene implements GameScene {
     private readonly onEnterRegion: (regionId: RegionId) => void,
     private readonly spawnAtRegion: RegionId | null = null,
     private readonly onRegionProximityChange: (regionId: RegionId, proximity: number) => void = () => {},
-    private readonly completedRegions: readonly RegionId[] = [],
+    private completedRegions: readonly RegionId[] = [],
   ) {
     this.input = new PointerInput(canvas);
     this.input.addEventListener(GAME_EVENTS.POINT, this.onPoint as EventListener);
@@ -195,6 +201,29 @@ export class OverworldScene implements GameScene {
     this.camera.updateProjectionMatrix();
   }
 
+  syncCompletedRegions(completedRegions: readonly RegionId[]): void {
+    if (completedRegions.length === this.completedRegions.length
+      && completedRegions.every((regionId) => this.completedRegions.includes(regionId))) return;
+    this.completedRegions = completedRegions;
+    for (const [regionId, visual] of this.portalVisuals) {
+      const completed = completedRegions.includes(regionId);
+      const color = completed ? 0xf3df8d : visual.primaryColor;
+      visual.base.material.color.setHex(color);
+      visual.base.material.emissive.setHex(color);
+      visual.base.material.emissiveIntensity = completed ? 0.65 : 0.2;
+      const texture = this.createPortalLabelTexture(`${completed ? "✓ " : ""}${visual.label}`, color);
+      const previous = visual.sprite.material.map;
+      visual.sprite.material.map = texture;
+      visual.sprite.material.needsUpdate = true;
+      const textureIndex = previous instanceof THREE.CanvasTexture
+        ? this.portalLabelTextures.indexOf(previous)
+        : -1;
+      if (textureIndex >= 0) this.portalLabelTextures[textureIndex] = texture;
+      else this.portalLabelTextures.push(texture);
+      previous?.dispose();
+    }
+  }
+
   dispose(): void {
     this.onRegionProximityChange(this.activeRegionId, 0);
     this.input.removeEventListener(GAME_EVENTS.POINT, this.onPoint as EventListener);
@@ -283,6 +312,7 @@ export class OverworldScene implements GameScene {
 
   private createEntrance(): void {
     this.createPortal(
+      "music-shop",
       this.entrance,
       this.entranceWaves,
       this.entrancePosition,
@@ -295,6 +325,7 @@ export class OverworldScene implements GameScene {
 
   private createSecondEntrance(): void {
     this.createPortal(
+      "neon-forest",
       this.secondEntrance,
       this.secondEntranceWaves,
       this.secondEntrancePosition,
@@ -306,6 +337,7 @@ export class OverworldScene implements GameScene {
   }
 
   private createPortal(
+    regionId: RegionId,
     group: THREE.Group,
     waves: Array<THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>>,
     position: THREE.Vector3,
@@ -340,6 +372,7 @@ export class OverworldScene implements GameScene {
     labelSprite.position.y = 4.8;
     labelSprite.scale.set(3.8, 0.95, 1);
     this.portalLabelTextures.push(labelTexture);
+    this.portalVisuals.set(regionId, { base, label, primaryColor, sprite: labelSprite });
     group.add(base, ring, glow, beacon, labelSprite);
     for (let index = 0; index < 3; index += 1) {
       const wave = new THREE.Mesh(
