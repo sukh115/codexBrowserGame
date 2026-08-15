@@ -50,7 +50,14 @@ export function bootstrap(root: HTMLElement): void {
     () => tutorial.replay(),
     () => gameStore.resetAll(),
   );
-  let wasCompleted = gameStore.snapshot.completed;
+  const showCompletionIfNeeded = (state: typeof gameStore.snapshot): void => {
+    if (state.currentScene !== "region" || !state.completed || !activeRegionScene
+      || state.celebratedRegions.includes(state.currentRegion)) return;
+    gameStore.celebrateRegion(state.currentRegion);
+    activeRegionScene.setInputLocked(true);
+    sfxPlayer.playComplete();
+    completionOverlay.show(state.currentRegion, () => activeRegionScene?.setInputLocked(false));
+  };
   let overworldAudioRegion: RegionId = initialRegion.id;
   let audioSwitchToken = 0;
   let imageProgress = 0;
@@ -131,6 +138,7 @@ export function bootstrap(root: HTMLElement): void {
         () => gameStore.snapshot.reducedMotion,
       );
       sceneManager.transitionTo(activeRegionScene);
+      showCompletionIfNeeded(gameStore.snapshot);
       if (!gameStore.snapshot.tutorialCompleted) tutorial.showRegion();
     };
     const updateOverworldAudio = (regionId: RegionId, proximity: number): void => {
@@ -150,7 +158,9 @@ export function bootstrap(root: HTMLElement): void {
           }
         });
       }
-      const { minimumVolume, maximumVolume } = ASSET_MANIFEST.overworldEntrance;
+      const entrance = ASSET_MANIFEST.overworldEntrances.find((item) => item.regionId === regionId);
+      if (!entrance) return;
+      const { minimumVolume, maximumVolume } = entrance;
       stemPlayer.setMasterVolume(
         minimumVolume + (maximumVolume - minimumVolume) * proximity,
         0.12,
@@ -206,16 +216,7 @@ export function bootstrap(root: HTMLElement): void {
     if (state.muted || state.currentScene === "region") {
       stemPlayer.setMasterVolume(state.muted ? 0 : 1);
     }
-    if (!wasCompleted && state.completed) {
-      activeRegionScene?.setInputLocked(true);
-      sfxPlayer.playComplete();
-      completionOverlay.show(state.currentRegion, () => activeRegionScene?.setInputLocked(false));
-    }
-    if (wasCompleted && !state.completed) {
-      completionOverlay.hide();
-      activeRegionScene?.setInputLocked(false);
-    }
-    wasCompleted = state.completed;
+    showCompletionIfNeeded(state);
   });
 
   gameStore.addEventListener(GAME_EVENTS.NOTE_COLLECTED, (event) => {
@@ -247,9 +248,15 @@ export function bootstrap(root: HTMLElement): void {
   gameStore.addEventListener(GAME_EVENTS.REGION_PROGRESS_RESET, (event) => {
     const { regionId } = (event as CustomEvent<RegionProgressResetDetail>).detail;
     if (regionId === gameStore.snapshot.currentRegion) stemPlayer.lockAll();
+    completionOverlay.hide();
+    activeRegionScene?.setInputLocked(false);
   });
 
-  gameStore.addEventListener(GAME_EVENTS.ALL_PROGRESS_RESET, () => stemPlayer.lockAll());
+  gameStore.addEventListener(GAME_EVENTS.ALL_PROGRESS_RESET, () => {
+    stemPlayer.lockAll();
+    completionOverlay.hide();
+    activeRegionScene?.setInputLocked(false);
+  });
 
   // 실제 수집 오브젝트가 붙기 전 스템 조합을 빠르게 검증하기 위한 임시 입력이다.
   if (new URLSearchParams(window.location.search).has("debug")) {

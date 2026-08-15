@@ -8,6 +8,12 @@ import { OverworldCharacterController } from "./characterController";
 import { OverworldPropLoader } from "./propLoader";
 import { beatPhase } from "../../core/music";
 
+const getEntranceManifest = (regionId: RegionId): (typeof ASSET_MANIFEST.overworldEntrances)[number] => {
+  const entrance = ASSET_MANIFEST.overworldEntrances.find((item) => item.regionId === regionId);
+  if (!entrance) throw new Error(`${regionId} 입구 설정을 찾을 수 없습니다.`);
+  return entrance;
+};
+
 export class OverworldScene implements GameScene {
   readonly scene = new THREE.Scene();
   readonly camera = new THREE.PerspectiveCamera(42, 1, 0.1, 120);
@@ -40,11 +46,15 @@ export class OverworldScene implements GameScene {
   }>();
   private readonly portalGuide = document.createElement("div");
   private readonly entrancePosition = new THREE.Vector3(
-    ASSET_MANIFEST.overworldEntrance.position.x,
+    getEntranceManifest("music-shop").position.x,
     0,
-    ASSET_MANIFEST.overworldEntrance.position.z,
+    getEntranceManifest("music-shop").position.z,
   );
-  private readonly secondEntrancePosition = new THREE.Vector3(-11, 0, 8);
+  private readonly secondEntrancePosition = new THREE.Vector3(
+    getEntranceManifest("neon-forest").position.x,
+    0,
+    getEntranceManifest("neon-forest").position.z,
+  );
   private readonly activeEntrancePosition = new THREE.Vector3();
   private activeRegionId: RegionId = "music-shop";
   private readonly enterButton = document.createElement("button");
@@ -172,7 +182,8 @@ export class OverworldScene implements GameScene {
     this.activeEntrancePosition.copy(useSecondEntrance ? this.secondEntrancePosition : this.entrancePosition);
     this.activeRegionId = useSecondEntrance ? "neon-forest" : "music-shop";
     const nearestDistanceSquared = Math.min(firstDistanceSquared, secondDistanceSquared);
-    const nearEntrance = nearestDistanceSquared <= ASSET_MANIFEST.overworldEntrance.activationRadius ** 2;
+    const activeEntrance = getEntranceManifest(this.activeRegionId);
+    const nearEntrance = nearestDistanceSquared <= activeEntrance.activationRadius ** 2;
     this.enterButton.hidden = !nearEntrance || this.entering;
     this.enterButton.textContent = this.activeRegionId === "neon-forest" ? "버려진 온실로 들어가기" : "악기점으로 들어가기";
     const distanceToEntrance = Math.sqrt(nearestDistanceSquared);
@@ -182,7 +193,7 @@ export class OverworldScene implements GameScene {
       this.updatePortalGuide(Math.sqrt(firstDistanceSquared), Math.sqrt(secondDistanceSquared));
     }
     const linearProximity = THREE.MathUtils.clamp(
-      1 - distanceToEntrance / ASSET_MANIFEST.overworldEntrance.audioRadius,
+      1 - distanceToEntrance / activeEntrance.audioRadius,
       0,
       1,
     );

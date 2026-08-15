@@ -12,6 +12,7 @@ export interface GameState {
   readonly muted: boolean;
   readonly completed: boolean;
   readonly completedRegions: readonly RegionId[];
+  readonly celebratedRegions: readonly RegionId[];
   readonly tutorialCompleted: boolean;
   readonly masterVolume: number;
   readonly sfxVolume: number;
@@ -43,7 +44,7 @@ export function getNoteCountForRegion(collectedNotes: readonly string[], regionI
 
 class GameStore extends EventTarget {
   private readonly initialState: GameState = {
-    saveVersion: 2,
+    saveVersion: 3,
     collectedNotes: [],
     clearedMinigames: [],
     currentScene: "loading",
@@ -51,6 +52,7 @@ class GameStore extends EventTarget {
     muted: false,
     completed: false,
     completedRegions: [],
+    celebratedRegions: [],
     tutorialCompleted: false,
     masterVolume: 1,
     sfxVolume: 1,
@@ -75,6 +77,11 @@ class GameStore extends EventTarget {
     this.dispatchEvent(new CustomEvent<RegionEnteredDetail>(GAME_EVENTS.REGION_ENTERED, {
       detail: { regionId },
     }));
+  }
+
+  celebrateRegion(regionId: RegionId): void {
+    if (this.state.celebratedRegions.includes(regionId)) return;
+    this.setState({ celebratedRegions: [...this.state.celebratedRegions, regionId] });
   }
 
   collectNote(noteId: string): void {
@@ -126,6 +133,7 @@ class GameStore extends EventTarget {
         : id.startsWith("greenhouse-")),
       completed: false,
       completedRegions: this.state.completedRegions.filter((id) => id !== this.state.currentRegion),
+      celebratedRegions: this.state.celebratedRegions.filter((id) => id !== this.state.currentRegion),
     });
     this.dispatchEvent(new CustomEvent<RegionProgressResetDetail>(GAME_EVENTS.REGION_PROGRESS_RESET, {
       detail: { regionId: this.state.currentRegion },
@@ -156,14 +164,18 @@ class GameStore extends EventTarget {
       if (getNoteCountForRegion(collectedNotes, "music-shop") >= 7) completedRegions.push("music-shop");
       if (getNoteCountForRegion(collectedNotes, "neon-forest") >= 7) completedRegions.push("neon-forest");
       const currentRegion = stored.currentRegion === "neon-forest" ? "neon-forest" : "music-shop";
+      const celebratedRegions = Array.isArray(stored.celebratedRegions)
+        ? stored.celebratedRegions.filter((item): item is RegionId => item === "music-shop" || item === "neon-forest")
+        : [];
       return {
         ...this.initialState,
         ...stored,
-        saveVersion: 2,
+        saveVersion: 3,
         collectedNotes,
         clearedMinigames: stored.clearedMinigames.filter((item): item is string => typeof item === "string"),
         currentRegion,
         completedRegions,
+        celebratedRegions,
         completed: completedRegions.includes(currentRegion),
         currentScene: "loading",
       };

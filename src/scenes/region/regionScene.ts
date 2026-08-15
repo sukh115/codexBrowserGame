@@ -105,7 +105,9 @@ export class RegionScene implements GameScene {
     this.tapRipples.update(deltaSeconds);
     this.minigames.update(this.camera, this.viewportWidth, this.viewportHeight, transportTime, reducedMotion);
     this.reactiveLayer.update(this.collectedNotes, transportTime, this.manifest.bpm, reducedMotion);
-    const nearestDistance = this.noteField.getNearestUnfoundScreenDistance(this.camera);
+    const nearestDistance = this.inputLocked
+      ? null
+      : this.noteField.getNearestUnfoundScreenDistance(this.camera);
     if (nearestDistance === null) {
       this.sfxPlayer.stopHum();
     } else {
