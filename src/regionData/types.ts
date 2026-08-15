@@ -15,7 +15,7 @@ export interface NoteSpot {
   readonly secret?: boolean;
 }
 
-export type MinigameType = "timing" | "rhythm" | "memory";
+export type MinigameType = "timing" | "rhythm" | "memory" | "pottery" | "watering";
 
 export interface MinigameSpot {
   readonly id: string;
@@ -24,6 +24,7 @@ export interface MinigameSpot {
   readonly label: string;
   readonly u: number;
   readonly v: number;
+  readonly pieceImagePaths?: readonly (string | null)[];
 }
 
 export interface RegionPlacementData {

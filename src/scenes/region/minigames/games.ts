@@ -1,5 +1,7 @@
 import type { MinigameFrame } from "./frame";
 import type { MinigameType } from "../../../regionData/types";
+import { startPottery } from "./pottery";
+import { startWatering } from "./watering";
 
 export type StopGame = () => void;
 
@@ -17,11 +19,39 @@ export function startMinigame(
   playTone: (index: number) => void,
   rhythmAssist: boolean,
   greenhouse: boolean,
+  musicalScale: readonly number[],
+  pieceImagePaths: readonly (string | null)[] | undefined,
+  playScaleTone: (frequency: number) => void,
+  playDirt: () => void,
+  playArpeggio: () => void,
   onClear: () => void,
 ): StopGame {
   if (type === "timing") return startTiming(frame, greenhouse, onClear);
   if (type === "rhythm") return startRhythm(frame, bpm, getTransportTime, rhythmAssist, greenhouse, onClear);
-  return startMemory(frame, playTone, greenhouse, onClear);
+  if (type === "memory") return startMemory(frame, playTone, greenhouse, onClear);
+  if (type === "pottery") {
+    return startPottery(
+      frame,
+      musicalScale,
+      rhythmAssist,
+      pieceImagePaths,
+      playScaleTone,
+      playDirt,
+      playArpeggio,
+      onClear,
+    );
+  }
+  return startWatering(
+    frame,
+    bpm,
+    getTransportTime,
+    musicalScale,
+    rhythmAssist,
+    playScaleTone,
+    playDirt,
+    playArpeggio,
+    onClear,
+  );
 }
 
 function startTiming(frame: MinigameFrame, greenhouse: boolean, onClear: () => void): StopGame {

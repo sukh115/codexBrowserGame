@@ -22,6 +22,10 @@ export class MinigameController {
     private readonly bpm: number,
     private readonly getTransportTime: () => number,
     private readonly playTone: (index: number) => void,
+    private readonly musicalScale: readonly number[],
+    private readonly playScaleTone: (frequency: number) => void,
+    private readonly playDirt: () => void,
+    private readonly playArpeggio: () => void,
     private readonly getRhythmAssist: () => boolean,
     regionId: RegionId,
     spots: readonly MinigameSpot[],
@@ -96,9 +100,14 @@ export class MinigameController {
       this.playTone,
       this.getRhythmAssist(),
       this.greenhouse,
+      this.musicalScale,
+      spot.pieceImagePaths,
+      this.playScaleTone,
+      this.playDirt,
+      this.playArpeggio,
       () => {
-      this.onClear(spot.id, spot.rewardNoteId);
-      this.close();
+        this.onClear(spot.id, spot.rewardNoteId);
+        this.close();
       },
     );
   }
@@ -116,6 +125,8 @@ export class MinigameController {
       timing: this.greenhouse ? "VINE" : "AMP",
       rhythm: this.greenhouse ? "RAIN" : "BEAT",
       memory: this.greenhouse ? "BLOOM" : "CRT",
+      pottery: "POT",
+      watering: "WATER",
     };
     button.innerHTML = `<b>${complete ? "✓" : icons[spot.type]}</b><span>${complete ? "완료" : spot.label}</span>`;
   }
