@@ -491,24 +491,62 @@ export class OverworldScene implements GameScene {
       context.stroke();
     }
     const worldToCanvas = (value: number): number => ((value + WORLD.HALF_SIZE) / WORLD.SIZE) * canvas.width;
-    context.lineCap = "round";
-    context.setLineDash([22, 16]);
-    context.lineWidth = 11;
-    context.strokeStyle = "rgba(230, 132, 89, .5)";
-    context.beginPath();
-    context.moveTo(512, 512);
-    context.quadraticCurveTo(650, 430, worldToCanvas(this.entrancePosition.x), worldToCanvas(this.entrancePosition.z));
-    context.stroke();
-    context.strokeStyle = "rgba(104, 145, 91, .55)";
-    context.beginPath();
-    context.moveTo(512, 512);
-    context.quadraticCurveTo(380, 600, worldToCanvas(this.secondEntrancePosition.x), worldToCanvas(this.secondEntrancePosition.z));
-    context.stroke();
-    context.setLineDash([]);
-    context.fillStyle = "rgba(82, 91, 91, .62)";
-    context.font = "700 25px sans-serif";
-    context.fillText("악기점 →", worldToCanvas(6), worldToCanvas(-3));
-    context.fillText("← 버려진 온실", worldToCanvas(-8), worldToCanvas(6));
+    const drawRoute = (
+      position: THREE.Vector3,
+      controlX: number,
+      controlY: number,
+      label: string,
+      color: string,
+    ): void => {
+      const startX = canvas.width / 2;
+      const startY = canvas.height / 2;
+      const targetX = worldToCanvas(position.x);
+      const targetY = worldToCanvas(position.z);
+      const pointOnCurve = (t: number): { x: number; y: number } => ({
+        x: (1 - t) ** 2 * startX + 2 * (1 - t) * t * controlX + t ** 2 * targetX,
+        y: (1 - t) ** 2 * startY + 2 * (1 - t) * t * controlY + t ** 2 * targetY,
+      });
+      const tangentAngle = (t: number): number => Math.atan2(
+        2 * (1 - t) * (controlY - startY) + 2 * t * (targetY - controlY),
+        2 * (1 - t) * (controlX - startX) + 2 * t * (targetX - controlX),
+      );
+      context.lineCap = "round";
+      context.setLineDash([22, 16]);
+      context.lineWidth = 11;
+      context.strokeStyle = color;
+      context.beginPath();
+      context.moveTo(startX, startY);
+      context.quadraticCurveTo(controlX, controlY, targetX, targetY);
+      context.stroke();
+      context.setLineDash([]);
+
+      const arrow = pointOnCurve(0.84);
+      const arrowAngle = tangentAngle(0.84);
+      context.save();
+      context.translate(arrow.x, arrow.y);
+      context.rotate(arrowAngle);
+      context.fillStyle = color;
+      context.beginPath();
+      context.moveTo(24, 0);
+      context.lineTo(-13, -18);
+      context.lineTo(-8, 0);
+      context.lineTo(-13, 18);
+      context.closePath();
+      context.fill();
+      context.restore();
+
+      const labelPoint = pointOnCurve(0.65);
+      context.save();
+      context.translate(labelPoint.x, labelPoint.y);
+      context.rotate(tangentAngle(0.65));
+      context.fillStyle = "rgba(57, 68, 69, .78)";
+      context.font = "700 27px sans-serif";
+      context.textAlign = "center";
+      context.fillText(label, 0, -22);
+      context.restore();
+    };
+    drawRoute(this.entrancePosition, 650, 430, "악기점", "rgba(230, 132, 89, .58)");
+    drawRoute(this.secondEntrancePosition, 380, 600, "버려진 온실", "rgba(104, 145, 91, .62)");
     context.strokeStyle = "rgba(109, 137, 102, .35)";
     context.lineWidth = 4;
     for (let index = 0; index < 18; index += 1) {
