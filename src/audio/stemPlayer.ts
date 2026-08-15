@@ -8,12 +8,20 @@ interface ActiveStem {
 }
 
 const AUDIO_FORMATS = ["ogg", "m4a", "wav"] as const;
+const PLACEHOLDER_SAMPLE_RATE = 48_000;
+const BEATS_PER_LOOP = 16;
+const LOOP_DURATION_TOLERANCE_SECONDS = 0.03;
+const STEM_PEAK_LIMIT = 10 ** (-6 / 20);
+const STEM_LEVEL = 0.72;
+const RHYTHM_ACCENT_LEVEL = 0.86;
+const COMPLETION_BOOST_LEVEL = 1.08;
 
 export class StemPlayer {
   private context: AudioContext | null = null;
   private masterGain: GainNode | null = null;
   private masterFilter: BiquadFilterNode | null = null;
   private outputBoost: GainNode | null = null;
+  private limiter: DynamicsCompressorNode | null = null;
   private readonly activeStems = new Map<string, ActiveStem>();
   private readonly unlockedStemIds = new Set<string>();
   private readonly appliedEffects = new Set<MusicEffect>();
@@ -85,7 +93,7 @@ export class StemPlayer {
       source.connect(gain).connect(this.masterGain);
       source.start(startTime);
       this.activeStems.set(stem.id, { source, gain });
-      this.stemLevels.set(stem.id, 1);
+      this.stemLevels.set(stem.id, STEM_LEVEL);
     });
     this.started = true;
   }
@@ -118,7 +126,7 @@ export class StemPlayer {
     const now = this.context.currentTime;
     active.gain.gain.cancelScheduledValues(now);
     active.gain.gain.setValueAtTime(active.gain.gain.value, now);
-    active.gain.gain.linearRampToValueAtTime(this.stemLevels.get(id) ?? 1, now + fadeSeconds);
+    active.gain.gain.linearRampToValueAtTime(this.stemLevels.get(id) ?? STEM_LEVEL, now + fadeSeconds);
   }
 
   applyEffect(effect: MusicEffect, fadeSeconds = 1.2): void {
@@ -126,12 +134,12 @@ export class StemPlayer {
     this.appliedEffects.add(effect);
     const now = this.context.currentTime;
     if (effect === "rhythm-accent") {
-      this.stemLevels.set("rhythm", 1.28);
+      this.stemLevels.set("rhythm", RHYTHM_ACCENT_LEVEL);
       const rhythm = this.activeStems.get("rhythm");
       if (rhythm && this.unlockedStemIds.has("rhythm")) {
         rhythm.gain.gain.cancelScheduledValues(now);
         rhythm.gain.gain.setValueAtTime(rhythm.gain.gain.value, now);
-        rhythm.gain.gain.linearRampToValueAtTime(1.28, now + fadeSeconds);
+        rhythm.gain.gain.linearRampToValueAtTime(RHYTHM_ACCENT_LEVEL, now + fadeSeconds);
       }
     }
     if (effect === "open-filter" && this.masterFilter) {
@@ -145,7 +153,7 @@ export class StemPlayer {
       this.masterFilter.frequency.exponentialRampToValueAtTime(20000, now + fadeSeconds * 1.5);
       this.outputBoost.gain.cancelScheduledValues(now);
       this.outputBoost.gain.setValueAtTime(this.outputBoost.gain.value, now);
-      this.outputBoost.gain.linearRampToValueAtTime(1.16, now + fadeSeconds);
+      this.outputBoost.gain.linearRampToValueAtTime(COMPLETION_BOOST_LEVEL, now + fadeSeconds);
     }
   }
 
@@ -159,7 +167,7 @@ export class StemPlayer {
     }
     this.unlockedStemIds.clear();
     this.appliedEffects.clear();
-    this.stemLevels.set("rhythm", 1);
+    this.stemLevels.set("rhythm", STEM_LEVEL);
     if (this.masterFilter) {
       this.masterFilter.frequency.cancelScheduledValues(now);
       this.masterFilter.frequency.linearRampToValueAtTime(2400, now + fadeSeconds);
@@ -211,11 +219,13 @@ export class StemPlayer {
     this.masterGain?.disconnect();
     this.masterFilter?.disconnect();
     this.outputBoost?.disconnect();
+    this.limiter?.disconnect();
     void this.context?.close();
     this.context = null;
     this.masterGain = null;
     this.masterFilter = null;
     this.outputBoost = null;
+    this.limiter = null;
     this.started = false;
     this.unlocked = false;
     this.targetMasterVolume = -1;
@@ -242,6 +252,7 @@ export class StemPlayer {
           const response = await fetch(`${stem.path}.${extension}`);
           if (!response.ok) continue;
           const buffer = await this.context.decodeAudioData(await response.arrayBuffer());
+          if (!this.validateStem(buffer, stem, bpm)) continue;
           this.bufferCache.set(cacheKey, buffer);
           return buffer;
         } catch {
@@ -256,9 +267,9 @@ export class StemPlayer {
   }
 
   private async renderPlaceholder(trackIndex: number, regionId = this.regionId, bpm = this.bpm): Promise<AudioBuffer> {
-    const sampleRate = 44_100;
+    const sampleRate = PLACEHOLDER_SAMPLE_RATE;
     const beatDuration = 60 / bpm;
-    const duration = beatDuration * 16;
+    const duration = beatDuration * BEATS_PER_LOOP;
     const offline = new OfflineAudioContext(2, Math.ceil(sampleRate * duration), sampleRate);
     const output = offline.createGain();
     output.gain.value = trackIndex === 0 ? 0.22 : 0.12;
@@ -359,17 +370,55 @@ export class StemPlayer {
     oscillator.stop(start + duration + 0.01);
   }
 
+  private validateStem(buffer: AudioBuffer, stem: StemManifest, bpm: number): boolean {
+    const expectedDuration = BEATS_PER_LOOP * 60 / bpm;
+    if (buffer.sampleRate !== PLACEHOLDER_SAMPLE_RATE) {
+      console.warn(`[StemPlayer] ${stem.id}: 48 kHz가 아니어서 플레이스홀더를 사용합니다. (${buffer.sampleRate} Hz)`);
+      return false;
+    }
+    if (Math.abs(buffer.duration - expectedDuration) > LOOP_DURATION_TOLERANCE_SECONDS) {
+      console.warn(
+        `[StemPlayer] ${stem.id}: 4마디 길이가 아니어서 플레이스홀더를 사용합니다. `
+        + `(기대 ${expectedDuration.toFixed(3)}초, 실제 ${buffer.duration.toFixed(3)}초)`,
+      );
+      return false;
+    }
+    let peak = 0;
+    for (let channel = 0; channel < buffer.numberOfChannels; channel += 1) {
+      const samples = buffer.getChannelData(channel);
+      for (let index = 0; index < samples.length; index += 1) {
+        peak = Math.max(peak, Math.abs(samples[index]));
+      }
+    }
+    if (peak > STEM_PEAK_LIMIT + 0.001) {
+      const peakDb = 20 * Math.log10(peak);
+      console.warn(`[StemPlayer] ${stem.id}: 피크가 -6 dBFS를 초과해 플레이스홀더를 사용합니다. (${peakDb.toFixed(1)} dBFS)`);
+      return false;
+    }
+    return true;
+  }
+
   private ensureContext(): void {
     if (this.context) return;
     this.context = new AudioContext();
     this.masterGain = this.context.createGain();
     this.masterFilter = this.context.createBiquadFilter();
     this.outputBoost = this.context.createGain();
+    this.limiter = this.context.createDynamicsCompressor();
     this.masterGain.gain.value = 0.3;
     this.masterFilter.type = "lowpass";
     this.masterFilter.frequency.value = 2400;
     this.masterFilter.Q.value = 0.7;
     this.outputBoost.gain.value = 1;
-    this.masterGain.connect(this.masterFilter).connect(this.outputBoost).connect(this.context.destination);
+    this.limiter.threshold.value = -3;
+    this.limiter.knee.value = 0;
+    this.limiter.ratio.value = 20;
+    this.limiter.attack.value = 0.003;
+    this.limiter.release.value = 0.15;
+    this.masterGain
+      .connect(this.masterFilter)
+      .connect(this.outputBoost)
+      .connect(this.limiter)
+      .connect(this.context.destination);
   }
 }

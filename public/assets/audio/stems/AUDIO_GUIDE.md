@@ -7,8 +7,13 @@
 - WAV 48 kHz / 24 bit 또는 OGG 192 kbps 이상
 - 정확히 4마디, 루프 끝에 잔향이 끊기지 않도록 렌더링
 - 트랙별 피크 -6 dBFS 이하
-- 파일명: `{region}-{stem}.ogg`
+- 파일명: `{region}-{stem}.{format}` (예: `music-shop-rhythm.ogg`)
+- 권장 포맷은 OGG이며, 브라우저 호환 폴백이 필요하면 같은 이름의 M4A 또는 WAV도 함께 납품합니다.
+- 런타임 탐색 순서: `.ogg` → `.m4a` → `.wav`
 - 스템: `rhythm`, `bass`, `harmony`, `melody`
+
+런타임은 48 kHz, 정확한 4마디 길이, 피크 -6 dBFS 이하를 검사합니다. 규격을 벗어나거나
+디코딩에 실패한 파일은 해당 스템의 합성 플레이스홀더로 대체됩니다.
 
 ## 악기점
 

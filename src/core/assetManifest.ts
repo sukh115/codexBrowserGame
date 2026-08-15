@@ -22,10 +22,10 @@ export interface StemManifest {
 }
 
 const createStems = (regionId: RegionId): readonly StemManifest[] => [
-  { id: "rhythm", path: assetPath(`assets/audio/stems/${regionId}/rhythm`) },
-  { id: "bass", path: assetPath(`assets/audio/stems/${regionId}/bass`) },
-  { id: "harmony", path: assetPath(`assets/audio/stems/${regionId}/harmony`) },
-  { id: "melody", path: assetPath(`assets/audio/stems/${regionId}/melody`) },
+  { id: "rhythm", path: assetPath(`assets/audio/stems/${regionId}-rhythm`) },
+  { id: "bass", path: assetPath(`assets/audio/stems/${regionId}-bass`) },
+  { id: "harmony", path: assetPath(`assets/audio/stems/${regionId}-harmony`) },
+  { id: "melody", path: assetPath(`assets/audio/stems/${regionId}-melody`) },
 ];
 
 const NOTE_STEM_MAPPING = {
