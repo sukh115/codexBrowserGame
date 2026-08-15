@@ -1,5 +1,10 @@
+import { createTapeVoice, createTuningVoice, type TapeVoice, type TuningVoice } from "./minigameVoices";
+
+export type MinigameInstrument = "bass" | "drum" | "melody";
+
 export class SfxPlayer {
   private context: AudioContext | null = null;
+  private output: GainNode | null = null;
   private muted = false;
   private volume = 1;
   private humGain: GainNode | null = null;
@@ -9,7 +14,12 @@ export class SfxPlayer {
   private humIntensity = 0;
 
   async unlock(): Promise<void> {
-    if (!this.context) this.context = new AudioContext();
+    if (!this.context) {
+      this.context = new AudioContext();
+      this.output = this.context.createGain();
+      this.output.connect(this.context.destination);
+      this.updateOutputGain();
+    }
     await this.context.resume();
   }
 
@@ -33,11 +43,13 @@ export class SfxPlayer {
 
   setMuted(muted: boolean): void {
     this.muted = muted;
+    this.updateOutputGain();
     this.updateHumGain(0.04);
   }
 
   setVolume(volume: number): void {
     this.volume = Math.max(0, Math.min(1, volume));
+    this.updateOutputGain();
     this.updateHumGain(0.04);
   }
 
@@ -46,9 +58,9 @@ export class SfxPlayer {
     const now = this.context.currentTime;
     const gain = this.context.createGain();
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.2 * this.volume, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.2, now + 0.01);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
-    gain.connect(this.context.destination);
+    gain.connect(this.getOutput());
     [659.25, 880].forEach((frequency, index) => {
       const oscillator = this.context?.createOscillator();
       if (!oscillator) return;
@@ -65,9 +77,9 @@ export class SfxPlayer {
     const now = this.context.currentTime;
     const gain = this.context.createGain();
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.16 * this.volume, now + 0.025);
+    gain.gain.exponentialRampToValueAtTime(0.16, now + 0.025);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.4);
-    gain.connect(this.context.destination);
+    gain.connect(this.getOutput());
     [261.63, 329.63, 392, 523.25].forEach((frequency, index) => {
       const oscillator = this.context?.createOscillator();
       if (!oscillator) return;
@@ -90,9 +102,9 @@ export class SfxPlayer {
     oscillator.type = "sine";
     oscillator.frequency.value = frequency;
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.13 * this.volume, now + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.13, now + 0.008);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-    oscillator.connect(gain).connect(this.context.destination);
+    oscillator.connect(gain).connect(this.getOutput());
     oscillator.start(now);
     oscillator.stop(now + duration + 0.02);
   }
@@ -106,9 +118,9 @@ export class SfxPlayer {
     oscillator.frequency.setValueAtTime(frequency, now);
     oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.995, now + 0.32);
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.12 * this.volume, now + 0.006);
+    gain.gain.exponentialRampToValueAtTime(0.12, now + 0.006);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.36);
-    oscillator.connect(gain).connect(this.context.destination);
+    oscillator.connect(gain).connect(this.getOutput());
     oscillator.start(now);
     oscillator.stop(now + 0.38);
   }
@@ -122,9 +134,9 @@ export class SfxPlayer {
     oscillator.frequency.setValueAtTime(105, now);
     oscillator.frequency.exponentialRampToValueAtTime(58, now + 0.2);
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.08 * this.volume, now + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.08, now + 0.008);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.23);
-    oscillator.connect(gain).connect(this.context.destination);
+    oscillator.connect(gain).connect(this.getOutput());
     oscillator.start(now);
     oscillator.stop(now + 0.25);
   }
@@ -143,9 +155,9 @@ export class SfxPlayer {
       oscillator.type = "triangle";
       oscillator.frequency.value = frequency;
       gain.gain.setValueAtTime(0.0001, start);
-      gain.gain.exponentialRampToValueAtTime(0.11 * this.volume, start + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.11, start + 0.008);
       gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.28);
-      oscillator.connect(gain).connect(context.destination);
+      oscillator.connect(gain).connect(this.getOutput());
       oscillator.start(start);
       oscillator.stop(start + 0.3);
     });
@@ -191,14 +203,52 @@ export class SfxPlayer {
     this.humOvertoneGain.gain.value = 0.28;
     this.humRoot.connect(this.humGain);
     this.humOvertone.connect(this.humOvertoneGain).connect(this.humGain);
-    this.humGain.connect(this.context.destination);
+    this.humGain.connect(this.getOutput());
     this.humRoot.start();
     this.humOvertone.start();
   }
 
   private updateHumGain(timeConstant: number): void {
     if (!this.context || !this.humGain) return;
-    const target = this.muted ? 0 : this.humIntensity * this.volume * 0.022;
+    const target = this.humIntensity * 0.022;
     this.humGain.gain.setTargetAtTime(target, this.context.currentTime, timeConstant);
+  }
+
+  playInstrument(instrument: MinigameInstrument, frequency: number): void {
+    if (!this.context || this.muted || frequency <= 0) return;
+    const now = this.context.currentTime;
+    const oscillator = this.context.createOscillator();
+    const gain = this.context.createGain();
+    const duration = instrument === "drum" ? 0.11 : instrument === "bass" ? 0.26 : 0.2;
+    oscillator.type = instrument === "bass" ? "square" : instrument === "drum" ? "triangle" : "sine";
+    oscillator.frequency.setValueAtTime(instrument === "bass" ? frequency * 0.5 : frequency, now);
+    if (instrument === "drum") oscillator.frequency.exponentialRampToValueAtTime(Math.max(45, frequency * 0.24), now + duration);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(instrument === "drum" ? 0.14 : 0.1, now + 0.006);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    oscillator.connect(gain).connect(this.getOutput());
+    oscillator.start(now);
+    oscillator.stop(now + duration + 0.02);
+  }
+
+  createTuningVoice(frequency: number, detuneCents: number): TuningVoice | null {
+    if (!this.context || !this.output) return null;
+    return createTuningVoice(this.context, this.output, frequency, detuneCents);
+  }
+
+  createTapeVoice(scale: readonly number[]): TapeVoice | null {
+    if (!this.context || !this.output) return null;
+    return createTapeVoice(this.context, this.output, scale);
+  }
+
+  private getOutput(): AudioNode {
+    if (this.output) return this.output;
+    if (!this.context) throw new Error("SFX AudioContext가 준비되지 않았습니다.");
+    return this.context.destination;
+  }
+
+  private updateOutputGain(): void {
+    if (!this.context || !this.output) return;
+    this.output.gain.setTargetAtTime(this.muted ? 0 : this.volume, this.context.currentTime, 0.025);
   }
 }

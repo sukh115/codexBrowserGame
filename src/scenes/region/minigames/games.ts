@@ -2,6 +2,9 @@ import type { MinigameFrame } from "./frame";
 import type { MinigameType } from "../../../regionData/types";
 import { startPottery } from "./pottery";
 import { startWatering } from "./watering";
+import { startTuning } from "./tuning";
+import { startTape } from "./tape";
+import type { SfxPlayer } from "../../../audio/sfx";
 
 export type StopGame = () => void;
 
@@ -16,45 +19,50 @@ export function startMinigame(
   frame: MinigameFrame,
   bpm: number,
   getTransportTime: () => number,
-  playTone: (index: number) => void,
   rhythmAssist: boolean,
   greenhouse: boolean,
   musicalScale: readonly number[],
   pieceImagePaths: readonly (string | null)[] | undefined,
-  playScaleTone: (frequency: number) => void,
-  playDirt: () => void,
-  playArpeggio: () => void,
+  sfx: SfxPlayer,
   onClear: () => void,
 ): StopGame {
-  if (type === "timing") return startTiming(frame, greenhouse, onClear);
-  if (type === "rhythm") return startRhythm(frame, bpm, getTransportTime, rhythmAssist, greenhouse, onClear);
-  if (type === "memory") return startMemory(frame, playTone, greenhouse, onClear);
+  if (type === "timing") return startTiming(frame, greenhouse, musicalScale, sfx, onClear);
+  if (type === "rhythm") return startRhythm(frame, bpm, getTransportTime, rhythmAssist, greenhouse, musicalScale, sfx, onClear);
+  if (type === "memory") return startMemory(frame, musicalScale, sfx, greenhouse, onClear);
   if (type === "pottery") {
     return startPottery(
       frame,
       musicalScale,
       rhythmAssist,
       pieceImagePaths,
-      playScaleTone,
-      playDirt,
-      playArpeggio,
+      (frequency) => sfx.playPluck(frequency),
+      () => sfx.playDirt(),
+      () => sfx.playArpeggio(musicalScale),
       onClear,
     );
   }
-  return startWatering(
+  if (type === "watering") return startWatering(
     frame,
     bpm,
     getTransportTime,
     musicalScale,
     rhythmAssist,
-    playScaleTone,
-    playDirt,
-    playArpeggio,
+    (frequency) => sfx.playPluck(frequency),
+    () => sfx.playDirt(),
+    () => sfx.playArpeggio(musicalScale),
     onClear,
   );
+  if (type === "tuning") return startTuning(frame, musicalScale, rhythmAssist, sfx, onClear);
+  return startTape(frame, musicalScale, sfx, onClear);
 }
 
-function startTiming(frame: MinigameFrame, greenhouse: boolean, onClear: () => void): StopGame {
+function startTiming(
+  frame: MinigameFrame,
+  greenhouse: boolean,
+  scale: readonly number[],
+  sfx: SfxPlayer,
+  onClear: () => void,
+): StopGame {
   const track = document.createElement("button");
   track.className = "timing-track";
   track.classList.toggle("is-vine", greenhouse);
@@ -76,6 +84,7 @@ function startTiming(frame: MinigameFrame, greenhouse: boolean, onClear: () => v
     const position = Number.parseFloat(cursor?.style.left ?? "0");
     const targetCenter = greenhouse ? vineTargets[success] : 50;
     if (position >= targetCenter - 8 && position <= targetCenter + 8) {
+      sfx.playInstrument("bass", scale[Math.min(success * 2, scale.length - 1)] ?? 110);
       success += 1;
       frame.status.textContent = greenhouse ? `덩굴 공명 ${success}/3` : `성공 ${success}/3`;
       flashFeedback(frame, "success");
@@ -107,6 +116,8 @@ function startRhythm(
   getTransportTime: () => number,
   assist: boolean,
   greenhouse: boolean,
+  scale: readonly number[],
+  sfx: SfxPlayer,
   onClear: () => void,
 ): StopGame {
   const track = document.createElement("div");
@@ -198,6 +209,7 @@ function startRhythm(
       return;
     }
     const result = nearestError <= (assist ? 0.12 : 0.08) ? "Perfect" : "Good";
+    sfx.playInstrument("drum", scale[nearestIndex % Math.max(1, scale.length)] ?? 110);
     judged[nearestIndex] = true;
     notes[nearestIndex].classList.add(result === "Perfect" ? "is-perfect" : "is-good");
     if (nearestIndex < practiceCount) {
@@ -226,7 +238,8 @@ function startRhythm(
 
 function startMemory(
   frame: MinigameFrame,
-  playTone: (index: number) => void,
+  scale: readonly number[],
+  sfx: SfxPlayer,
   greenhouse: boolean,
   onClear: () => void,
 ): StopGame {
@@ -248,7 +261,7 @@ function startMemory(
     button.classList.remove("is-pressed", "is-wrong");
     requestAnimationFrame(() => button.classList.add(className));
     timers.push(window.setTimeout(() => button.classList.remove(className), duration));
-    playTone(value);
+    sfx.playInstrument("melody", scale[Math.min(value * 2, scale.length - 1)] ?? 220);
   };
   const playRound = (): void => {
     sequence = Array.from({ length: round + 2 }, () => Math.floor(Math.random() * 4));

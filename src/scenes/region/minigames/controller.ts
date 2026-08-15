@@ -4,6 +4,7 @@ import { startMinigame, type StopGame } from "./games";
 import type { MinigameSpot } from "../../../regionData/types";
 import type { RegionId } from "../../../core/assetManifest";
 import { beatPhase } from "../../../core/music";
+import type { SfxPlayer } from "../../../audio/sfx";
 
 export class MinigameController {
   private readonly buttons: HTMLButtonElement[] = [];
@@ -21,11 +22,8 @@ export class MinigameController {
     private readonly backgroundHeight: number,
     private readonly bpm: number,
     private readonly getTransportTime: () => number,
-    private readonly playTone: (index: number) => void,
+    private readonly sfx: SfxPlayer,
     private readonly musicalScale: readonly number[],
-    private readonly playScaleTone: (frequency: number) => void,
-    private readonly playDirt: () => void,
-    private readonly playArpeggio: () => void,
     private readonly getRhythmAssist: () => boolean,
     regionId: RegionId,
     spots: readonly MinigameSpot[],
@@ -97,14 +95,11 @@ export class MinigameController {
       this.frame,
       this.bpm,
       this.getTransportTime,
-      this.playTone,
       this.getRhythmAssist(),
       this.greenhouse,
       this.musicalScale,
       spot.pieceImagePaths,
-      this.playScaleTone,
-      this.playDirt,
-      this.playArpeggio,
+      this.sfx,
       () => {
         this.onClear(spot.id, spot.rewardNoteId);
         this.close();
@@ -127,6 +122,8 @@ export class MinigameController {
       memory: this.greenhouse ? "BLOOM" : "CRT",
       pottery: "POT",
       watering: "WATER",
+      tuning: "TUNE",
+      tape: "TAPE",
     };
     button.innerHTML = `<b>${complete ? "✓" : icons[spot.type]}</b><span>${complete ? "완료" : spot.label}</span>`;
   }

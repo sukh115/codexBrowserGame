@@ -34,9 +34,9 @@ const NOTE_STEM_MAPPING = {
   "note-1": "rhythm",
   "note-2": null,
   "note-3": "bass",
-  "note-4": "harmony",
-  "note-5": null,
-  "note-6": "melody",
+  "note-4": "rhythm",
+  "note-5": "melody",
+  "note-6": "harmony",
   "note-7": null,
 } as const;
 
@@ -45,8 +45,8 @@ const NOTE_EFFECT_MAPPING = {
   "note-2": "rhythm-accent",
   "note-3": null,
   "note-4": null,
-  "note-5": "open-filter",
-  "note-6": null,
+  "note-5": null,
+  "note-6": "open-filter",
   "note-7": "completion-boost",
 } as const;
 
@@ -54,9 +54,9 @@ const GREENHOUSE_NOTE_STEM_MAPPING = {
   "greenhouse-note-1": "rhythm",
   "greenhouse-note-2": null,
   "greenhouse-note-3": "bass",
-  "greenhouse-note-4": "harmony",
-  "greenhouse-note-5": null,
-  "greenhouse-note-6": "melody",
+  "greenhouse-note-4": "rhythm",
+  "greenhouse-note-5": "melody",
+  "greenhouse-note-6": "harmony",
   "greenhouse-note-7": null,
 } as const;
 
@@ -65,8 +65,8 @@ const GREENHOUSE_NOTE_EFFECT_MAPPING = {
   "greenhouse-note-2": "rhythm-accent",
   "greenhouse-note-3": null,
   "greenhouse-note-4": null,
-  "greenhouse-note-5": "open-filter",
-  "greenhouse-note-6": null,
+  "greenhouse-note-5": null,
+  "greenhouse-note-6": "open-filter",
   "greenhouse-note-7": "completion-boost",
 } as const;
 

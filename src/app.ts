@@ -130,6 +130,8 @@ export function bootstrap(root: HTMLElement): void {
         gameStore.snapshot.clearedMinigames,
         (gameId, rewardNoteId) => {
           sfxPlayer.playFound();
+          const stemId = region.noteStemMapping[rewardNoteId];
+          if (stemId) stemPlayer.unlockStem(stemId, 0.5);
           gameStore.clearMinigame(gameId, rewardNoteId);
         },
         () => stemPlayer.getTransportTime(),
