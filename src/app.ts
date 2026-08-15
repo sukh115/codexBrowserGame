@@ -182,7 +182,14 @@ export function bootstrap(root: HTMLElement): void {
   ]).then(() => loading.complete());
 
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") void stemPlayer.resumeAndRestore();
+    if (document.visibilityState === "hidden") {
+      void sfxPlayer.suspendForBackground();
+      return;
+    }
+    void Promise.all([
+      stemPlayer.resumeAndRestore(),
+      sfxPlayer.resumeAndRestore(),
+    ]);
   });
 
   gameStore.addEventListener(GAME_EVENTS.STATE_CHANGE, (event) => {

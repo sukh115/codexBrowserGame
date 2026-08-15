@@ -13,6 +13,24 @@ export class SfxPlayer {
     await this.context.resume();
   }
 
+  async suspendForBackground(): Promise<void> {
+    if (!this.context || this.context.state === "closed") return;
+    if (this.humGain) {
+      const now = this.context.currentTime;
+      this.humGain.gain.cancelScheduledValues(now);
+      this.humGain.gain.setValueAtTime(0, now);
+    }
+    await this.context.suspend();
+    // 빠른 탭 전환 중 뒤늦게 suspend가 끝난 경우 즉시 복구한다.
+    if (document.visibilityState === "visible") await this.resumeAndRestore();
+  }
+
+  async resumeAndRestore(): Promise<void> {
+    if (!this.context || this.context.state === "closed" || document.visibilityState !== "visible") return;
+    await this.context.resume();
+    if (document.visibilityState === "visible") this.updateHumGain(0.04);
+  }
+
   setMuted(muted: boolean): void {
     this.muted = muted;
     this.updateHumGain(0.04);
