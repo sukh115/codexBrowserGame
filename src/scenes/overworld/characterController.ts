@@ -3,6 +3,7 @@ import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { createPlaceholderCharacter, type PlaceholderCharacterRig } from "./placeholderCharacter";
 import { disposeObject3D } from "./resourceDisposal";
+import { applyConceptCharacterStyle } from "./characterStyle";
 
 interface CharacterMotion {
   readonly group: THREE.Group;
@@ -79,6 +80,7 @@ class GltfMotion implements CharacterMotion {
   constructor(group: THREE.Group, clips: readonly THREE.AnimationClip[]) {
     this.group = group;
     this.normalizeModel();
+    applyConceptCharacterStyle(this.group);
     this.mixer = new THREE.AnimationMixer(group);
     this.idleAction = this.createAction(clips, ["idle"]);
     this.walkAction = this.createAction(clips, ["walk", "walking"]);
