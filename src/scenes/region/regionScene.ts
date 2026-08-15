@@ -1,13 +1,13 @@
 import * as THREE from "three";
 import type { GameScene } from "../../core/engine";
 import type { RegionManifest } from "../../core/assetManifest";
-import { NOTE_SPOTS } from "./noteSpots";
 import { NoteField } from "./noteField";
 import { INPUT_LIMITS } from "../../core/constants";
 import { MinigameController } from "./minigames/controller";
 import { ReactiveLayer } from "./reactiveLayer";
 import { TapRipplePool } from "./tapRipplePool";
 import type { SfxPlayer } from "../../audio/sfx";
+import { REGION_PLACEMENTS } from "../../regionData";
 
 const BACKGROUND_HEIGHT = 10;
 const MIN_ZOOM = 1;
@@ -35,6 +35,7 @@ export class RegionScene implements GameScene {
   private tapStartY = 0;
   private tapStartTime = 0;
   private inputLocked = false;
+  private readonly placementEditorEnabled = new URLSearchParams(window.location.search).get("debug") === "1";
   private collectedNotes: readonly string[];
 
   constructor(
@@ -52,6 +53,7 @@ export class RegionScene implements GameScene {
     private readonly getReducedMotion: () => boolean,
   ) {
     const width = BACKGROUND_HEIGHT * manifest.aspectRatio;
+    const placement = REGION_PLACEMENTS[manifest.id];
     this.reactiveLayer = new ReactiveLayer(
       overlayRoot,
       manifest.id,
@@ -64,7 +66,7 @@ export class RegionScene implements GameScene {
       this.reactiveLayer.background.material,
     );
     this.noteField = new NoteField(
-      NOTE_SPOTS[manifest.id],
+      placement.notes,
       collectedNotes,
       width,
       BACKGROUND_HEIGHT,
@@ -80,6 +82,7 @@ export class RegionScene implements GameScene {
       (index) => this.sfxPlayer.playTone(index),
       getRhythmAssist,
       manifest.id,
+      placement.minigames,
       clearedMinigames,
       (open) => this.setInputLocked(open),
       onClearMinigame,
@@ -224,8 +227,12 @@ export class RegionScene implements GameScene {
       const distanceLimit = touch ? 14 : INPUT_LIMITS.TAP_DISTANCE_PX;
       const durationLimit = touch ? 420 : INPUT_LIMITS.TAP_DURATION_MS;
       if (distance < distanceLimit && duration < durationLimit) {
-        const collected = this.noteField.collectAt(event.clientX, event.clientY, this.camera);
-        if (!collected) this.playBackgroundTap(event.clientX, event.clientY);
+        if (this.placementEditorEnabled && event.shiftKey) {
+          this.logPlacementSnippet(event.clientX, event.clientY);
+        } else {
+          const collected = this.noteField.collectAt(event.clientX, event.clientY, this.camera);
+          if (!collected) this.playBackgroundTap(event.clientX, event.clientY);
+        }
       }
     }
     this.pointers.delete(event.pointerId);
@@ -258,6 +265,29 @@ export class RegionScene implements GameScene {
     const scaleIndex = Math.round((1 - backgroundV) * (scale.length - 1));
     this.sfxPlayer.playPluck(scale[scaleIndex]);
     this.tapRipples.play(this.tapWorldPosition);
+  }
+
+  private logPlacementSnippet(clientX: number, clientY: number): void {
+    const bounds = this.canvas.getBoundingClientRect();
+    const screenX = clientX - bounds.left;
+    const screenY = clientY - bounds.top;
+    this.tapWorldPosition.set(
+      (screenX / bounds.width) * 2 - 1,
+      -(screenY / bounds.height) * 2 + 1,
+      0,
+    ).unproject(this.camera);
+    const backgroundWidth = BACKGROUND_HEIGHT * this.manifest.aspectRatio;
+    const snippet = {
+      u: Number(THREE.MathUtils.clamp(this.tapWorldPosition.x / backgroundWidth + 0.5, 0, 1).toFixed(3)),
+      v: Number(THREE.MathUtils.clamp(0.5 - this.tapWorldPosition.y / BACKGROUND_HEIGHT, 0, 1).toFixed(3)),
+    };
+    console.log(
+      `[RegionEditor] ${this.manifest.id}\n${JSON.stringify(snippet, null, 2)}`,
+      {
+        zoom: Number(this.camera.zoom.toFixed(3)),
+        screen: { x: Math.round(screenX), y: Math.round(screenY) },
+      },
+    );
   }
 
   private clampCamera(): void {

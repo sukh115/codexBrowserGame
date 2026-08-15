@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import type { NoteSpot } from "./noteSpots";
+import type { NoteSpot } from "../../regionData/types";
 import { beatPhase } from "../../core/music";
 
 interface NoteObject {

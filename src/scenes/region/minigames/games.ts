@@ -1,5 +1,5 @@
 import type { MinigameFrame } from "./frame";
-import type { MinigameType } from "./types";
+import type { MinigameType } from "../../../regionData/types";
 
 export type StopGame = () => void;
 

@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { MinigameFrame } from "./frame";
 import { startMinigame, type StopGame } from "./games";
-import { GREENHOUSE_MINIGAME_SPOTS, MINIGAME_SPOTS, type MinigameSpot } from "./types";
+import type { MinigameSpot } from "../../../regionData/types";
 import type { RegionId } from "../../../core/assetManifest";
 import { beatPhase } from "../../../core/music";
 
@@ -24,18 +24,13 @@ export class MinigameController {
     private readonly playTone: (index: number) => void,
     private readonly getRhythmAssist: () => boolean,
     regionId: RegionId,
+    spots: readonly MinigameSpot[],
     cleared: readonly string[],
     private readonly onModalChange: (open: boolean) => void,
     private readonly onClear: (gameId: string, rewardNoteId: string) => void,
   ) {
     this.greenhouse = regionId === "neon-forest";
-    const prefix = this.greenhouse ? "greenhouse-" : "";
-    const sourceSpots = this.greenhouse ? GREENHOUSE_MINIGAME_SPOTS : MINIGAME_SPOTS;
-    this.spots = sourceSpots.map((spot) => ({
-      ...spot,
-      id: `${prefix}${spot.id}`,
-      rewardNoteId: `${prefix}${spot.rewardNoteId}`,
-    }));
+    this.spots = spots;
     this.frame = new MinigameFrame(overlayRoot, () => this.close());
     this.frame.element.classList.toggle("is-greenhouse", this.greenhouse);
     this.spots.forEach((spot) => {

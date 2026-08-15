@@ -1,4 +1,4 @@
-import type { MinigameSpot } from "./types";
+import type { MinigameSpot } from "../../../regionData/types";
 
 export class MinigameFrame {
   readonly element = document.createElement("section");
