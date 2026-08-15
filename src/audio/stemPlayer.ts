@@ -10,7 +10,7 @@ interface ActiveStem {
 const AUDIO_FORMATS = ["ogg", "m4a", "wav"] as const;
 const PLACEHOLDER_SAMPLE_RATE = 48_000;
 const BEATS_PER_LOOP = 16;
-const LOOP_DURATION_TOLERANCE_SECONDS = 0.03;
+const LOOP_DURATION_TOLERANCE_SECONDS = 0.05;
 const STEM_PEAK_LIMIT = 10 ** (-6 / 20);
 const STEM_LEVEL = 0.72;
 const RHYTHM_ACCENT_LEVEL = 0.86;
@@ -371,17 +371,16 @@ export class StemPlayer {
   }
 
   private validateStem(buffer: AudioBuffer, stem: StemManifest, bpm: number): boolean {
-    const expectedDuration = BEATS_PER_LOOP * 60 / bpm;
-    if (buffer.sampleRate !== PLACEHOLDER_SAMPLE_RATE) {
-      console.warn(`[StemPlayer] ${stem.id}: 48 kHz가 아니어서 플레이스홀더를 사용합니다. (${buffer.sampleRate} Hz)`);
-      return false;
-    }
-    if (Math.abs(buffer.duration - expectedDuration) > LOOP_DURATION_TOLERANCE_SECONDS) {
+    const fourBarDuration = BEATS_PER_LOOP * 60 / bpm;
+    const loopMultiple = Math.round(buffer.duration / fourBarDuration);
+    const validMultiple = loopMultiple >= 1
+      && loopMultiple <= 4
+      && Math.abs(buffer.duration - fourBarDuration * loopMultiple) <= LOOP_DURATION_TOLERANCE_SECONDS;
+    if (!validMultiple) {
       console.warn(
-        `[StemPlayer] ${stem.id}: 4마디 길이가 아니어서 플레이스홀더를 사용합니다. `
-        + `(기대 ${expectedDuration.toFixed(3)}초, 실제 ${buffer.duration.toFixed(3)}초)`,
+        `[StemPlayer] ${stem.id}: 길이가 4마디의 1~4배 범위와 맞지 않습니다. 버퍼는 그대로 사용합니다. `
+        + `(4마디 ${fourBarDuration.toFixed(3)}초, 실제 ${buffer.duration.toFixed(3)}초)`,
       );
-      return false;
     }
     let peak = 0;
     for (let channel = 0; channel < buffer.numberOfChannels; channel += 1) {
