@@ -520,8 +520,8 @@ export class OverworldScene implements GameScene {
       context.stroke();
       context.setLineDash([]);
 
-      const arrow = pointOnCurve(0.84);
-      const arrowAngle = tangentAngle(0.84);
+      const arrow = pointOnCurve(0.68);
+      const arrowAngle = tangentAngle(0.68);
       context.save();
       context.translate(arrow.x, arrow.y);
       context.rotate(arrowAngle);
@@ -535,10 +535,23 @@ export class OverworldScene implements GameScene {
       context.fill();
       context.restore();
 
-      const labelPoint = pointOnCurve(0.65);
+      const labelPoint = pointOnCurve(0.48);
+      const rawLabelAngle = tangentAngle(0.48);
+      const labelAngle = rawLabelAngle > Math.PI / 2
+        ? rawLabelAngle - Math.PI
+        : rawLabelAngle < -Math.PI / 2
+          ? rawLabelAngle + Math.PI
+          : rawLabelAngle;
       context.save();
       context.translate(labelPoint.x, labelPoint.y);
-      context.rotate(tangentAngle(0.65));
+      context.rotate(labelAngle);
+      context.fillStyle = "rgba(249, 247, 240, .82)";
+      context.beginPath();
+      context.roundRect(-92, -49, 184, 38, 13);
+      context.fill();
+      context.strokeStyle = color;
+      context.lineWidth = 3;
+      context.stroke();
       context.fillStyle = "rgba(57, 68, 69, .78)";
       context.font = "700 27px sans-serif";
       context.textAlign = "center";
@@ -559,10 +572,6 @@ export class OverworldScene implements GameScene {
       context.quadraticCurveTo(x + 14, y, x + 25, y + 6);
       context.stroke();
     }
-    context.fillStyle = "#9aa9ad";
-    context.font = "bold 34px sans-serif";
-    context.textAlign = "center";
-    context.fillText("3D OVERWORLD · PLACEHOLDER", 512, 520);
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
     return texture;
