@@ -52,7 +52,13 @@ export class RegionScene implements GameScene {
     private readonly getReducedMotion: () => boolean,
   ) {
     const width = BACKGROUND_HEIGHT * manifest.aspectRatio;
-    this.reactiveLayer = new ReactiveLayer(overlayRoot, manifest.id, this.createPlaceholderTexture());
+    this.reactiveLayer = new ReactiveLayer(
+      overlayRoot,
+      manifest.id,
+      this.createPlaceholderTexture(),
+      manifest.baseBrightness,
+      manifest.baseSaturation,
+    );
     this.background = new THREE.Mesh(
       new THREE.PlaneGeometry(width, BACKGROUND_HEIGHT),
       this.reactiveLayer.background.material,

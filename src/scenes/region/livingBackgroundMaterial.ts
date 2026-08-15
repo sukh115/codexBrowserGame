@@ -3,10 +3,16 @@ import { gsap } from "gsap";
 
 export class LivingBackgroundMaterial {
   readonly material: THREE.ShaderMaterial;
-  private readonly saturation = { value: 0.35 };
-  private readonly brightness = { value: 0.62 };
+  private readonly saturation: { value: number };
+  private readonly brightness: { value: number };
+  private readonly baseBrightness: number;
+  private readonly baseSaturation: number;
 
-  constructor(texture: THREE.Texture) {
+  constructor(texture: THREE.Texture, baseBrightness: number, baseSaturation: number) {
+    this.baseBrightness = THREE.MathUtils.clamp(baseBrightness, 0, 1);
+    this.baseSaturation = THREE.MathUtils.clamp(baseSaturation, 0, 1);
+    this.saturation = { value: this.baseSaturation };
+    this.brightness = { value: this.baseBrightness };
     this.material = new THREE.ShaderMaterial({
       uniforms: {
         map: { value: texture },
@@ -43,8 +49,8 @@ export class LivingBackgroundMaterial {
 
   setProgress(count: number, reducedMotion: boolean): void {
     const progress = THREE.MathUtils.clamp(count / 7, 0, 1);
-    const saturation = THREE.MathUtils.lerp(0.35, 1.15, progress);
-    const brightness = THREE.MathUtils.lerp(0.62, 1.08, progress);
+    const saturation = THREE.MathUtils.lerp(this.baseSaturation, 1.15, progress);
+    const brightness = THREE.MathUtils.lerp(this.baseBrightness, 1.08, progress);
     gsap.killTweensOf([this.saturation, this.brightness]);
     if (reducedMotion) {
       this.saturation.value = saturation;

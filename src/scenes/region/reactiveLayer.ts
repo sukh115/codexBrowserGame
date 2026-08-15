@@ -12,8 +12,14 @@ export class ReactiveLayer {
   private progressCount = -1;
   private reducedMotion = false;
 
-  constructor(overlayRoot: HTMLElement, private readonly regionId: RegionId, texture: THREE.Texture) {
-    this.background = new LivingBackgroundMaterial(texture);
+  constructor(
+    overlayRoot: HTMLElement,
+    private readonly regionId: RegionId,
+    texture: THREE.Texture,
+    baseBrightness: number,
+    baseSaturation: number,
+  ) {
+    this.background = new LivingBackgroundMaterial(texture, baseBrightness, baseSaturation);
     this.element.className = "region-reactive-layer";
     this.element.classList.toggle("is-greenhouse", regionId === "neon-forest");
     this.crt.className = "reactive-crt";

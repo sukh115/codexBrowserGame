@@ -9,6 +9,8 @@ export interface RegionManifest {
   readonly bpm: number;
   readonly musicalScale: readonly number[];
   readonly aspectRatio: number;
+  readonly baseBrightness: number;
+  readonly baseSaturation: number;
   readonly stems: readonly StemManifest[];
   readonly noteStemMapping: Readonly<Record<string, string | null>>;
   readonly noteEffectMapping: Readonly<Record<string, MusicEffect | null>>;
@@ -95,6 +97,8 @@ export const ASSET_MANIFEST = {
       bpm: 120,
       musicalScale: [220, 261.63, 293.66, 329.63, 392, 440, 523.25, 587.33],
       aspectRatio: 2,
+      baseBrightness: 0.8,
+      baseSaturation: 0.55,
       stems: createStems("music-shop"),
       noteStemMapping: NOTE_STEM_MAPPING,
       noteEffectMapping: NOTE_EFFECT_MAPPING,
@@ -106,6 +110,8 @@ export const ASSET_MANIFEST = {
       bpm: 96,
       musicalScale: [146.83, 174.61, 196, 220, 261.63, 293.66, 349.23, 392],
       aspectRatio: 1456 / 720,
+      baseBrightness: 0.72,
+      baseSaturation: 0.45,
       stems: createStems("neon-forest"),
       noteStemMapping: GREENHOUSE_NOTE_STEM_MAPPING,
       noteEffectMapping: GREENHOUSE_NOTE_EFFECT_MAPPING,
