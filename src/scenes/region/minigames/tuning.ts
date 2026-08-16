@@ -91,7 +91,8 @@ export function startTuning(
     context.fillStyle = "#eee9c8";
     context.font = "bold 17px sans-serif";
     context.textAlign = "center";
-    context.fillText(`차이 ${error.toFixed(1)} cent · 유지 ${heldSeconds.toFixed(1)}/1.2초`, canvas.width / 2, 132);
+    const holdLabel = `유지 ${heldSeconds.toFixed(1)}/1.2초`;
+    context.fillText(assist ? `차이 ${error.toFixed(1)} cent · ${holdLabel}` : holdLabel, canvas.width / 2, 132);
     if (!complete && heldSeconds >= 1.2) {
       voice?.stop();
       voice = null;

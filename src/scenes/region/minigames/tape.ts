@@ -40,6 +40,11 @@ export function startTape(
     const delta = Math.min(0.05, Math.max(0, (time - lastFrameTime) / 1000));
     lastFrameTime = time;
     const dragging = activePointer !== null;
+    if (time - lastPointerTime >= 120 && playbackRate > 0.3) {
+      playbackRate += (0.3 - playbackRate) * Math.min(1, delta * 2);
+      if (playbackRate < 0.305) playbackRate = 0.3;
+      voice?.setPlaybackRate(playbackRate);
+    }
     if (dragging && playbackRate >= 0.9 && playbackRate <= 1.1) {
       progressSeconds = Math.min(8, progressSeconds + delta);
     }
