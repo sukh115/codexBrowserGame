@@ -53,7 +53,7 @@ export function startMinigame(
     onClear,
   );
   if (type === "tuning") return startTuning(frame, musicalScale, rhythmAssist, sfx, onClear);
-  return startTape(frame, musicalScale, sfx, onClear);
+  return startTape(frame, musicalScale, rhythmAssist, sfx, onClear);
 }
 
 function startTiming(

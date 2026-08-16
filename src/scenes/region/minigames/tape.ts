@@ -5,9 +5,14 @@ import type { StopGame } from "./games";
 export function startTape(
   frame: MinigameFrame,
   scale: readonly number[],
+  rhythmAssist: boolean,
   sfx: SfxPlayer,
   onClear: () => void,
 ): StopGame {
+  const minimumTargetRate = rhythmAssist ? 0.7 : 0.8;
+  const maximumTargetRate = rhythmAssist ? 1.4 : 1.25;
+  const targetSeconds = 5;
+  const graceSeconds = 0.4;
   const deck = document.createElement("div");
   deck.className = "tape-deck";
   deck.setAttribute("aria-label", "릴을 드래그해 테이프 속도 맞추기");
@@ -36,8 +41,9 @@ export function startTape(
   let activePointer: number | null = null;
   let lastX = 0;
   let lastPointerTime = performance.now();
-  let playbackRate = 0.3;
+  let smoothedRate = 0.3;
   let progressSeconds = 0;
+  let graceRemaining = 0;
   let lastFrameTime = performance.now();
   let reelRotation = 0;
   let frameId = 0;
@@ -46,12 +52,12 @@ export function startTape(
   let hasInteracted = false;
 
   const updateStatus = (): void => {
-    const inTargetRange = playbackRate >= 0.9 && playbackRate <= 1.1;
-    speedStatus.textContent = `속도 ${playbackRate.toFixed(2)}×`;
+    const inTargetRange = smoothedRate >= minimumTargetRate && smoothedRate <= maximumTargetRate;
+    speedStatus.textContent = `속도 ${smoothedRate.toFixed(2)}×`;
     rateStatus.textContent = inTargetRange
       ? "정속이에요"
-      : playbackRate < 0.9 ? "너무 느려요" : "너무 빨라요";
-    progressStatus.textContent = `안정 재생 ${progressSeconds.toFixed(1)}/8.0초`;
+      : smoothedRate < minimumTargetRate ? "너무 느려요" : "너무 빨라요";
+    progressStatus.textContent = `안정 재생 ${progressSeconds.toFixed(1)}/${targetSeconds.toFixed(1)}초`;
     frame.status.classList.toggle("is-target-rate", inTargetRange);
     frame.status.replaceChildren(speedStatus, rateStatus, progressStatus);
   };
@@ -60,20 +66,25 @@ export function startTape(
     const delta = Math.min(0.05, Math.max(0, (time - lastFrameTime) / 1000));
     lastFrameTime = time;
     const dragging = activePointer !== null;
-    if (time - lastPointerTime >= 120 && playbackRate > 0.3) {
-      playbackRate += (0.3 - playbackRate) * Math.min(1, delta * 2);
-      if (playbackRate < 0.305) playbackRate = 0.3;
-      voice?.setPlaybackRate(playbackRate);
+    if (time - lastPointerTime >= 120 && smoothedRate > 0.3) {
+      smoothedRate += (0.3 - smoothedRate) * Math.min(1, delta * 2);
+      if (smoothedRate < 0.305) smoothedRate = 0.3;
+      voice?.setPlaybackRate(smoothedRate);
     }
-    if (dragging && playbackRate >= 0.9 && playbackRate <= 1.1) {
-      progressSeconds = Math.min(8, progressSeconds + delta);
+    const inTargetRange = smoothedRate >= minimumTargetRate && smoothedRate <= maximumTargetRate;
+    if (dragging && inTargetRange) {
+      graceRemaining = graceSeconds;
+      progressSeconds = Math.min(targetSeconds, progressSeconds + delta);
+    } else if (dragging && graceRemaining > 0) {
+      graceRemaining = Math.max(0, graceRemaining - delta);
+      progressSeconds = Math.min(targetSeconds, progressSeconds + delta);
     }
-    reelRotation += dragging ? playbackRate * delta * 220 : 0;
+    reelRotation += dragging ? smoothedRate * delta * 220 : 0;
     leftReel.style.transform = `rotate(${reelRotation}deg)`;
     rightReel.style.transform = `rotate(${reelRotation}deg)`;
-    gaugeFill.style.width = `${(progressSeconds / 8) * 100}%`;
+    gaugeFill.style.width = `${(progressSeconds / targetSeconds) * 100}%`;
     if (hasInteracted && !complete) updateStatus();
-    if (!complete && progressSeconds >= 8) {
+    if (!complete && progressSeconds >= targetSeconds) {
       complete = true;
       voice?.setActive(false);
       sfx.playArpeggio(scale);
@@ -91,6 +102,7 @@ export function startTape(
     lastX = event.clientX;
     lastPointerTime = performance.now();
     deck.setPointerCapture(event.pointerId);
+    voice?.setPlaybackRate(smoothedRate);
     voice?.setActive(true);
   };
   const onPointerMove = (event: PointerEvent): void => {
@@ -98,8 +110,9 @@ export function startTape(
     const now = performance.now();
     const seconds = Math.max(0.016, (now - lastPointerTime) / 1000);
     const speed = Math.abs(event.clientX - lastX) / seconds;
-    playbackRate = Math.max(0.3, Math.min(2, 0.3 + speed / 145));
-    voice?.setPlaybackRate(playbackRate);
+    const rawRate = Math.max(0.3, Math.min(2, 0.3 + speed / 145));
+    smoothedRate += (rawRate - smoothedRate) * 0.18;
+    voice?.setPlaybackRate(smoothedRate);
     lastX = event.clientX;
     lastPointerTime = now;
   };
