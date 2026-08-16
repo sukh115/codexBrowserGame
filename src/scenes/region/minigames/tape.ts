@@ -167,7 +167,15 @@ export function startTape(
   };
 
   const onPointerDown = (event: PointerEvent): void => {
-    if (phase !== "play" || activePointer !== null) return;
+    if (phase === "completion" || phase === "done" || activePointer !== null) return;
+    if (phase === "reference") {
+      // 미리듣기 중 터치는 무시하지 않고 즉시 플레이로 전환한다
+      phase = "play";
+      phaseElapsed = 0;
+      smoothedRate = 0;
+      deck.classList.remove("is-reference");
+      frame.status.textContent = "이제 릴을 문질러 그 속도를 찾으세요";
+    }
     activePointer = event.pointerId;
     hasInteracted = true;
     lastX = event.clientX;
