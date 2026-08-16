@@ -255,10 +255,10 @@ button { font: inherit; }
 .minigame-overlay.is-open { display: grid; }
 .minigame-overlay.feedback-success .minigame-panel { animation: feedback-success 280ms ease; }
 .minigame-overlay.feedback-error .minigame-panel { animation: feedback-error 280ms ease; }
-.minigame-panel { display: flex; flex-direction: column; width: min(560px, 92vw); min-height: min(380px, 92dvh); max-height: min(92dvh, 560px); padding: 28px; overflow: hidden; border: 2px solid #67e8d2; border-radius: 22px; color: #fff; text-align: center; background: linear-gradient(145deg, #211740, #101d35); box-shadow: 0 0 50px rgb(103 232 210 / 20%); }
+.minigame-panel { display: flex; flex-direction: column; width: min(680px, calc(100vw - 40px)); height: min(680px, calc(100dvh - 40px)); min-height: 0; padding: 28px; overflow: hidden; border: 2px solid #67e8d2; border-radius: 22px; color: #fff; text-align: center; background: linear-gradient(145deg, #211740, #101d35); box-shadow: 0 0 50px rgb(103 232 210 / 20%); }
 .minigame-title { margin: 0 0 8px; font-size: 30px; }
 .minigame-status { min-height: 24px; margin: 0 0 22px; color: #f0a2d7; }
-.minigame-stage { display: grid; flex: 1 1 auto; grid-template-columns: repeat(2, 1fr); place-items: center; gap: 14px; width: 100%; height: 0; min-height: 0; overflow: hidden; }
+.minigame-stage { display: grid; flex: 1 1 0; grid-template-columns: repeat(2, 1fr); place-items: center; gap: 14px; width: 100%; min-height: 0; overflow: hidden; }
 .minigame-stage[data-game-type="pottery"], .minigame-stage[data-game-type="watering"] { display: flex; flex-direction: column; justify-content: center; }
 .minigame-close { position: sticky; bottom: 0; flex: 0 0 auto; align-self: center; margin-top: 18px; padding: 9px 18px; border: 0; border-radius: 999px; cursor: pointer; }
 .timing-track { position: relative; grid-column: 1 / -1; width: min(430px, 75vw); height: 76px; border: 1px solid #8d72e1; border-radius: 14px; background: #0d1026; cursor: pointer; }
@@ -395,7 +395,7 @@ button { font: inherit; }
   .portal-guide span { min-width: 130px; padding: 5px 8px; font-size: 10px; }
   .tutorial-tip { bottom: max(74px, calc(env(safe-area-inset-bottom) + 74px)); padding: 13px; font-size: 13px; }
   .minigame-overlay { align-items: center; overflow-y: auto; padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); }
-  .minigame-panel { width: min(100%, 440px); min-height: 0; padding: 18px 14px; }
+  .minigame-panel { width: min(100%, 520px); height: min(680px, calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom))); padding: 18px 14px; }
   .minigame-title { font-size: 24px; }
   .minigame-status { margin-bottom: 10px; font-size: 13px; }
   .minigame-stage { min-height: 0; }
@@ -419,7 +419,7 @@ button { font: inherit; }
   .exit-button { top: 178px; right: 10px; padding: 0 12px; font-size: 13px; }
   .ui-layer[data-scene="region"] .world-progress { left: 10px; transform: none; }
   .minigame-overlay { padding: 8px; }
-  .minigame-panel { height: min(92dvh, 560px); min-height: 0; padding: 12px 16px; }
+  .minigame-panel { padding: 12px 16px; }
   .minigame-title { font-size: 24px; }
   .minigame-status { margin-bottom: 10px; }
   .minigame-stage { min-height: 0; gap: 8px; }
