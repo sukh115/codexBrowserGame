@@ -20,9 +20,17 @@ export function startTape(
   const gauge = document.createElement("div");
   gauge.className = "tape-gauge";
   const gaugeFill = document.createElement("i");
-  gauge.append(gaugeFill);
+  const gaugeLabel = document.createElement("span");
+  gaugeLabel.className = "tape-gauge-label";
+  gaugeLabel.textContent = "정속 유지";
+  gauge.append(gaugeFill, gaugeLabel);
   deck.append(leftReel, tapeLine, rightReel, gauge);
   frame.stage.append(deck);
+
+  const speedStatus = document.createElement("span");
+  const rateStatus = document.createElement("strong");
+  const progressStatus = document.createElement("span");
+  frame.status.classList.add("tape-status");
 
   const voice = sfx.createTapeVoice(scale);
   let activePointer: number | null = null;
@@ -35,6 +43,18 @@ export function startTape(
   let frameId = 0;
   let clearTimer = 0;
   let complete = false;
+  let hasInteracted = false;
+
+  const updateStatus = (): void => {
+    const inTargetRange = playbackRate >= 0.9 && playbackRate <= 1.1;
+    speedStatus.textContent = `속도 ${playbackRate.toFixed(2)}×`;
+    rateStatus.textContent = inTargetRange
+      ? "정속이에요"
+      : playbackRate < 0.9 ? "너무 느려요" : "너무 빨라요";
+    progressStatus.textContent = `안정 재생 ${progressSeconds.toFixed(1)}/8.0초`;
+    frame.status.classList.toggle("is-target-rate", inTargetRange);
+    frame.status.replaceChildren(speedStatus, rateStatus, progressStatus);
+  };
 
   const draw = (time: number): void => {
     const delta = Math.min(0.05, Math.max(0, (time - lastFrameTime) / 1000));
@@ -52,11 +72,12 @@ export function startTape(
     leftReel.style.transform = `rotate(${reelRotation}deg)`;
     rightReel.style.transform = `rotate(${reelRotation}deg)`;
     gaugeFill.style.width = `${(progressSeconds / 8) * 100}%`;
-    frame.status.textContent = `속도 ${playbackRate.toFixed(2)}× · 안정 재생 ${progressSeconds.toFixed(1)}/8.0초`;
+    if (hasInteracted && !complete) updateStatus();
     if (!complete && progressSeconds >= 8) {
       complete = true;
       voice?.setActive(false);
       sfx.playArpeggio(scale);
+      frame.status.classList.remove("is-target-rate");
       frame.status.textContent = "원래 속도의 멜로디를 복원했어요!";
       clearTimer = window.setTimeout(onClear, 650);
     }
@@ -66,6 +87,7 @@ export function startTape(
   const onPointerDown = (event: PointerEvent): void => {
     if (activePointer !== null || complete) return;
     activePointer = event.pointerId;
+    hasInteracted = true;
     lastX = event.clientX;
     lastPointerTime = performance.now();
     deck.setPointerCapture(event.pointerId);
@@ -91,12 +113,13 @@ export function startTape(
   deck.addEventListener("pointermove", onPointerMove);
   deck.addEventListener("pointerup", onPointerUp);
   deck.addEventListener("pointercancel", onPointerUp);
-  frame.status.textContent = "릴을 일정한 속도로 좌우 드래그하세요";
+  frame.status.textContent = "릴을 좌우로 문질러 테이프를 돌리세요. 멜로디가 원래 속도로 들리는 빠르기를 유지하면 게이지가 찹니다";
   frameId = requestAnimationFrame(draw);
   return () => {
     cancelAnimationFrame(frameId);
     window.clearTimeout(clearTimer);
     voice?.stop();
+    frame.status.classList.remove("tape-status", "is-target-rate");
     deck.removeEventListener("pointerdown", onPointerDown);
     deck.removeEventListener("pointermove", onPointerMove);
     deck.removeEventListener("pointerup", onPointerUp);

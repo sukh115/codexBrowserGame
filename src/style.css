@@ -302,6 +302,10 @@ button { font: inherit; }
 .tape-line { position: absolute; top: 47%; right: 27%; left: 27%; height: 6px; background: #b78078; box-shadow: 0 0 8px #d39487; }
 .tape-gauge { position: absolute; right: 38px; bottom: 24px; left: 38px; height: 18px; overflow: hidden; border: 1px solid #d7bed7; border-radius: 999px; background: #111326; }
 .tape-gauge i { display: block; width: 0; height: 100%; background: linear-gradient(90deg, #6ee0d1, #f0d274); transition: width 80ms linear; }
+.tape-gauge-label { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; color: #fff8d6; font-size: 10px; font-weight: 800; line-height: 1; text-shadow: 0 1px 3px #080814; pointer-events: none; }
+.minigame-status.tape-status { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 9px; }
+.minigame-status.tape-status strong { color: #ef9aac; }
+.minigame-status.tape-status.is-target-rate strong { color: #72ead6; text-shadow: 0 0 12px rgb(114 234 214 / 55%); }
 .key-2, .key-3 { border-color: #e97ac7; }
 @keyframes rhythm-hit { 50% { transform: scale(.88); background: #67e8d2; } }
 @keyframes memory-wrong { 33% { transform: translateX(-7px); } 66% { transform: translateX(7px); } }
