@@ -26,11 +26,13 @@ export class MinigameFrame {
     this.title.textContent = spot.label;
     this.status.textContent = "준비하세요";
     this.stage.replaceChildren();
+    this.stage.dataset.gameType = spot.type;
     this.element.classList.add("is-open");
   }
 
   close(): void {
     this.element.classList.remove("is-open");
     this.stage.replaceChildren();
+    delete this.stage.dataset.gameType;
   }
 }

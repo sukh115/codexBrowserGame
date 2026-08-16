@@ -254,11 +254,12 @@ button { font: inherit; }
 .minigame-overlay.is-open { display: grid; }
 .minigame-overlay.feedback-success .minigame-panel { animation: feedback-success 280ms ease; }
 .minigame-overlay.feedback-error .minigame-panel { animation: feedback-error 280ms ease; }
-.minigame-panel { width: min(560px, 92vw); min-height: 380px; padding: 28px; border: 2px solid #67e8d2; border-radius: 22px; color: #fff; text-align: center; background: linear-gradient(145deg, #211740, #101d35); box-shadow: 0 0 50px rgb(103 232 210 / 20%); }
+.minigame-panel { display: flex; flex-direction: column; width: min(560px, 92vw); min-height: min(380px, 92dvh); max-height: min(92dvh, 560px); padding: 28px; overflow: hidden; border: 2px solid #67e8d2; border-radius: 22px; color: #fff; text-align: center; background: linear-gradient(145deg, #211740, #101d35); box-shadow: 0 0 50px rgb(103 232 210 / 20%); }
 .minigame-title { margin: 0 0 8px; font-size: 30px; }
 .minigame-status { min-height: 24px; margin: 0 0 22px; color: #f0a2d7; }
-.minigame-stage { display: grid; grid-template-columns: repeat(2, 1fr); place-items: center; gap: 14px; min-height: 210px; }
-.minigame-close { margin-top: 18px; padding: 9px 18px; border: 0; border-radius: 999px; cursor: pointer; }
+.minigame-stage { display: grid; flex: 1 1 auto; grid-template-columns: repeat(2, 1fr); place-items: center; gap: 14px; width: 100%; height: 0; min-height: 0; overflow: hidden; }
+.minigame-stage[data-game-type="pottery"], .minigame-stage[data-game-type="watering"] { display: flex; flex-direction: column; justify-content: center; }
+.minigame-close { position: sticky; bottom: 0; flex: 0 0 auto; align-self: center; margin-top: 18px; padding: 9px 18px; border: 0; border-radius: 999px; cursor: pointer; }
 .timing-track { position: relative; grid-column: 1 / -1; width: min(430px, 75vw); height: 76px; border: 1px solid #8d72e1; border-radius: 14px; background: #0d1026; cursor: pointer; }
 .timing-target { position: absolute; top: 0; bottom: 0; left: 42%; width: 16%; background: rgb(103 232 210 / 35%); }
 .timing-cursor { position: absolute; top: 8px; bottom: 8px; width: 7px; border-radius: 9px; background: #f5e68b; box-shadow: 0 0 14px #f5e68b; transform: translateX(-50%); }
@@ -286,8 +287,10 @@ button { font: inherit; }
 .minigame-overlay.is-greenhouse .rhythm-pad { border-color: #8eb593; background: radial-gradient(circle, #56745c, #263b30); box-shadow: 0 0 30px rgb(174 217 177 / 28%); }
 .memory-key.is-plant { height: 105px; border-color: #718f68; border-radius: 50% 50% 42% 42%; color: #f0e6bd; background: radial-gradient(circle at 50% 25%, #526f4e, #223427 65%); }
 .memory-key.is-plant.is-lit { background: radial-gradient(circle at 50% 25%, #fbefab, #83ad65 45%, #29432e); box-shadow: 0 0 35px #dce795; }
-.pottery-canvas, .watering-canvas { grid-column: 1 / -1; width: min(100%, 620px); height: auto; border: 1px solid rgb(173 199 137 / 36%); border-radius: 16px; background: #0b1612; touch-action: none; }
-.watering-button { grid-column: 1 / -1; min-width: 170px; min-height: 54px; border: 2px solid #86bda9; border-radius: 999px; color: #f4f0d1; font-weight: 800; background: #355b4d; box-shadow: 0 0 20px rgb(134 189 169 / 24%); cursor: pointer; touch-action: none; user-select: none; }
+.pottery-canvas, .watering-canvas { flex: 1 1 0; grid-column: 1 / -1; width: auto; height: auto; min-height: 0; max-width: min(100%, 620px); max-height: 100%; border: 1px solid rgb(173 199 137 / 36%); border-radius: 16px; background: #0b1612; touch-action: none; }
+.pottery-canvas { aspect-ratio: 620 / 390; }
+.watering-canvas { aspect-ratio: 620 / 310; }
+.watering-button { flex: 0 0 auto; grid-column: 1 / -1; min-width: 170px; min-height: 54px; border: 2px solid #86bda9; border-radius: 999px; color: #f4f0d1; font-weight: 800; background: #355b4d; box-shadow: 0 0 20px rgb(134 189 169 / 24%); cursor: pointer; touch-action: none; user-select: none; }
 .watering-button.is-watering { color: #15251f; background: #a9dac8; transform: scale(.96); }
 .tuning-wave { grid-column: 1 / -1; width: min(100%, 560px); height: auto; border: 1px solid rgb(112 225 211 / 35%); border-radius: 14px; background: #101529; }
 .tuning-track { position: relative; grid-column: 1 / -1; width: min(500px, 78vw); height: 52px; border: 1px solid #d9bd72; border-radius: 999px; background: linear-gradient(90deg, #4b274f, #263b4c 42% 58%, #4b274f); cursor: ew-resize; touch-action: none; }
@@ -391,10 +394,10 @@ button { font: inherit; }
   .portal-guide span { min-width: 130px; padding: 5px 8px; font-size: 10px; }
   .tutorial-tip { bottom: max(74px, calc(env(safe-area-inset-bottom) + 74px)); padding: 13px; font-size: 13px; }
   .minigame-overlay { align-items: center; overflow-y: auto; padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); }
-  .minigame-panel { width: min(100%, 440px); min-height: 0; max-height: calc(100dvh - 24px); padding: 18px 14px; overflow-y: auto; }
+  .minigame-panel { width: min(100%, 440px); min-height: 0; padding: 18px 14px; }
   .minigame-title { font-size: 24px; }
   .minigame-status { margin-bottom: 10px; font-size: 13px; }
-  .minigame-stage { min-height: 180px; }
+  .minigame-stage { min-height: 0; }
   .timing-track { width: min(100%, 360px); }
   .rhythm-track { width: 145px; height: 190px; }
   .rhythm-pad { width: 125px; }
@@ -414,13 +417,22 @@ button { font: inherit; }
   .settings-panel { top: 52px; right: 10px; left: auto; }
   .exit-button { top: 178px; right: 10px; padding: 0 12px; font-size: 13px; }
   .ui-layer[data-scene="region"] .world-progress { left: 10px; transform: none; }
-  .minigame-panel { min-height: 300px; padding: 18px; }
+  .minigame-overlay { padding: 8px; }
+  .minigame-panel { height: min(92dvh, 560px); min-height: 0; padding: 12px 16px; }
   .minigame-title { font-size: 24px; }
   .minigame-status { margin-bottom: 10px; }
-  .minigame-stage { min-height: 160px; }
-  .rhythm-pad { width: 130px; }
+  .minigame-stage { min-height: 0; gap: 8px; }
+  .rhythm-track { height: min(145px, 100%); }
+  .rhythm-pad { width: 110px; }
   .memory-key { height: 58px; }
-  .minigame-close { margin-top: 10px; }
+  .watering-button { min-height: 44px; }
+  .tuning-wave { width: auto; max-width: 100%; max-height: calc(100% - 50px); }
+  .tuning-track { height: 42px; }
+  .tuning-knob { width: 32px; height: 32px; }
+  .tape-deck { width: min(520px, 82vw); height: 100%; min-height: 0; padding: 12px 28px 38px; }
+  .tape-reel { width: min(92px, 19vw); border-width: 9px; }
+  .tape-gauge { right: 28px; bottom: 12px; left: 28px; height: 14px; }
+  .minigame-close { margin-top: 8px; }
   .minigame-entrance { min-width: 44px; min-height: 44px; font-size: 12px; }
 }
 .webgl-fallback {
