@@ -298,6 +298,9 @@ button { font: inherit; }
 .tuning-track::after { content: ""; position: absolute; top: 6px; bottom: 6px; left: 50%; width: 2px; background: rgb(255 241 170 / 65%); transform: translateX(-50%); }
 .tuning-knob { position: absolute; top: 50%; left: 50%; z-index: 1; width: 38px; height: 38px; border: 3px solid #fff0aa; border-radius: 50%; background: #8064a5; box-shadow: 0 0 18px rgb(255 234 150 / 55%); transform: translate(-50%, -50%); }
 .tape-deck { position: relative; grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; place-items: center; width: min(520px, 82vw); min-height: 245px; padding: 28px 38px 58px; border: 2px solid #a66b9e; border-radius: 24px; background: linear-gradient(145deg, #342542, #15182c); cursor: ew-resize; touch-action: none; user-select: none; }
+.tape-deck.is-reference, .tape-deck.is-target-rate { border-color: #72ead6; box-shadow: inset 0 0 28px rgb(114 234 214 / 18%), 0 0 28px rgb(114 234 214 / 45%); }
+.tape-deck.is-completing { animation: tape-complete-glow 700ms ease-in-out infinite alternate; }
+.tape-deck.is-target-rate .tape-reel { border-color: #fff0b0; filter: drop-shadow(0 0 12px rgb(114 234 214 / 80%)); }
 .tape-reel { position: relative; z-index: 1; width: min(130px, 26vw); aspect-ratio: 1; border: 13px dotted #d8b5d0; border-radius: 50%; background: radial-gradient(circle, #141527 0 19%, #8c6388 21% 31%, #29213a 33%); }
 .tape-line { position: absolute; top: 47%; right: 27%; left: 27%; height: 6px; background: #b78078; box-shadow: 0 0 8px #d39487; }
 .tape-gauge { position: absolute; right: 38px; bottom: 24px; left: 38px; height: 18px; overflow: hidden; border: 1px solid #d7bed7; border-radius: 999px; background: #111326; }
@@ -308,6 +311,7 @@ button { font: inherit; }
 .minigame-status.tape-status.is-target-rate strong { color: #72ead6; text-shadow: 0 0 12px rgb(114 234 214 / 55%); }
 .key-2, .key-3 { border-color: #e97ac7; }
 @keyframes rhythm-hit { 50% { transform: scale(.88); background: #67e8d2; } }
+@keyframes tape-complete-glow { to { box-shadow: inset 0 0 38px rgb(255 226 137 / 22%), 0 0 40px rgb(114 234 214 / 70%); } }
 @keyframes memory-wrong { 33% { transform: translateX(-7px); } 66% { transform: translateX(7px); } }
 @keyframes feedback-success { 45% { border-color: #eff69c; box-shadow: 0 0 55px rgb(225 239 133 / 55%); transform: scale(1.015); } }
 @keyframes feedback-error { 30% { border-color: #ef7183; transform: translateX(-5px); } 65% { transform: translateX(5px); } }

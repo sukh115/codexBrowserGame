@@ -141,6 +141,22 @@ export class SfxPlayer {
     oscillator.stop(now + 0.25);
   }
 
+  playTapeLock(): void {
+    if (!this.context || this.muted) return;
+    const now = this.context.currentTime;
+    const oscillator = this.context.createOscillator();
+    const gain = this.context.createGain();
+    oscillator.type = "square";
+    oscillator.frequency.setValueAtTime(920, now);
+    oscillator.frequency.exponentialRampToValueAtTime(640, now + 0.055);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.055, now + 0.004);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.07);
+    oscillator.connect(gain).connect(this.getOutput());
+    oscillator.start(now);
+    oscillator.stop(now + 0.075);
+  }
+
   playArpeggio(scale: readonly number[]): void {
     if (!this.context || this.muted || scale.length === 0) return;
     const context = this.context;
