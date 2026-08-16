@@ -49,8 +49,8 @@ export class LivingBackgroundMaterial {
 
   setProgress(count: number, reducedMotion: boolean): void {
     const progress = THREE.MathUtils.clamp(count / this.noteGoal, 0, 1);
-    const saturation = THREE.MathUtils.lerp(this.baseSaturation, 1.15, progress);
-    const brightness = THREE.MathUtils.lerp(this.baseBrightness, 1.08, progress);
+    const saturation = THREE.MathUtils.lerp(this.baseSaturation, 1, progress);
+    const brightness = THREE.MathUtils.lerp(this.baseBrightness, 1, progress);
     gsap.killTweensOf([this.saturation, this.brightness]);
     if (reducedMotion) {
       this.saturation.value = saturation;
