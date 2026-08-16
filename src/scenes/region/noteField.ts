@@ -35,6 +35,7 @@ export class NoteField {
     collectedNotes: readonly string[],
     backgroundWidth: number,
     backgroundHeight: number,
+    private readonly noteGoal: number,
     private readonly onCollect: (noteId: string) => void,
   ) {
     this.regularPrefix = this.spots.some((spot) => spot.id.startsWith("greenhouse-note-"))
@@ -56,7 +57,8 @@ export class NoteField {
         (0.5 - spot.v) * backgroundHeight,
         0.15,
       );
-      const active = !collectedNotes.includes(spot.id) && (!spot.secret || this.regularCount(collectedNotes) >= 7);
+      const active = !collectedNotes.includes(spot.id)
+        && (!spot.secret || this.regularCount(collectedNotes) >= this.noteGoal);
       sprite.visible = active;
       const note = { id: spot.id, sprite, texture, size: spot.size, secret: spot.secret === true, active };
       this.notes.push(note);
@@ -174,7 +176,8 @@ export class NoteField {
 
   syncCollectedNotes(collectedNotes: readonly string[]): void {
     for (const note of this.notes) {
-      note.active = !collectedNotes.includes(note.id) && (!note.secret || this.regularCount(collectedNotes) >= 7);
+      note.active = !collectedNotes.includes(note.id)
+        && (!note.secret || this.regularCount(collectedNotes) >= this.noteGoal);
       note.sprite.visible = note.active;
       note.sprite.material.opacity = 0.84;
       const spot = this.getSpotById(note.id);

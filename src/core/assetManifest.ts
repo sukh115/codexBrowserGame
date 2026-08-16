@@ -5,6 +5,7 @@ const assetPath = (path: string): string => `${import.meta.env.BASE_URL}${path.r
 export interface RegionManifest {
   readonly id: RegionId;
   readonly title: string;
+  readonly noteGoal: number;
   readonly background: string | null;
   readonly bpm: number;
   readonly musicalScale: readonly number[];
@@ -93,6 +94,7 @@ export const ASSET_MANIFEST = {
     "music-shop": {
       id: "music-shop",
       title: "잠든 악기점",
+      noteGoal: 7,
       background: assetPath("assets/textures/music-shop.webp"),
       bpm: 120,
       musicalScale: [220, 261.63, 293.66, 329.63, 392, 440, 523.25, 587.33],
@@ -106,6 +108,7 @@ export const ASSET_MANIFEST = {
     "neon-forest": {
       id: "neon-forest",
       title: "네온 숲",
+      noteGoal: 7,
       background: assetPath("assets/textures/abandoned-greenhouse.webp"),
       bpm: 96,
       musicalScale: [146.83, 174.61, 196, 220, 261.63, 293.66, 349.23, 392],

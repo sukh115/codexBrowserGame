@@ -117,13 +117,13 @@ export class MinigameController {
 
   private setButtonContent(button: HTMLButtonElement, spot: MinigameSpot, complete: boolean): void {
     const icons: Record<MinigameSpot["type"], string> = {
-      timing: this.greenhouse ? "VINE" : "AMP",
-      rhythm: this.greenhouse ? "RAIN" : "BEAT",
-      memory: this.greenhouse ? "BLOOM" : "CRT",
-      pottery: "POT",
-      watering: "WATER",
-      tuning: "TUNE",
-      tape: "TAPE",
+      timing: "⏱",
+      rhythm: "♪",
+      memory: "▶",
+      pottery: "◇",
+      watering: "≈",
+      tuning: "♬",
+      tape: "↶",
     };
     button.innerHTML = `<b>${complete ? "✓" : icons[spot.type]}</b><span>${complete ? "완료" : spot.label}</span>`;
   }

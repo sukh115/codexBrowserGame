@@ -1,5 +1,5 @@
-import { GAME_EVENTS } from "./constants";
-import type { RegionId } from "./assetManifest";
+import { GAME_EVENTS, GAME_STORAGE_KEY } from "./constants";
+import { ASSET_MANIFEST, type RegionId } from "./assetManifest";
 
 export type SceneId = "loading" | "overworld" | "region";
 
@@ -67,12 +67,12 @@ class GameStore extends EventTarget {
 
   setState(patch: Partial<GameState>): void {
     this.state = { ...this.state, ...patch };
-    localStorage.setItem("lost-song-progress", JSON.stringify(this.state));
+    localStorage.setItem(GAME_STORAGE_KEY, JSON.stringify(this.state));
     this.dispatchEvent(new CustomEvent<GameState>(GAME_EVENTS.STATE_CHANGE, { detail: this.state }));
   }
 
   enterRegion(regionId: RegionId): void {
-    const completed = getNoteCountForRegion(this.state.collectedNotes, regionId) >= 7;
+    const completed = getNoteCountForRegion(this.state.collectedNotes, regionId) >= ASSET_MANIFEST.regions[regionId].noteGoal;
     this.setState({ currentScene: "region", currentRegion: regionId, completed });
     this.dispatchEvent(new CustomEvent<RegionEnteredDetail>(GAME_EVENTS.REGION_ENTERED, {
       detail: { regionId },
@@ -87,7 +87,8 @@ class GameStore extends EventTarget {
   collectNote(noteId: string): void {
     if (this.state.collectedNotes.includes(noteId)) return;
     const collectedNotes = [...this.state.collectedNotes, noteId];
-    const completed = getRegionNoteCount({ ...this.state, collectedNotes }) >= 7;
+    const completed = getRegionNoteCount({ ...this.state, collectedNotes })
+      >= ASSET_MANIFEST.regions[this.state.currentRegion].noteGoal;
     const completedRegions = completed && !this.state.completedRegions.includes(this.state.currentRegion)
       ? [...this.state.completedRegions, this.state.currentRegion]
       : this.state.completedRegions;
@@ -104,7 +105,8 @@ class GameStore extends EventTarget {
     const collectedNotes = !noteWasNew
       ? [...this.state.collectedNotes]
       : [...this.state.collectedNotes, rewardNoteId];
-    const completed = getRegionNoteCount({ ...this.state, collectedNotes }) >= 7;
+    const completed = getRegionNoteCount({ ...this.state, collectedNotes })
+      >= ASSET_MANIFEST.regions[this.state.currentRegion].noteGoal;
     const completedRegions = completed && !this.state.completedRegions.includes(this.state.currentRegion)
       ? [...this.state.completedRegions, this.state.currentRegion]
       : this.state.completedRegions;
@@ -146,14 +148,14 @@ class GameStore extends EventTarget {
       currentScene: this.state.currentScene,
       currentRegion: this.state.currentRegion,
     };
-    localStorage.removeItem("lost-song-progress");
+    localStorage.removeItem(GAME_STORAGE_KEY);
     this.dispatchEvent(new CustomEvent<GameState>(GAME_EVENTS.STATE_CHANGE, { detail: this.state }));
     this.dispatchEvent(new Event(GAME_EVENTS.ALL_PROGRESS_RESET));
   }
 
   private load(): GameState {
     try {
-      const value: unknown = JSON.parse(localStorage.getItem("lost-song-progress") ?? "null");
+      const value: unknown = JSON.parse(localStorage.getItem(GAME_STORAGE_KEY) ?? "null");
       if (!value || typeof value !== "object") return this.initialState;
       const stored = value as Partial<GameState>;
       if (!Array.isArray(stored.collectedNotes) || !Array.isArray(stored.clearedMinigames)) {
@@ -161,8 +163,8 @@ class GameStore extends EventTarget {
       }
       const collectedNotes = stored.collectedNotes.filter((item): item is string => typeof item === "string");
       const completedRegions: RegionId[] = [];
-      if (getNoteCountForRegion(collectedNotes, "music-shop") >= 7) completedRegions.push("music-shop");
-      if (getNoteCountForRegion(collectedNotes, "neon-forest") >= 7) completedRegions.push("neon-forest");
+      if (getNoteCountForRegion(collectedNotes, "music-shop") >= ASSET_MANIFEST.regions["music-shop"].noteGoal) completedRegions.push("music-shop");
+      if (getNoteCountForRegion(collectedNotes, "neon-forest") >= ASSET_MANIFEST.regions["neon-forest"].noteGoal) completedRegions.push("neon-forest");
       const currentRegion = stored.currentRegion === "neon-forest" ? "neon-forest" : "music-shop";
       const celebratedRegions = Array.isArray(stored.celebratedRegions)
         ? stored.celebratedRegions.filter((item): item is RegionId => item === "music-shop" || item === "neon-forest")

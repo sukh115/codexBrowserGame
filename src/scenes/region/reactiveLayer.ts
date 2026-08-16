@@ -18,8 +18,9 @@ export class ReactiveLayer {
     texture: THREE.Texture,
     baseBrightness: number,
     baseSaturation: number,
+    noteGoal: number,
   ) {
-    this.background = new LivingBackgroundMaterial(texture, baseBrightness, baseSaturation);
+    this.background = new LivingBackgroundMaterial(texture, baseBrightness, baseSaturation, noteGoal);
     this.element.className = "region-reactive-layer";
     this.element.classList.toggle("is-greenhouse", regionId === "neon-forest");
     this.crt.className = "reactive-crt";

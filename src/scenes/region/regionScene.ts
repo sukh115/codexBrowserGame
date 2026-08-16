@@ -60,6 +60,7 @@ export class RegionScene implements GameScene {
       this.createPlaceholderTexture(),
       manifest.baseBrightness,
       manifest.baseSaturation,
+      manifest.noteGoal,
     );
     this.background = new THREE.Mesh(
       new THREE.PlaneGeometry(width, BACKGROUND_HEIGHT),
@@ -70,6 +71,7 @@ export class RegionScene implements GameScene {
       collectedNotes,
       width,
       BACKGROUND_HEIGHT,
+      manifest.noteGoal,
       onCollectNote,
     );
     this.collectedNotes = collectedNotes;

@@ -8,7 +8,7 @@ export class LivingBackgroundMaterial {
   private readonly baseBrightness: number;
   private readonly baseSaturation: number;
 
-  constructor(texture: THREE.Texture, baseBrightness: number, baseSaturation: number) {
+  constructor(texture: THREE.Texture, baseBrightness: number, baseSaturation: number, private readonly noteGoal: number) {
     this.baseBrightness = THREE.MathUtils.clamp(baseBrightness, 0, 1);
     this.baseSaturation = THREE.MathUtils.clamp(baseSaturation, 0, 1);
     this.saturation = { value: this.baseSaturation };
@@ -48,7 +48,7 @@ export class LivingBackgroundMaterial {
   }
 
   setProgress(count: number, reducedMotion: boolean): void {
-    const progress = THREE.MathUtils.clamp(count / 7, 0, 1);
+    const progress = THREE.MathUtils.clamp(count / this.noteGoal, 0, 1);
     const saturation = THREE.MathUtils.lerp(this.baseSaturation, 1.15, progress);
     const brightness = THREE.MathUtils.lerp(this.baseBrightness, 1.08, progress);
     gsap.killTweensOf([this.saturation, this.brightness]);

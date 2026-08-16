@@ -222,9 +222,11 @@ button { font: inherit; }
   position: absolute;
   z-index: 6;
   display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   place-items: center;
-  gap: 2px;
-  min-width: 62px;
+  gap: 5px;
+  min-width: 96px;
+  max-width: min(142px, 42vw);
   min-height: 50px;
   padding: 6px 9px;
   border: 2px solid #67e8d2;
@@ -237,9 +239,8 @@ button { font: inherit; }
   pointer-events: auto;
 }
 
-.minigame-entrance b { font: 900 12px/1 monospace; letter-spacing: .1em; }
-.minigame-entrance span { max-width: 80px; font-size: 10px; white-space: nowrap; opacity: 0; transform: translateY(3px); transition: 160ms ease; }
-.minigame-entrance:hover span, .minigame-entrance:focus-visible span { opacity: 1; transform: none; }
+.minigame-entrance b { font: 900 12px/1 sans-serif; }
+.minigame-entrance span { min-width: 0; font-size: 12px; font-weight: 800; line-height: 1.15; white-space: normal; overflow-wrap: anywhere; }
 .entrance-timing { border-color: #67e8d2; box-shadow: inset 0 0 12px rgb(103 232 210 / 18%), 0 0 14px rgb(103 232 210 / 35%); }
 .entrance-rhythm { border-color: #e97ac7; box-shadow: inset 0 0 12px rgb(233 122 199 / 18%), 0 0 14px rgb(233 122 199 / 35%); }
 .entrance-memory { border-color: #9f84ef; box-shadow: inset 0 0 12px rgb(159 132 239 / 22%), 0 0 14px rgb(159 132 239 / 40%); }
@@ -404,7 +405,7 @@ button { font: inherit; }
   .memory-key { width: min(140px, 38vw); height: 68px; }
   .memory-key.is-plant { height: 76px; font-size: 15px; }
   .rhythm-track.is-rain { width: min(170px, 46vw); }
-  .minigame-entrance { --entrance-base: .86; min-width: 48px; min-height: 44px; }
+  .minigame-entrance { --entrance-base: .86; min-width: 88px; min-height: 44px; }
   .completion-overlay h2 { max-width: 88vw; font-size: clamp(28px, 9vw, 48px); text-align: center; }
   .completion-overlay p { max-width: 82vw; text-align: center; }
 }
@@ -433,7 +434,7 @@ button { font: inherit; }
   .tape-reel { width: min(92px, 19vw); border-width: 9px; }
   .tape-gauge { right: 28px; bottom: 12px; left: 28px; height: 14px; }
   .minigame-close { margin-top: 8px; }
-  .minigame-entrance { min-width: 44px; min-height: 44px; font-size: 12px; }
+  .minigame-entrance { min-width: 84px; min-height: 44px; font-size: 12px; }
 }
 .webgl-fallback {
   display: grid;

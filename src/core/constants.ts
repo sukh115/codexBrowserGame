@@ -11,6 +11,8 @@ export const GAME_EVENTS = {
   TUTORIAL_NEXT: "game:tutorial-next",
 } as const;
 
+export const GAME_STORAGE_KEY = "lost-song-progress";
+
 export const INPUT_LIMITS = {
   TAP_DISTANCE_PX: 8,
   TAP_DURATION_MS: 300,

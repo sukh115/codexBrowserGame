@@ -185,7 +185,7 @@ export class OverworldScene implements GameScene {
     const activeEntrance = getEntranceManifest(this.activeRegionId);
     const nearEntrance = nearestDistanceSquared <= activeEntrance.activationRadius ** 2;
     this.enterButton.hidden = !nearEntrance || this.entering;
-    this.enterButton.textContent = this.activeRegionId === "neon-forest" ? "버려진 온실로 들어가기" : "악기점으로 들어가기";
+    this.enterButton.textContent = `${ASSET_MANIFEST.regions[this.activeRegionId].title}으로 들어가기`;
     const distanceToEntrance = Math.sqrt(nearestDistanceSquared);
     this.guideElapsed += deltaSeconds;
     if (this.guideElapsed >= 0.2) {
@@ -306,7 +306,7 @@ export class OverworldScene implements GameScene {
       this.entrancePosition,
       0xf08a5d,
       0x67e8d2,
-      "악기점",
+      ASSET_MANIFEST.regions["music-shop"].title,
       this.completedRegions.includes("music-shop"),
     );
   }
@@ -319,7 +319,7 @@ export class OverworldScene implements GameScene {
       this.secondEntrancePosition,
       0x718b61,
       0xc5a96b,
-      "버려진 온실",
+      ASSET_MANIFEST.regions["neon-forest"].title,
       this.completedRegions.includes("neon-forest"),
     );
   }
@@ -380,8 +380,8 @@ export class OverworldScene implements GameScene {
     const shopComplete = this.completedRegions.includes("music-shop");
     const greenhouseComplete = this.completedRegions.includes("neon-forest");
     this.portalGuide.innerHTML = `
-      <span class="${this.activeRegionId === "music-shop" ? "is-nearest" : ""}">${shopComplete ? "✓" : "♪"} 악기점 <b>${shopDistance.toFixed(1)}m</b></span>
-      <span class="${this.activeRegionId === "neon-forest" ? "is-nearest" : ""}">${greenhouseComplete ? "✓" : "♧"} 온실 <b>${greenhouseDistance.toFixed(1)}m</b></span>
+      <span class="${this.activeRegionId === "music-shop" ? "is-nearest" : ""}">${shopComplete ? "✓" : "♪"} ${ASSET_MANIFEST.regions["music-shop"].title} <b>${shopDistance.toFixed(1)}m</b></span>
+      <span class="${this.activeRegionId === "neon-forest" ? "is-nearest" : ""}">${greenhouseComplete ? "✓" : "♧"} ${ASSET_MANIFEST.regions["neon-forest"].title} <b>${greenhouseDistance.toFixed(1)}m</b></span>
     `;
   }
 
@@ -558,8 +558,8 @@ export class OverworldScene implements GameScene {
       context.fillText(label, 0, -22);
       context.restore();
     };
-    drawRoute(this.entrancePosition, 650, 430, "악기점", "rgba(230, 132, 89, .58)");
-    drawRoute(this.secondEntrancePosition, 380, 600, "버려진 온실", "rgba(104, 145, 91, .62)");
+    drawRoute(this.entrancePosition, 650, 430, ASSET_MANIFEST.regions["music-shop"].title, "rgba(230, 132, 89, .58)");
+    drawRoute(this.secondEntrancePosition, 380, 600, ASSET_MANIFEST.regions["neon-forest"].title, "rgba(104, 145, 91, .62)");
     context.strokeStyle = "rgba(109, 137, 102, .35)";
     context.lineWidth = 4;
     for (let index = 0; index < 18; index += 1) {

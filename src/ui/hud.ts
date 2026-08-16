@@ -1,4 +1,5 @@
 import { getNoteCountForRegion, type GameState } from "../core/store";
+import { ASSET_MANIFEST, type RegionId } from "../core/assetManifest";
 
 export class Hud {
   readonly element = document.createElement("aside");
@@ -42,13 +43,14 @@ export class Hud {
     this.currentScene = state.currentScene;
     this.element.classList.toggle("is-overworld", state.currentScene === "overworld");
     this.element.classList.toggle("is-region", state.currentScene === "region");
-    const shopCount = getNoteCountForRegion(state.collectedNotes, "music-shop");
-    const greenhouseCount = getNoteCountForRegion(state.collectedNotes, "neon-forest");
-    const shopComplete = state.completedRegions.includes("music-shop");
-    const greenhouseComplete = state.completedRegions.includes("neon-forest");
-    const shopSecret = state.collectedNotes.includes("secret-music-shop") ? " ★" : "";
-    const greenhouseSecret = state.collectedNotes.includes("secret-neon-forest") ? " ★" : "";
-    this.progress.innerHTML = `<span class="${state.currentRegion === "music-shop" ? "is-current" : ""} ${shopComplete ? "is-complete" : ""}">${shopComplete ? "✓ " : ""}악기점 ${shopCount}/7${shopSecret}</span><span class="${state.currentRegion === "neon-forest" ? "is-current" : ""} ${greenhouseComplete ? "is-complete" : ""}">${greenhouseComplete ? "✓ " : ""}온실 ${greenhouseCount}/7${greenhouseSecret}</span>`;
+    const regionProgress = (["music-shop", "neon-forest"] satisfies RegionId[]).map((regionId) => {
+      const manifest = ASSET_MANIFEST.regions[regionId];
+      const count = getNoteCountForRegion(state.collectedNotes, regionId);
+      const complete = state.completedRegions.includes(regionId);
+      const secret = state.collectedNotes.includes(`secret-${regionId}`) ? " ★" : "";
+      return `<span class="${state.currentRegion === regionId ? "is-current" : ""} ${complete ? "is-complete" : ""}">${complete ? "✓ " : ""}${manifest.title} ${count}/${manifest.noteGoal}${secret}</span>`;
+    });
+    this.progress.innerHTML = regionProgress.join("");
     this.muteButton.textContent = state.muted ? "소리 켜기" : "음소거";
   }
 

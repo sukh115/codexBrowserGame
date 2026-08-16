@@ -264,7 +264,8 @@ export function bootstrap(root: HTMLElement): void {
   if (new URLSearchParams(window.location.search).has("debug")) {
     window.addEventListener("keydown", (event) => {
       const number = Number(event.key);
-      if (number >= 1 && number <= 7) {
+      const noteGoal = ASSET_MANIFEST.regions[gameStore.snapshot.currentRegion].noteGoal;
+      if (number >= 1 && number <= noteGoal) {
         const prefix = gameStore.snapshot.currentRegion === "neon-forest" ? "greenhouse-note-" : "note-";
         gameStore.collectNote(`${prefix}${number}`);
       }
