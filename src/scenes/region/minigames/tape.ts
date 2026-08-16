@@ -40,7 +40,7 @@ export function startTape(
   const voice = sfx.createTapeVoice(scale);
   let activePointer: number | null = null;
   let lastX = 0;
-  let lastPointerTime = performance.now();
+  let movedPx = 0;
   let smoothedRate = 0.3;
   let progressSeconds = 0;
   let graceRemaining = 0;
@@ -66,11 +66,11 @@ export function startTape(
     const delta = Math.min(0.05, Math.max(0, (time - lastFrameTime) / 1000));
     lastFrameTime = time;
     const dragging = activePointer !== null;
-    if (time - lastPointerTime >= 120 && smoothedRate > 0.3) {
-      smoothedRate += (0.3 - smoothedRate) * Math.min(1, delta * 2);
-      if (smoothedRate < 0.305) smoothedRate = 0.3;
-      voice?.setPlaybackRate(smoothedRate);
-    }
+    const speed = delta > 0 ? movedPx / delta : 0;
+    movedPx = 0;
+    const rawRate = dragging ? Math.max(0, Math.min(2, speed / 400)) : 0;
+    smoothedRate += (rawRate - smoothedRate) * Math.min(1, delta * 8);
+    voice?.setPlaybackRate(Math.max(0.3, smoothedRate));
     const inTargetRange = smoothedRate >= minimumTargetRate && smoothedRate <= maximumTargetRate;
     if (dragging && inTargetRange) {
       graceRemaining = graceSeconds;
@@ -100,21 +100,15 @@ export function startTape(
     activePointer = event.pointerId;
     hasInteracted = true;
     lastX = event.clientX;
-    lastPointerTime = performance.now();
+    movedPx = 0;
     deck.setPointerCapture(event.pointerId);
-    voice?.setPlaybackRate(smoothedRate);
+    voice?.setPlaybackRate(Math.max(0.3, smoothedRate));
     voice?.setActive(true);
   };
   const onPointerMove = (event: PointerEvent): void => {
     if (event.pointerId !== activePointer) return;
-    const now = performance.now();
-    const seconds = Math.max(0.016, (now - lastPointerTime) / 1000);
-    const speed = Math.abs(event.clientX - lastX) / seconds;
-    const rawRate = Math.max(0.3, Math.min(2, 0.3 + speed / 145));
-    smoothedRate += (rawRate - smoothedRate) * 0.18;
-    voice?.setPlaybackRate(smoothedRate);
+    movedPx += Math.abs(event.clientX - lastX);
     lastX = event.clientX;
-    lastPointerTime = now;
   };
   const onPointerUp = (event: PointerEvent): void => {
     if (event.pointerId !== activePointer) return;
