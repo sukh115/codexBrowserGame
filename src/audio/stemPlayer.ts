@@ -11,7 +11,7 @@ const AUDIO_FORMATS = ["ogg", "m4a", "wav"] as const;
 const PLACEHOLDER_SAMPLE_RATE = 48_000;
 const BEATS_PER_LOOP = 16;
 const LOOP_DURATION_TOLERANCE_SECONDS = 0.05;
-const STEM_PEAK_LIMIT = 10 ** (-6 / 20);
+const STEM_PEAK_LIMIT = 10 ** (-1 / 20);
 const STEM_LEVEL = 0.72;
 const RHYTHM_ACCENT_LEVEL = 0.86;
 const COMPLETION_BOOST_LEVEL = 1.08;
@@ -391,7 +391,7 @@ export class StemPlayer {
     }
     if (peak > STEM_PEAK_LIMIT + 0.001) {
       const peakDb = 20 * Math.log10(peak);
-      console.warn(`[StemPlayer] ${stem.id}: 피크가 -6 dBFS를 초과해 플레이스홀더를 사용합니다. (${peakDb.toFixed(1)} dBFS)`);
+      console.warn(`[StemPlayer] ${stem.id}: 피크가 -1 dBFS를 초과해 플레이스홀더를 사용합니다. (${peakDb.toFixed(1)} dBFS)`);
       return false;
     }
     return true;

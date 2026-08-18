@@ -36,8 +36,8 @@ const NOTE_STEM_MAPPING = {
   "note-2": null,
   "note-3": "bass",
   "note-4": "rhythm",
-  "note-5": "melody",
-  "note-6": "harmony",
+  "note-5": "harmony",
+  "note-6": "melody",
   "note-7": null,
 } as const;
 
@@ -96,8 +96,8 @@ export const ASSET_MANIFEST = {
       title: "잠든 악기점",
       noteGoal: 7,
       background: assetPath("assets/textures/music-shop.webp"),
-      bpm: 120,
-      musicalScale: [220, 261.63, 293.66, 329.63, 392, 440, 523.25, 587.33],
+      bpm: 100,
+      musicalScale: [130.81, 155.56, 174.61, 196, 233.08, 261.63, 311.13, 349.23],
       aspectRatio: 2,
       baseBrightness: 0.8,
       baseSaturation: 0.55,
