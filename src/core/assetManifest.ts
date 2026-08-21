@@ -22,22 +22,38 @@ export type MusicEffect = "rhythm-accent" | "open-filter" | "completion-boost";
 export interface StemManifest {
   readonly id: string;
   readonly path: string | null;
+  readonly gain?: number;
+  readonly initiallyUnlocked?: boolean;
 }
 
-const createStems = (regionId: RegionId): readonly StemManifest[] => [
+const createFourStems = (regionId: RegionId): readonly StemManifest[] => [
   { id: "rhythm", path: assetPath(`assets/audio/stems/${regionId}-rhythm`) },
   { id: "bass", path: assetPath(`assets/audio/stems/${regionId}-bass`) },
   { id: "harmony", path: assetPath(`assets/audio/stems/${regionId}-harmony`) },
   { id: "melody", path: assetPath(`assets/audio/stems/${regionId}-melody`) },
 ];
 
+const MUSIC_SHOP_STEMS = [
+  {
+    id: "rhythm",
+    path: assetPath("assets/audio/stems/music-shop-rhythm"),
+    initiallyUnlocked: true,
+  },
+  { id: "bass", path: assetPath("assets/audio/stems/music-shop-bass") },
+  {
+    id: "harmony",
+    path: assetPath("assets/audio/stems/music-shop-harmony"),
+    gain: 2,
+  },
+] as const satisfies readonly StemManifest[];
+
 const NOTE_STEM_MAPPING = {
-  "note-1": "rhythm",
+  "note-1": null,
   "note-2": null,
   "note-3": "bass",
-  "note-4": "rhythm",
+  "note-4": null,
   "note-5": "harmony",
-  "note-6": "melody",
+  "note-6": null,
   "note-7": null,
 } as const;
 
@@ -101,7 +117,7 @@ export const ASSET_MANIFEST = {
       aspectRatio: 2,
       baseBrightness: 0.8,
       baseSaturation: 0.55,
-      stems: createStems("music-shop"),
+      stems: MUSIC_SHOP_STEMS,
       noteStemMapping: NOTE_STEM_MAPPING,
       noteEffectMapping: NOTE_EFFECT_MAPPING,
     },
@@ -115,7 +131,7 @@ export const ASSET_MANIFEST = {
       aspectRatio: 1456 / 720,
       baseBrightness: 0.72,
       baseSaturation: 0.45,
-      stems: createStems("neon-forest"),
+      stems: createFourStems("neon-forest"),
       noteStemMapping: GREENHOUSE_NOTE_STEM_MAPPING,
       noteEffectMapping: GREENHOUSE_NOTE_EFFECT_MAPPING,
     },

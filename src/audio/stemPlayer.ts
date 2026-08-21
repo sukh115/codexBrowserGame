@@ -24,6 +24,7 @@ export class StemPlayer {
   private limiter: DynamicsCompressorNode | null = null;
   private readonly activeStems = new Map<string, ActiveStem>();
   private readonly unlockedStemIds = new Set<string>();
+  private readonly initialStemIds = new Set<string>();
   private readonly appliedEffects = new Set<MusicEffect>();
   private readonly stemLevels = new Map<string, number>();
   private readonly bufferCache = new Map<string, AudioBuffer>();
@@ -83,17 +84,23 @@ export class StemPlayer {
     if (!this.context || !this.masterGain) return;
     const startTime = this.context.currentTime + 0.08;
     this.transportStartTime = startTime;
+    this.initialStemIds.clear();
     stems.forEach((stem, index) => {
       if (!this.context || !this.masterGain) return;
       const source = this.context.createBufferSource();
       const gain = this.context.createGain();
       source.buffer = buffers[index];
       source.loop = true;
-      gain.gain.value = 0;
+      const targetLevel = STEM_LEVEL * (stem.gain ?? 1);
+      gain.gain.value = stem.initiallyUnlocked ? targetLevel : 0;
       source.connect(gain).connect(this.masterGain);
       source.start(startTime);
       this.activeStems.set(stem.id, { source, gain });
-      this.stemLevels.set(stem.id, STEM_LEVEL);
+      this.stemLevels.set(stem.id, targetLevel);
+      if (stem.initiallyUnlocked) {
+        this.initialStemIds.add(stem.id);
+        this.unlockedStemIds.add(stem.id);
+      }
     });
     this.started = true;
   }
@@ -160,12 +167,16 @@ export class StemPlayer {
   lockAll(fadeSeconds = 0.1): void {
     if (!this.context) return;
     const now = this.context.currentTime;
-    for (const { gain } of this.activeStems.values()) {
+    for (const [id, { gain }] of this.activeStems) {
       gain.gain.cancelScheduledValues(now);
       gain.gain.setValueAtTime(gain.gain.value, now);
-      gain.gain.linearRampToValueAtTime(0, now + fadeSeconds);
+      gain.gain.linearRampToValueAtTime(
+        this.initialStemIds.has(id) ? (this.stemLevels.get(id) ?? STEM_LEVEL) : 0,
+        now + fadeSeconds,
+      );
     }
     this.unlockedStemIds.clear();
+    for (const id of this.initialStemIds) this.unlockedStemIds.add(id);
     this.appliedEffects.clear();
     this.stemLevels.set("rhythm", STEM_LEVEL);
     if (this.masterFilter) {
@@ -216,6 +227,7 @@ export class StemPlayer {
     }
     this.activeStems.clear();
     this.unlockedStemIds.clear();
+    this.initialStemIds.clear();
     this.masterGain?.disconnect();
     this.masterFilter?.disconnect();
     this.outputBoost?.disconnect();
