@@ -403,7 +403,7 @@ button { font: inherit; }
   .portal-guide span { min-width: 130px; padding: 5px 8px; font-size: 10px; }
   .tutorial-tip { bottom: max(74px, calc(env(safe-area-inset-bottom) + 74px)); padding: 13px; font-size: 13px; }
   .minigame-overlay { align-items: center; overflow-y: auto; padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); }
-  .minigame-panel { width: min(100%, 520px); height: min(680px, calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom))); padding: 18px 14px; }
+  .minigame-panel { width: min(520px, calc(100vw - 24px)); height: min(680px, calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom))); padding: 18px 14px; }
   .minigame-title { font-size: 24px; }
   .minigame-status { margin-bottom: 10px; font-size: 13px; }
   .minigame-stage { min-height: 0; }

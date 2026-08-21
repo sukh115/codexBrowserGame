@@ -6,6 +6,8 @@ import type { RegionId } from "../../../core/assetManifest";
 import { beatPhase } from "../../../core/music";
 import type { SfxPlayer } from "../../../audio/sfx";
 
+const ENTRANCE_EDGE_MARGIN_PX = 56;
+
 export class MinigameController {
   private readonly buttons: HTMLButtonElement[] = [];
   private readonly frame: MinigameFrame;
@@ -64,10 +66,15 @@ export class MinigameController {
       );
       this.projected.copy(this.worldPosition).project(camera);
       const button = this.buttons[index];
-      button.style.left = `${(this.projected.x * 0.5 + 0.5) * width}px`;
-      button.style.top = `${(-this.projected.y * 0.5 + 0.5) * height}px`;
+      const screenX = (this.projected.x * 0.5 + 0.5) * width;
+      const screenY = (-this.projected.y * 0.5 + 0.5) * height;
+      button.style.left = `${screenX}px`;
+      button.style.top = `${screenY}px`;
       button.style.setProperty("--beat-pulse", pulse.toFixed(4));
-      button.hidden = Math.abs(this.projected.x) > 1.1 || Math.abs(this.projected.y) > 1.1;
+      button.hidden = screenX < ENTRANCE_EDGE_MARGIN_PX
+        || screenX > width - ENTRANCE_EDGE_MARGIN_PX
+        || screenY < ENTRANCE_EDGE_MARGIN_PX
+        || screenY > height - ENTRANCE_EDGE_MARGIN_PX;
     });
   }
 
