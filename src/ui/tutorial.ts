@@ -21,7 +21,7 @@ export class Tutorial {
   showRegion(): void {
     if (this.step > 1) return;
     this.step = 1;
-    this.text.textContent = "악기점에서는 음표, 온실에서는 빛나는 소리 씨앗을 찾으세요. 표시된 오브젝트는 서로 다른 미니게임 입구입니다.";
+    this.text.textContent = "좌우로 드래그해 가게 안을 둘러보세요. 악기점에서는 음표, 온실에서는 빛나는 소리 씨앗을 찾고, 표시된 오브젝트는 서로 다른 미니게임 입구입니다.";
     this.element.classList.add("is-visible");
   }
 

@@ -148,14 +148,12 @@ export class RegionScene implements GameScene {
     this.viewportHeight = height;
     const aspect = width / height;
     const backgroundWidth = BACKGROUND_HEIGHT * this.manifest.aspectRatio;
-    let viewWidth = backgroundWidth;
+    // 세로 화면에서도 배경이 화면을 채우도록 높이를 기준으로 맞추고(cover),
+    // 남는 가로는 드래그 팬으로 탐색한다. 가로 화면은 기존과 동일하게 폭을 채운다.
     let viewHeight = BACKGROUND_HEIGHT;
-    if (aspect < 1) {
-      // 세로 화면은 배경 높이를 채우고 좌우 탐색으로 공간감을 유지한다.
-      viewWidth = BACKGROUND_HEIGHT * aspect;
-    } else if (aspect >= this.manifest.aspectRatio) {
-      viewWidth = BACKGROUND_HEIGHT * aspect;
-    } else {
+    let viewWidth = viewHeight * aspect;
+    if (viewWidth > backgroundWidth) {
+      viewWidth = backgroundWidth;
       viewHeight = backgroundWidth / aspect;
     }
     this.camera.left = -viewWidth / 2;
