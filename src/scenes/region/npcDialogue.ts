@@ -32,6 +32,10 @@ export class NpcDialogue {
     this.button.addEventListener("pointerup", this.show);
 
     this.overlay.className = "npc-dialogue-overlay";
+    this.overlay.setAttribute("role", "dialog");
+    this.overlay.setAttribute("aria-label", "다카포와의 대화");
+    this.overlay.setAttribute("aria-modal", "true");
+    this.overlay.setAttribute("aria-hidden", "true");
     this.overlay.setAttribute("aria-live", "polite");
     const panel = document.createElement("div");
     panel.className = "npc-dialogue-panel";
@@ -47,6 +51,7 @@ export class NpcDialogue {
     this.nextButton.textContent = "다음";
     this.closeButton.addEventListener("pointerup", this.hide);
     this.nextButton.addEventListener("pointerup", this.advance);
+    document.addEventListener("keydown", this.handleKeyDown);
     actions.append(this.closeButton, this.nextButton);
     panel.append(header, this.text, actions);
     this.overlay.append(panel);
@@ -79,6 +84,7 @@ export class NpcDialogue {
     this.button.removeEventListener("pointerup", this.show);
     this.closeButton.removeEventListener("pointerup", this.hide);
     this.nextButton.removeEventListener("pointerup", this.advance);
+    document.removeEventListener("keydown", this.handleKeyDown);
     this.button.remove();
     this.overlay.remove();
   }
@@ -87,14 +93,24 @@ export class NpcDialogue {
     this.lineIndex = 0;
     this.open = true;
     this.overlay.classList.add("is-open");
+    this.overlay.setAttribute("aria-hidden", "false");
     this.onModalChange(true);
     this.renderLine();
+    this.nextButton.focus();
   };
 
   private readonly hide = (): void => {
     this.open = false;
     this.overlay.classList.remove("is-open");
+    this.overlay.setAttribute("aria-hidden", "true");
     this.onModalChange(false);
+    this.button.focus();
+  };
+
+  private readonly handleKeyDown = (event: KeyboardEvent): void => {
+    if (event.key !== "Escape" || !this.open) return;
+    event.preventDefault();
+    this.hide();
   };
 
   private readonly advance = (): void => {
@@ -119,4 +135,3 @@ export class NpcDialogue {
     return this.stages[this.collectedCount] ?? this.stages[this.stages.length - 1];
   }
 }
-
