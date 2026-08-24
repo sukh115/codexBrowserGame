@@ -114,7 +114,7 @@ export const ASSET_MANIFEST = {
       background: assetPath("assets/textures/music-shop.webp"),
       bpm: 100,
       musicalScale: [130.81, 155.56, 174.61, 196, 233.08, 261.63, 311.13, 349.23],
-      aspectRatio: 2,
+      aspectRatio: 1472 / 720,
       baseBrightness: 0.8,
       baseSaturation: 0.55,
       stems: MUSIC_SHOP_STEMS,

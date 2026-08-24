@@ -8,6 +8,8 @@ import { ReactiveLayer } from "./reactiveLayer";
 import { TapRipplePool } from "./tapRipplePool";
 import type { SfxPlayer } from "../../audio/sfx";
 import { REGION_PLACEMENTS } from "../../regionData";
+import { MUSIC_SHOP_DIALOGUE } from "../../regionData/musicShopDialogue";
+import { NpcDialogue } from "./npcDialogue";
 
 const BACKGROUND_HEIGHT = 10;
 const MIN_ZOOM = 1;
@@ -20,6 +22,7 @@ export class RegionScene implements GameScene {
   private readonly exitButton = document.createElement("button");
   private readonly noteField: NoteField;
   private readonly minigames: MinigameController;
+  private readonly npcDialogue: NpcDialogue | null;
   private readonly reactiveLayer: ReactiveLayer;
   private readonly tapRipples = new TapRipplePool();
   private readonly pointers = new Map<number, THREE.Vector2>();
@@ -90,6 +93,19 @@ export class RegionScene implements GameScene {
       (open) => this.setInputLocked(open),
       onClearMinigame,
     );
+    this.npcDialogue = manifest.id === "music-shop"
+      ? new NpcDialogue(
+        overlayRoot,
+        width,
+        BACKGROUND_HEIGHT,
+        0.323,
+        0.61,
+        MUSIC_SHOP_DIALOGUE,
+        manifest.noteGoal,
+        (open) => this.setInputLocked(open),
+      )
+      : null;
+    this.npcDialogue?.setProgress(this.getCollectedCount(collectedNotes));
     this.loadBackground();
     this.exitButton.className = "exit-button";
     this.exitButton.textContent = "오버월드로 나가기";
@@ -116,6 +132,7 @@ export class RegionScene implements GameScene {
     this.noteField.update(deltaSeconds, this.camera, transportTime, this.manifest.bpm, reducedMotion);
     this.tapRipples.update(deltaSeconds);
     this.minigames.update(this.camera, this.viewportWidth, this.viewportHeight, transportTime, reducedMotion);
+    this.npcDialogue?.update(this.camera, this.viewportWidth, this.viewportHeight);
     this.reactiveLayer.update(this.collectedNotes, transportTime, this.manifest.bpm, reducedMotion);
     const nearestDistance = this.inputLocked
       ? null
@@ -132,6 +149,7 @@ export class RegionScene implements GameScene {
   syncCollectedNotes(collectedNotes: readonly string[]): void {
     this.collectedNotes = collectedNotes;
     this.noteField.syncCollectedNotes(collectedNotes);
+    this.npcDialogue?.setProgress(this.getCollectedCount(collectedNotes));
   }
 
   syncClearedMinigames(cleared: readonly string[]): void {
@@ -181,6 +199,7 @@ export class RegionScene implements GameScene {
     this.tapRipples.dispose();
     this.sfxPlayer.stopHum();
     this.minigames.dispose();
+    this.npcDialogue?.dispose();
     this.reactiveLayer.dispose();
     this.scene.clear();
     this.pointers.clear();
@@ -312,6 +331,10 @@ export class RegionScene implements GameScene {
 
   private updatePinchDistance(): void {
     this.lastPinchDistance = this.getPinchDistance();
+  }
+
+  private getCollectedCount(collectedNotes: readonly string[]): number {
+    return collectedNotes.filter((id) => id.startsWith("note-")).length;
   }
 
   private createPlaceholderTexture(): THREE.CanvasTexture {

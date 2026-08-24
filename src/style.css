@@ -251,6 +251,35 @@ button { font: inherit; }
 .minigame-entrance:not(:disabled) { transition: filter 120ms linear, transform 80ms linear; }
 .minigame-entrance:disabled { color: #82ad9f; border-color: #557169; background: rgb(13 29 29 / 76%); box-shadow: none; }
 .minigame-entrance:disabled span { opacity: .8; transform: none; }
+.npc-dialogue-trigger {
+  position: absolute;
+  z-index: 7;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 13px;
+  border: 2px solid #d98bd1;
+  border-radius: 999px;
+  color: #fff0fb;
+  font-weight: 800;
+  background: linear-gradient(145deg, rgb(52 27 70 / 92%), rgb(22 25 48 / 94%));
+  box-shadow: 0 0 18px rgb(231 130 208 / 42%);
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  pointer-events: auto;
+}
+.npc-dialogue-trigger b { color: #7ff1dc; }
+.npc-dialogue-overlay { position: absolute; inset: 0; z-index: 45; display: none; align-items: end; justify-items: center; padding: 24px; background: linear-gradient(transparent 35%, rgb(7 6 20 / 74%)); pointer-events: auto; }
+.npc-dialogue-overlay.is-open { display: grid; }
+.npc-dialogue-panel { width: min(640px, calc(100vw - 40px)); padding: 18px 20px; border: 1px solid #d98bd1; border-radius: 18px; color: #fff; background: rgb(20 16 43 / 96%); box-shadow: 0 0 36px rgb(217 139 209 / 24%); }
+.npc-dialogue-panel header { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.npc-dialogue-panel strong { color: #8ff1df; font-size: 18px; }
+.npc-dialogue-progress { color: #bdb4cc; font-size: 12px; }
+.npc-dialogue-text { min-height: 3em; margin: 14px 0 18px; color: #f5edf8; font-size: 16px; line-height: 1.55; }
+.npc-dialogue-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.npc-dialogue-actions button { min-height: 38px; padding: 8px 15px; border: 1px solid #726987; border-radius: 999px; color: #f6f0fa; background: #2d2746; cursor: pointer; }
+.npc-dialogue-actions button:last-child { color: #171426; border-color: transparent; background: linear-gradient(120deg, #fff2a5, #79e0cf); font-weight: 800; }
 .minigame-overlay { position: absolute; inset: 0; z-index: 40; display: none; place-content: center; padding: 20px; background: rgb(7 6 20 / 80%); pointer-events: auto; }
 .minigame-overlay.is-open { display: grid; }
 .minigame-overlay.feedback-success .minigame-panel { animation: feedback-success 280ms ease; }
@@ -414,6 +443,10 @@ button { font: inherit; }
   .memory-key.is-plant { height: 76px; font-size: 15px; }
   .rhythm-track.is-rain { width: min(170px, 46vw); }
   .minigame-entrance { --entrance-base: .86; min-width: 88px; min-height: 44px; }
+  .npc-dialogue-trigger { min-height: 40px; padding: 7px 11px; font-size: 13px; }
+  .npc-dialogue-overlay { padding: 12px; }
+  .npc-dialogue-panel { width: calc(100vw - 24px); padding: 15px 16px; }
+  .npc-dialogue-text { margin: 11px 0 14px; font-size: 14px; }
   .completion-overlay h2 { max-width: 88vw; font-size: clamp(28px, 9vw, 48px); text-align: center; }
   .completion-overlay p { max-width: 82vw; text-align: center; }
 }
