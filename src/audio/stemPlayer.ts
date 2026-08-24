@@ -97,6 +97,8 @@ export class StemPlayer {
       const gain = this.context.createGain();
       source.buffer = buffers[index];
       source.loop = true;
+      source.loopStart = 0;
+      source.loopEnd = this.getMusicalLoopDuration(buffers[index]);
       const targetLevel = STEM_LEVEL * (stem.gain ?? 1);
       gain.gain.value = stem.initiallyUnlocked ? targetLevel : 0;
       source.connect(gain).connect(this.masterGain);
@@ -413,6 +415,11 @@ export class StemPlayer {
       return false;
     }
     return true;
+  }
+
+  private getMusicalLoopDuration(buffer: AudioBuffer): number {
+    const fourBarDuration = BEATS_PER_LOOP * 60 / this.bpm;
+    return fourBarDuration * Math.max(1, Math.min(4, Math.round(buffer.duration / fourBarDuration)));
   }
 
   private ensureContext(): void {
