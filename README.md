@@ -46,8 +46,9 @@ npm.cmd run build
 
 ## 배포
 
-Vercel 프로젝트에서 이 저장소를 연결하면 `vercel.json`에 따라 Vite 빌드 결과인 `dist/`가 배포됩니다.
-해시가 붙은 `/assets/` 파일은 장기 캐시하고 `index.html`은 캐시하지 않도록 설정되어 있습니다.
+`main` 브랜치에 푸시하면 GitHub Actions가 Vite 빌드를 실행하고 GitHub Pages에 `dist/`를 자동 배포합니다.
+배포 주소는 `https://sukh115.github.io/codexBrowserGame/`입니다. 저장소의 Pages 설정에서 Source를
+`GitHub Actions`로 선택해야 합니다.
 
 ## 프로젝트 구조
 
