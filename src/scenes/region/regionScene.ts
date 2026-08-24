@@ -38,6 +38,7 @@ export class RegionScene implements GameScene {
   private tapStartY = 0;
   private tapStartTime = 0;
   private inputLocked = false;
+  private exiting = false;
   private readonly placementEditorEnabled = new URLSearchParams(window.location.search).get("debug") === "1";
   private collectedNotes: readonly string[];
 
@@ -109,7 +110,7 @@ export class RegionScene implements GameScene {
     this.loadBackground();
     this.exitButton.className = "exit-button";
     this.exitButton.textContent = "오버월드로 나가기";
-    this.exitButton.addEventListener("pointerup", this.onExit);
+    this.exitButton.addEventListener("pointerup", this.requestExit);
     overlayRoot.append(this.exitButton);
   }
 
@@ -122,7 +123,7 @@ export class RegionScene implements GameScene {
     this.canvas.addEventListener("pointerdown", this.onPointerDown);
     this.canvas.addEventListener("pointermove", this.onPointerMove);
     this.canvas.addEventListener("pointerup", this.onPointerUp);
-    this.canvas.addEventListener("pointercancel", this.onPointerUp);
+    this.canvas.addEventListener("pointercancel", this.onPointerCancel);
     this.canvas.addEventListener("wheel", this.onWheel, { passive: false });
   }
 
@@ -188,9 +189,9 @@ export class RegionScene implements GameScene {
     this.canvas.removeEventListener("pointerdown", this.onPointerDown);
     this.canvas.removeEventListener("pointermove", this.onPointerMove);
     this.canvas.removeEventListener("pointerup", this.onPointerUp);
-    this.canvas.removeEventListener("pointercancel", this.onPointerUp);
+    this.canvas.removeEventListener("pointercancel", this.onPointerCancel);
     this.canvas.removeEventListener("wheel", this.onWheel);
-    this.exitButton.removeEventListener("pointerup", this.onExit);
+    this.exitButton.removeEventListener("pointerup", this.requestExit);
     this.exitButton.remove();
     this.background.geometry.dispose();
     const backgroundTexture = this.background.material.uniforms.map.value as THREE.Texture;
@@ -258,15 +259,39 @@ export class RegionScene implements GameScene {
         }
       }
     }
-    this.pointers.delete(event.pointerId);
-    this.dragPointerId = null;
-    this.lastPinchDistance = 0;
+    this.releasePointer(event.pointerId);
   };
+
+  private readonly onPointerCancel = (event: PointerEvent): void => {
+    this.releasePointer(event.pointerId);
+  };
+
+  private releasePointer(pointerId: number): void {
+    this.pointers.delete(pointerId);
+    const remaining = this.pointers.entries().next().value as [number, THREE.Vector2] | undefined;
+    if (!remaining) {
+      this.dragPointerId = null;
+      this.lastPinchDistance = 0;
+      return;
+    }
+    this.dragPointerId = remaining[0];
+    this.lastPointerX = remaining[1].x;
+    this.lastPointerY = remaining[1].y;
+    this.lastPinchDistance = 0;
+  }
 
   private readonly onWheel = (event: WheelEvent): void => {
     event.preventDefault();
     if (this.inputLocked) return;
     this.setZoom(this.camera.zoom * Math.exp(-event.deltaY * 0.0015));
+  };
+
+  private readonly requestExit = (): void => {
+    if (this.exiting) return;
+    this.exiting = true;
+    this.setInputLocked(true);
+    this.exitButton.disabled = true;
+    this.onExit();
   };
 
   private setZoom(zoom: number): void {

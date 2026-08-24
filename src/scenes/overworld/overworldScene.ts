@@ -114,7 +114,7 @@ export class OverworldScene implements GameScene {
       this.character.position.copy(
         this.spawnAtRegion === "neon-forest" ? this.secondEntrancePosition : this.entrancePosition,
       );
-      this.character.position.z += 2.7;
+      this.character.position.z += 1.6;
     }
     this.createBoundary();
     this.createEntrance();
@@ -242,6 +242,7 @@ export class OverworldScene implements GameScene {
   }
 
   dispose(): void {
+    gsap.killTweensOf(this.camera.position);
     this.onRegionProximityChange(this.activeRegionId, 0);
     this.input.removeEventListener(GAME_EVENTS.POINT, this.onPoint as EventListener);
     this.input.dispose();
@@ -252,11 +253,11 @@ export class OverworldScene implements GameScene {
     this.enterButton.remove();
     this.portalGuide.remove();
     this.scene.traverse((object) => {
-      if (!(object instanceof THREE.Mesh) && !(object instanceof THREE.Line)) return;
-      object.geometry.dispose();
+      if (object instanceof THREE.Mesh || object instanceof THREE.Line) object.geometry.dispose();
+      if (!(object instanceof THREE.Mesh) && !(object instanceof THREE.Line) && !(object instanceof THREE.Sprite)) return;
       const materials = Array.isArray(object.material) ? object.material : [object.material];
       for (const material of materials) {
-        if (material instanceof THREE.MeshStandardMaterial) material.map?.dispose();
+        if ("map" in material && material.map instanceof THREE.Texture) material.map.dispose();
         material.dispose();
       }
     });

@@ -40,7 +40,10 @@ export class SettingsPanel {
       overlayRoot.classList.remove("is-settings-open");
       onReplayTutorial();
     });
-    resetAll.addEventListener("pointerup", onResetAll);
+    resetAll.addEventListener("pointerup", () => {
+      if (!window.confirm("모든 지역의 진행 상황을 초기화할까요? 볼륨과 접근성 설정은 유지됩니다.")) return;
+      onResetAll();
+    });
     this.master.input.addEventListener("input", () => onChange({ masterVolume: Number(this.master.input.value) }));
     this.sfx.input.addEventListener("input", () => onChange({ sfxVolume: Number(this.sfx.input.value) }));
     this.motion.input.addEventListener("change", () => onChange({ reducedMotion: this.motion.input.checked }));

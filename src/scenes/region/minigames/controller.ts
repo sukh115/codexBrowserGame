@@ -108,8 +108,9 @@ export class MinigameController {
       spot.pieceImagePaths,
       this.sfx,
       () => {
-        this.onClear(spot.id, spot.rewardNoteId);
+        // 모달 잠금을 먼저 해제한 뒤 완료 상태가 연출 잠금을 다시 잡게 한다.
         this.close();
+        this.onClear(spot.id, spot.rewardNoteId);
       },
     );
   }

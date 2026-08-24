@@ -71,6 +71,12 @@ export class StemPlayer {
     this.targetMasterVolume = restoredVolume;
   }
 
+  async suspendForBackground(): Promise<void> {
+    if (!this.context || this.context.state !== "running") return;
+    await this.context.suspend();
+    if (document.visibilityState === "visible") await this.resumeAndRestore();
+  }
+
   async start(stems: readonly StemManifest[], regionId: RegionId = "music-shop"): Promise<void> {
     if (!this.unlocked || !this.context || !this.masterGain || this.started) return;
     const generation = ++this.regionGeneration;

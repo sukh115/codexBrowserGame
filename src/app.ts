@@ -59,6 +59,7 @@ export function bootstrap(root: HTMLElement): void {
     completionOverlay.show(state.currentRegion, () => activeRegionScene?.setInputLocked(false));
   };
   let overworldAudioRegion: RegionId = initialRegion.id;
+  let overworldTargetVolume = 0;
   let audioSwitchToken = 0;
   let imageProgress = 0;
   let audioProgress = 0;
@@ -144,7 +145,7 @@ export function bootstrap(root: HTMLElement): void {
       if (!gameStore.snapshot.tutorialCompleted) tutorial.showRegion();
     };
     const updateOverworldAudio = (regionId: RegionId, proximity: number): void => {
-      if (gameStore.snapshot.muted || gameStore.snapshot.currentScene !== "overworld") return;
+      if (gameStore.snapshot.currentScene !== "overworld") return;
       if (overworldAudioRegion !== regionId) {
         overworldAudioRegion = regionId;
         const switchToken = ++audioSwitchToken;
@@ -163,10 +164,8 @@ export function bootstrap(root: HTMLElement): void {
       const entrance = ASSET_MANIFEST.overworldEntrances.find((item) => item.regionId === regionId);
       if (!entrance) return;
       const { minimumVolume, maximumVolume } = entrance;
-      stemPlayer.setMasterVolume(
-        minimumVolume + (maximumVolume - minimumVolume) * proximity,
-        0.12,
-      );
+      overworldTargetVolume = minimumVolume + (maximumVolume - minimumVolume) * proximity;
+      if (!gameStore.snapshot.muted) stemPlayer.setMasterVolume(overworldTargetVolume, 0.12);
     };
     activeOverworldScene = new OverworldScene(
       engine.renderer.domElement,
@@ -195,6 +194,7 @@ export function bootstrap(root: HTMLElement): void {
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
+      void stemPlayer.suspendForBackground();
       void sfxPlayer.suspendForBackground();
       return;
     }
@@ -215,9 +215,7 @@ export function bootstrap(root: HTMLElement): void {
     activeRegionScene?.syncClearedMinigames(state.clearedMinigames);
     activeOverworldScene?.syncCompletedRegions(state.completedRegions);
     sfxPlayer.setMuted(state.muted);
-    if (state.muted || state.currentScene === "region") {
-      stemPlayer.setMasterVolume(state.muted ? 0 : 1);
-    }
+    stemPlayer.setMasterVolume(state.muted ? 0 : state.currentScene === "region" ? 1 : overworldTargetVolume);
     showCompletionIfNeeded(state);
   });
 

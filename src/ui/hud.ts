@@ -30,6 +30,7 @@ export class Hud {
     });
     this.muteButton.addEventListener("pointerup", onToggleMute);
     this.resetButton.addEventListener("pointerup", () => {
+      if (!window.confirm("현재 지역에서 모은 음표와 미니게임 기록을 초기화할까요?")) return;
       onResetRegion();
       this.closeMenu(overlayRoot);
     });

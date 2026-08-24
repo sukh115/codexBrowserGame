@@ -1,6 +1,8 @@
 import { GAME_EVENTS, GAME_STORAGE_KEY } from "./constants";
 import { ASSET_MANIFEST, type RegionId } from "./assetManifest";
 
+const CURRENT_SAVE_VERSION = 3;
+
 export type SceneId = "loading" | "overworld" | "region";
 
 export interface GameState {
@@ -44,7 +46,7 @@ export function getNoteCountForRegion(collectedNotes: readonly string[], regionI
 
 class GameStore extends EventTarget {
   private readonly initialState: GameState = {
-    saveVersion: 3,
+    saveVersion: CURRENT_SAVE_VERSION,
     collectedNotes: [],
     clearedMinigames: [],
     currentScene: "loading",
@@ -67,7 +69,7 @@ class GameStore extends EventTarget {
 
   setState(patch: Partial<GameState>): void {
     this.state = { ...this.state, ...patch };
-    localStorage.setItem(GAME_STORAGE_KEY, JSON.stringify(this.state));
+    this.persist();
     this.dispatchEvent(new CustomEvent<GameState>(GAME_EVENTS.STATE_CHANGE, { detail: this.state }));
   }
 
@@ -143,12 +145,21 @@ class GameStore extends EventTarget {
   }
 
   resetAll(): void {
+    const settings = {
+      muted: this.state.muted,
+      tutorialCompleted: this.state.tutorialCompleted,
+      masterVolume: this.state.masterVolume,
+      sfxVolume: this.state.sfxVolume,
+      reducedMotion: this.state.reducedMotion,
+      rhythmAssist: this.state.rhythmAssist,
+    };
     this.state = {
       ...this.initialState,
+      ...settings,
       currentScene: this.state.currentScene,
       currentRegion: this.state.currentRegion,
     };
-    localStorage.removeItem(GAME_STORAGE_KEY);
+    this.persist();
     this.dispatchEvent(new CustomEvent<GameState>(GAME_EVENTS.STATE_CHANGE, { detail: this.state }));
     this.dispatchEvent(new Event(GAME_EVENTS.ALL_PROGRESS_RESET));
   }
@@ -158,6 +169,8 @@ class GameStore extends EventTarget {
       const value: unknown = JSON.parse(localStorage.getItem(GAME_STORAGE_KEY) ?? "null");
       if (!value || typeof value !== "object") return this.initialState;
       const stored = value as Partial<GameState>;
+      const storedVersion = typeof stored.saveVersion === "number" ? stored.saveVersion : 1;
+      if (!Number.isInteger(storedVersion) || storedVersion > CURRENT_SAVE_VERSION) return this.initialState;
       if (!Array.isArray(stored.collectedNotes) || !Array.isArray(stored.clearedMinigames)) {
         return this.initialState;
       }
@@ -171,8 +184,8 @@ class GameStore extends EventTarget {
         : [];
       return {
         ...this.initialState,
-        ...stored,
-        saveVersion: 3,
+        // 구버전 저장은 현재 필드만 명시적으로 골라 기본값과 병합한다.
+        saveVersion: CURRENT_SAVE_VERSION,
         collectedNotes,
         clearedMinigames: stored.clearedMinigames.filter((item): item is string => typeof item === "string"),
         currentRegion,
@@ -180,10 +193,37 @@ class GameStore extends EventTarget {
         celebratedRegions,
         completed: completedRegions.includes(currentRegion),
         currentScene: "loading",
+        muted: typeof stored.muted === "boolean" ? stored.muted : this.initialState.muted,
+        tutorialCompleted: typeof stored.tutorialCompleted === "boolean"
+          ? stored.tutorialCompleted
+          : this.initialState.tutorialCompleted,
+        masterVolume: this.readVolume(stored.masterVolume, this.initialState.masterVolume),
+        sfxVolume: this.readVolume(stored.sfxVolume, this.initialState.sfxVolume),
+        reducedMotion: typeof stored.reducedMotion === "boolean"
+          ? stored.reducedMotion
+          : this.initialState.reducedMotion,
+        rhythmAssist: typeof stored.rhythmAssist === "boolean"
+          ? stored.rhythmAssist
+          : this.initialState.rhythmAssist,
       };
     } catch {
       return this.initialState;
     }
+  }
+
+  private persist(): void {
+    try {
+      localStorage.setItem(GAME_STORAGE_KEY, JSON.stringify(this.state));
+    } catch (error) {
+      // 저장소가 막혀도 현재 세션 플레이는 계속되어야 한다.
+      console.warn("[Store] 진행 상황을 브라우저에 저장하지 못했습니다.", error);
+    }
+  }
+
+  private readVolume(value: unknown, fallback: number): number {
+    return typeof value === "number" && Number.isFinite(value)
+      ? Math.max(0, Math.min(1, value))
+      : fallback;
   }
 }
 

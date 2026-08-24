@@ -74,6 +74,7 @@ function startTiming(
   let success = 0;
   let start = performance.now();
   let frameId = 0;
+  let clearTimer = 0;
   const loop = (time: number): void => {
     const phase = ((time - start) / (1250 / (1 + success * 0.1))) % 2;
     const position = phase <= 1 ? phase : 2 - phase;
@@ -94,7 +95,7 @@ function startTiming(
         cancelAnimationFrame(frameId);
         frame.status.textContent = greenhouse ? "덩굴에 새싹이 돋았어요! 소리 씨앗 획득" : "조율 완료! ♪ 획득";
         track.disabled = true;
-        window.setTimeout(onClear, 500);
+        clearTimer = window.setTimeout(onClear, 500);
       }
     } else {
       frame.status.textContent = greenhouse ? "빛이 꽃봉오리 중앙에 닿을 때 눌러요" : "조금 더 정확하게!";
@@ -106,6 +107,7 @@ function startTiming(
   frameId = requestAnimationFrame(loop);
   return () => {
     cancelAnimationFrame(frameId);
+    window.clearTimeout(clearTimer);
     track.removeEventListener("pointerdown", tap);
   };
 }
@@ -153,6 +155,7 @@ function startRhythm(
   let score = 0;
   let combo = 0;
   let animationFrame = 0;
+  let clearTimer = 0;
   let finished = false;
   const finish = (): void => {
     if (finished || judgedCount < scoredCount) return;
@@ -163,7 +166,7 @@ function startRhythm(
         ? `빗방울 공명 ${Math.round(accuracy * 100)}% · 소리 씨앗 획득!`
         : `정확도 ${Math.round(accuracy * 100)}% · 클리어!`;
       flashFeedback(frame, "success");
-      window.setTimeout(onClear, 650);
+      clearTimer = window.setTimeout(onClear, 650);
     } else {
       frame.status.textContent = `정확도 ${Math.round(accuracy * 100)}% · 닫고 다시 도전하세요`;
       flashFeedback(frame, "error");
@@ -232,6 +235,7 @@ function startRhythm(
   animationFrame = requestAnimationFrame(animate);
   return () => {
     cancelAnimationFrame(animationFrame);
+    window.clearTimeout(clearTimer);
     pad.removeEventListener("pointerdown", tap);
   };
 }
