@@ -44,6 +44,11 @@ npm.cmd run dev
 npm.cmd run build
 ```
 
+## 배포
+
+Vercel 프로젝트에서 이 저장소를 연결하면 `vercel.json`에 따라 Vite 빌드 결과인 `dist/`가 배포됩니다.
+해시가 붙은 `/assets/` 파일은 장기 캐시하고 `index.html`은 캐시하지 않도록 설정되어 있습니다.
+
 ## 프로젝트 구조
 
 ```text
