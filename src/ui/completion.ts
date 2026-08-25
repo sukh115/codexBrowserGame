@@ -38,13 +38,13 @@ export class CompletionOverlay {
     this.timeline = gsap.timeline({
       onComplete: () => {
         this.element.classList.remove("is-visible");
+        onUnlock();
       },
     });
     this.timeline
       .fromTo(this.element, { opacity: 0 }, { opacity: 1, duration: 0.35 })
       .fromTo(this.title, { scale: 0.45, y: 26 }, { scale: 1, y: 0, duration: 0.8, ease: "back.out(1.7)" }, 0.15)
       .fromTo(this.subtitle, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.45 }, 0.7)
-      .call(onUnlock, [], 2)
       .to([this.title, this.subtitle], { opacity: 0, y: -15, duration: 0.55 }, 3.2)
       .to(this.element, { opacity: 0, duration: 0.45 }, 3.35);
   }

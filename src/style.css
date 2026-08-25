@@ -183,7 +183,7 @@ button { font: inherit; }
   pointer-events: none;
 }
 
-.completion-overlay.is-visible { visibility: visible; }
+.completion-overlay.is-visible { visibility: visible; pointer-events: auto; }
 .completion-overlay h2 { max-width: min(720px, 86vw); margin: 0; font-size: clamp(32px, 6vw, 68px); line-height: 1.08; letter-spacing: -0.05em; text-shadow: 0 0 28px #d97fd7; }
 .completion-overlay p { margin: 0; color: #b9fff3; font-size: clamp(15px, 2vw, 21px); }
 .completion-particles { position: absolute; inset: 0; }
