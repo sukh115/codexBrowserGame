@@ -237,8 +237,10 @@ export function bootstrap(root: HTMLElement): void {
     audioSwitchToken += 1;
     overworldAudioRegion = regionId;
     const region: RegionManifest = ASSET_MANIFEST.regions[regionId];
-    stemPlayer.lockAll();
+    stemPlayer.lockAll(0.1, false);
     void stemPlayer.setRegion(region.stems, region.bpm, region.id).then(() => {
+      // 오버월드 미리듣기용 기본 스템도 지역 0/7에서는 무음으로 시작한다.
+      stemPlayer.lockAll(0.05, false);
       for (const noteId of gameStore.snapshot.collectedNotes) {
         const stemId = region.noteStemMapping[noteId];
         if (stemId) stemPlayer.unlockStem(stemId, 0.05);
@@ -250,13 +252,13 @@ export function bootstrap(root: HTMLElement): void {
 
   gameStore.addEventListener(GAME_EVENTS.REGION_PROGRESS_RESET, (event) => {
     const { regionId } = (event as CustomEvent<RegionProgressResetDetail>).detail;
-    if (regionId === gameStore.snapshot.currentRegion) stemPlayer.lockAll();
+    if (regionId === gameStore.snapshot.currentRegion) stemPlayer.lockAll(0.1, false);
     completionOverlay.hide();
     activeRegionScene?.setInputLocked(false);
   });
 
   gameStore.addEventListener(GAME_EVENTS.ALL_PROGRESS_RESET, () => {
-    stemPlayer.lockAll();
+    stemPlayer.lockAll(0.1, false);
     completionOverlay.hide();
     activeRegionScene?.setInputLocked(false);
   });

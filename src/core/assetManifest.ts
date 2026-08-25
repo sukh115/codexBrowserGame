@@ -54,7 +54,7 @@ const MUSIC_SHOP_STEMS = [
 ] as const satisfies readonly StemManifest[];
 
 const NOTE_STEM_MAPPING = {
-  "note-1": null,
+  "note-1": "rhythm",
   "note-2": null,
   "note-3": "bass",
   "note-4": null,

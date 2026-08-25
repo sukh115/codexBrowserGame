@@ -172,7 +172,7 @@ export class StemPlayer {
     }
   }
 
-  lockAll(fadeSeconds = 0.1): void {
+  lockAll(fadeSeconds = 0.1, preserveInitial = true): void {
     if (!this.context) return;
     const now = this.context.currentTime;
     // 효과로 커진 기본 스템도 초기 음량을 목표로 되돌린다.
@@ -181,12 +181,14 @@ export class StemPlayer {
       gain.gain.cancelScheduledValues(now);
       gain.gain.setValueAtTime(gain.gain.value, now);
       gain.gain.linearRampToValueAtTime(
-        this.initialStemIds.has(id) ? (this.stemLevels.get(id) ?? STEM_LEVEL) : 0,
+        preserveInitial && this.initialStemIds.has(id) ? (this.stemLevels.get(id) ?? STEM_LEVEL) : 0,
         now + fadeSeconds,
       );
     }
     this.unlockedStemIds.clear();
-    for (const id of this.initialStemIds) this.unlockedStemIds.add(id);
+    if (preserveInitial) {
+      for (const id of this.initialStemIds) this.unlockedStemIds.add(id);
+    }
     this.appliedEffects.clear();
     if (this.masterFilter) {
       this.masterFilter.frequency.cancelScheduledValues(now);
