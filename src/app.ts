@@ -84,6 +84,8 @@ export function bootstrap(root: HTMLElement): void {
   loading.onStart(() => {
     void Promise.all([stemPlayer.unlock(), sfxPlayer.unlock()]).then(async () => {
       await stemPlayer.start(initialRegion.stems, initialRegion.id);
+      // 최초 시작도 지역 진입과 같은 기준으로 복원해야 0/7에서 기본 스템이 새지 않는다.
+      stemPlayer.lockAll(0.05, false);
       for (const noteId of gameStore.snapshot.collectedNotes) {
         const stemId = initialRegion.noteStemMapping[noteId];
         if (stemId) stemPlayer.unlockStem(stemId, 0.05);
