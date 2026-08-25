@@ -7,6 +7,7 @@ export interface RegionManifest {
   readonly title: string;
   readonly noteGoal: number;
   readonly background: string | null;
+  readonly npc: RegionNpcManifest | null;
   readonly bpm: number;
   readonly musicalScale: readonly number[];
   readonly aspectRatio: number;
@@ -15,6 +16,11 @@ export interface RegionManifest {
   readonly stems: readonly StemManifest[];
   readonly noteStemMapping: Readonly<Record<string, string | null>>;
   readonly noteEffectMapping: Readonly<Record<string, MusicEffect | null>>;
+}
+
+export interface RegionNpcManifest {
+  readonly worldLayer: string;
+  readonly portraits: readonly string[];
 }
 
 export type MusicEffect = "rhythm-accent" | "open-filter" | "completion-boost";
@@ -112,6 +118,19 @@ export const ASSET_MANIFEST = {
       title: "잠든 악기점",
       noteGoal: 7,
       background: assetPath("assets/textures/music-shop.webp"),
+      npc: {
+        worldLayer: assetPath("assets/textures/npc/dacapo-world.webp"),
+        portraits: [
+          assetPath("assets/textures/npc/dacapo-portrait.webp"),
+          assetPath("assets/textures/npc/dacapo-portrait.webp"),
+          assetPath("assets/textures/npc/dacapo-portrait.webp"),
+          assetPath("assets/textures/npc/dacapo-portrait.webp"),
+          assetPath("assets/textures/npc/dacapo-portrait.webp"),
+          assetPath("assets/textures/npc/dacapo-portrait.webp"),
+          assetPath("assets/textures/npc/dacapo-portrait.webp"),
+          assetPath("assets/textures/npc/dacapo-portrait.webp"),
+        ],
+      },
       bpm: 100,
       musicalScale: [130.81, 155.56, 174.61, 196, 233.08, 261.63, 311.13, 349.23],
       aspectRatio: 1472 / 720,
@@ -126,6 +145,7 @@ export const ASSET_MANIFEST = {
       title: "네온 숲",
       noteGoal: 7,
       background: assetPath("assets/textures/abandoned-greenhouse.webp"),
+      npc: null,
       bpm: 96,
       musicalScale: [146.83, 174.61, 196, 220, 261.63, 293.66, 349.23, 392],
       aspectRatio: 1456 / 720,

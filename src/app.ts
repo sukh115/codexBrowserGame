@@ -63,14 +63,17 @@ export function bootstrap(root: HTMLElement): void {
   let audioSwitchToken = 0;
   let imageProgress = 0;
   let audioProgress = 0;
-  const backgrounds = Object.values(ASSET_MANIFEST.regions)
-    .map((region) => region.background)
-    .filter((background): background is string => background !== null);
+  const regionImages = Object.values(ASSET_MANIFEST.regions).flatMap((region) => [
+    region.background,
+    region.npc?.worldLayer ?? null,
+    ...(region.npc?.portraits ?? []),
+  ]).filter((path): path is string => path !== null);
+  const images = [...new Set(regionImages)];
   const updatePreloadProgress = (): void => {
-    const total = backgrounds.length + initialRegion.stems.length;
+    const total = images.length + initialRegion.stems.length;
     loading.setProgress(total === 0
       ? 1
-      : (imageProgress * backgrounds.length + audioProgress * initialRegion.stems.length) / total);
+      : (imageProgress * images.length + audioProgress * initialRegion.stems.length) / total);
   };
   overlay.append(loading.element);
 
@@ -185,7 +188,7 @@ export function bootstrap(root: HTMLElement): void {
 
   // 외부 에셋이 없는 현재 단계도 동일한 로딩 흐름을 유지한다.
   void Promise.all([
-    loader.preloadImages(backgrounds),
+    loader.preloadImages(images),
     stemPlayer.preload(initialRegion.stems, initialRegion.id, initialRegion.bpm, (progress) => {
       audioProgress = progress;
       updatePreloadProgress();

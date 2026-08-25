@@ -278,7 +278,9 @@ button { font: inherit; }
 .npc-dialogue-panel header { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
 .npc-dialogue-panel strong { color: #8ff1df; font-size: 18px; }
 .npc-dialogue-progress { color: #bdb4cc; font-size: 12px; }
-.npc-dialogue-text { min-height: 3em; margin: 14px 0 18px; color: #f5edf8; font-size: 16px; line-height: 1.55; }
+.npc-dialogue-body { display: grid; grid-template-columns: 116px 1fr; align-items: end; gap: 16px; min-height: 136px; }
+.npc-dialogue-portrait { width: 116px; height: 136px; object-fit: contain; object-position: center bottom; image-rendering: pixelated; user-select: none; }
+.npc-dialogue-text { align-self: center; min-height: 3em; margin: 14px 0 18px; color: #f5edf8; font-size: 16px; line-height: 1.55; }
 .npc-dialogue-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .npc-dialogue-actions button { min-height: 38px; padding: 8px 15px; border: 1px solid #726987; border-radius: 999px; color: #f6f0fa; background: #2d2746; cursor: pointer; }
 .npc-dialogue-actions button:last-child { color: #171426; border-color: transparent; background: linear-gradient(120deg, #fff2a5, #79e0cf); font-weight: 800; }
@@ -448,6 +450,8 @@ button { font: inherit; }
   .npc-dialogue-trigger { min-height: 44px; padding: 7px 11px; font-size: 13px; }
   .npc-dialogue-overlay { padding: 12px; }
   .npc-dialogue-panel { width: calc(100vw - 24px); padding: 15px 16px; }
+  .npc-dialogue-body { grid-template-columns: 82px 1fr; gap: 10px; min-height: 102px; }
+  .npc-dialogue-portrait { width: 82px; height: 102px; }
   .npc-dialogue-text { margin: 11px 0 14px; font-size: 14px; }
   .completion-overlay h2 { max-width: 88vw; font-size: clamp(28px, 9vw, 48px); text-align: center; }
   .completion-overlay p { max-width: 82vw; text-align: center; }

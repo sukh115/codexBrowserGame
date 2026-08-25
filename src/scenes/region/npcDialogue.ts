@@ -8,6 +8,7 @@ export class NpcDialogue {
   private readonly overlay = document.createElement("section");
   private readonly text = document.createElement("p");
   private readonly progress = document.createElement("span");
+  private readonly portrait = document.createElement("img");
   private readonly nextButton = document.createElement("button");
   private readonly closeButton = document.createElement("button");
   private readonly worldPosition = new THREE.Vector3();
@@ -23,6 +24,7 @@ export class NpcDialogue {
     private readonly u: number,
     private readonly v: number,
     private readonly stages: readonly DialogueStage[],
+    private readonly portraits: readonly string[],
     private readonly noteGoal: number,
     private readonly onModalChange: (open: boolean) => void,
   ) {
@@ -44,7 +46,13 @@ export class NpcDialogue {
     name.textContent = "다카포";
     this.progress.className = "npc-dialogue-progress";
     header.append(name, this.progress);
+    const body = document.createElement("div");
+    body.className = "npc-dialogue-body";
+    this.portrait.className = "npc-dialogue-portrait";
+    this.portrait.alt = "다카포의 표정";
+    this.portrait.draggable = false;
     this.text.className = "npc-dialogue-text";
+    body.append(this.portrait, this.text);
     const actions = document.createElement("div");
     actions.className = "npc-dialogue-actions";
     this.closeButton.textContent = "닫기";
@@ -53,7 +61,7 @@ export class NpcDialogue {
     this.nextButton.addEventListener("pointerup", this.advance);
     document.addEventListener("keydown", this.handleKeyDown);
     actions.append(this.closeButton, this.nextButton);
-    panel.append(header, this.text, actions);
+    panel.append(header, body, actions);
     this.overlay.append(panel);
     overlayRoot.append(this.button, this.overlay);
   }
@@ -127,6 +135,9 @@ export class NpcDialogue {
     const stage = this.getStage();
     this.lineIndex = Math.min(this.lineIndex, stage.lines.length - 1);
     this.progress.textContent = `기억 ${this.collectedCount}/${this.noteGoal}`;
+    this.portrait.src = this.portraits[this.collectedCount]
+      ?? this.portraits[this.portraits.length - 1]
+      ?? "";
     this.text.textContent = stage.lines[this.lineIndex];
     this.nextButton.textContent = this.lineIndex >= stage.lines.length - 1 ? "대화 마치기" : "다음";
   }

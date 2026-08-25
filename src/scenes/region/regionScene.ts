@@ -10,6 +10,7 @@ import type { SfxPlayer } from "../../audio/sfx";
 import { REGION_PLACEMENTS } from "../../regionData";
 import { MUSIC_SHOP_DIALOGUE } from "../../regionData/musicShopDialogue";
 import { NpcDialogue } from "./npcDialogue";
+import { LivingBackgroundMaterial } from "./livingBackgroundMaterial";
 
 const BACKGROUND_HEIGHT = 10;
 const MIN_ZOOM = 1;
@@ -19,6 +20,8 @@ export class RegionScene implements GameScene {
   readonly scene = new THREE.Scene();
   readonly camera = new THREE.OrthographicCamera(-10, 10, 5, -5, 0.1, 20);
   private readonly background: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
+  private readonly npcLayer: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial> | null;
+  private readonly npcMaterial: LivingBackgroundMaterial | null;
   private readonly exitButton = document.createElement("button");
   private readonly noteField: NoteField;
   private readonly minigames: MinigameController;
@@ -39,6 +42,7 @@ export class RegionScene implements GameScene {
   private tapStartTime = 0;
   private inputLocked = false;
   private exiting = false;
+  private npcProgress = -1;
   private readonly placementEditorEnabled = new URLSearchParams(window.location.search).get("debug") === "1";
   private collectedNotes: readonly string[];
 
@@ -70,6 +74,23 @@ export class RegionScene implements GameScene {
       new THREE.PlaneGeometry(width, BACKGROUND_HEIGHT),
       this.reactiveLayer.background.material,
     );
+    if (manifest.npc) {
+      const texture = this.createTransparentTexture();
+      this.npcMaterial = new LivingBackgroundMaterial(
+        texture,
+        manifest.baseBrightness,
+        manifest.baseSaturation,
+        manifest.noteGoal,
+      );
+      this.npcLayer = new THREE.Mesh(
+        new THREE.PlaneGeometry(width, BACKGROUND_HEIGHT),
+        this.npcMaterial.material,
+      );
+      this.npcLayer.position.z = 0.1;
+    } else {
+      this.npcMaterial = null;
+      this.npcLayer = null;
+    }
     this.noteField = new NoteField(
       placement.notes,
       collectedNotes,
@@ -102,12 +123,14 @@ export class RegionScene implements GameScene {
         0.323,
         0.61,
         MUSIC_SHOP_DIALOGUE,
+        manifest.npc?.portraits ?? [],
         manifest.noteGoal,
         (open) => this.setInputLocked(open),
       )
       : null;
-    this.npcDialogue?.setProgress(this.getCollectedCount(collectedNotes));
+    this.syncNpcProgress(collectedNotes);
     this.loadBackground();
+    this.loadNpcLayer();
     this.exitButton.className = "exit-button";
     this.exitButton.textContent = "오버월드로 나가기";
     this.exitButton.addEventListener("pointerup", this.requestExit);
@@ -117,6 +140,7 @@ export class RegionScene implements GameScene {
   init(): void {
     this.scene.background = new THREE.Color(0x17142b);
     this.scene.add(this.background);
+    if (this.npcLayer) this.scene.add(this.npcLayer);
     this.scene.add(this.noteField.group);
     this.scene.add(this.tapRipples.group);
     this.camera.position.set(0, 0, 10);
@@ -150,7 +174,7 @@ export class RegionScene implements GameScene {
   syncCollectedNotes(collectedNotes: readonly string[]): void {
     this.collectedNotes = collectedNotes;
     this.noteField.syncCollectedNotes(collectedNotes);
-    this.npcDialogue?.setProgress(this.getCollectedCount(collectedNotes));
+    this.syncNpcProgress(collectedNotes);
   }
 
   syncClearedMinigames(cleared: readonly string[]): void {
@@ -196,6 +220,12 @@ export class RegionScene implements GameScene {
     this.background.geometry.dispose();
     const backgroundTexture = this.background.material.uniforms.map.value as THREE.Texture;
     backgroundTexture.dispose();
+    if (this.npcLayer && this.npcMaterial) {
+      this.npcLayer.geometry.dispose();
+      const npcTexture = this.npcMaterial.material.uniforms.map.value as THREE.Texture;
+      npcTexture.dispose();
+      this.npcMaterial.dispose();
+    }
     this.noteField.dispose();
     this.tapRipples.dispose();
     this.sfxPlayer.stopHum();
@@ -362,6 +392,14 @@ export class RegionScene implements GameScene {
     return collectedNotes.filter((id) => id.startsWith("note-")).length;
   }
 
+  private syncNpcProgress(collectedNotes: readonly string[]): void {
+    const progress = this.getCollectedCount(collectedNotes);
+    if (progress === this.npcProgress) return;
+    this.npcProgress = progress;
+    this.npcDialogue?.setProgress(progress);
+    this.npcMaterial?.setProgress(progress, this.getReducedMotion());
+  }
+
   private createPlaceholderTexture(): THREE.CanvasTexture {
     const canvas = document.createElement("canvas");
     canvas.width = 2048;
@@ -396,6 +434,12 @@ export class RegionScene implements GameScene {
     return texture;
   }
 
+  private createTransparentTexture(): THREE.DataTexture {
+    const texture = new THREE.DataTexture(new Uint8Array([0, 0, 0, 0]), 1, 1);
+    texture.needsUpdate = true;
+    return texture;
+  }
+
   private loadBackground(): void {
     if (!this.manifest.background) return;
     new THREE.TextureLoader().load(
@@ -415,6 +459,25 @@ export class RegionScene implements GameScene {
         // 에셋 전달 전에도 전체 게임 흐름은 중단하지 않는다.
         console.warn(`[RegionScene] 배경 로드 실패, 플레이스홀더 유지: ${this.manifest.background}`);
       },
+    );
+  }
+
+  private loadNpcLayer(): void {
+    if (!this.manifest.npc || !this.npcMaterial) return;
+    new THREE.TextureLoader().load(
+      this.manifest.npc.worldLayer,
+      (texture) => {
+        if (this.disposed) {
+          texture.dispose();
+          return;
+        }
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.magFilter = THREE.NearestFilter;
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
+        this.npcMaterial?.setTexture(texture).dispose();
+      },
+      undefined,
+      () => console.warn(`[RegionScene] NPC 로드 실패: ${this.manifest.npc?.worldLayer}`),
     );
   }
 }
