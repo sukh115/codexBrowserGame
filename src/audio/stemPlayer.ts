@@ -175,6 +175,8 @@ export class StemPlayer {
   lockAll(fadeSeconds = 0.1): void {
     if (!this.context) return;
     const now = this.context.currentTime;
+    // 효과로 커진 기본 스템도 초기 음량을 목표로 되돌린다.
+    this.stemLevels.set("rhythm", STEM_LEVEL);
     for (const [id, { gain }] of this.activeStems) {
       gain.gain.cancelScheduledValues(now);
       gain.gain.setValueAtTime(gain.gain.value, now);
@@ -186,7 +188,6 @@ export class StemPlayer {
     this.unlockedStemIds.clear();
     for (const id of this.initialStemIds) this.unlockedStemIds.add(id);
     this.appliedEffects.clear();
-    this.stemLevels.set("rhythm", STEM_LEVEL);
     if (this.masterFilter) {
       this.masterFilter.frequency.cancelScheduledValues(now);
       this.masterFilter.frequency.linearRampToValueAtTime(2400, now + fadeSeconds);

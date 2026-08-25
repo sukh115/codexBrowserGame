@@ -82,6 +82,9 @@ export class RegionScene implements GameScene {
         manifest.baseSaturation,
         manifest.noteGoal,
       );
+      // 투명 픽셀이 배경의 깊이 버퍼를 가리지 않아야 한다.
+      this.npcMaterial.material.transparent = true;
+      this.npcMaterial.material.depthWrite = false;
       this.npcLayer = new THREE.Mesh(
         new THREE.PlaneGeometry(width, BACKGROUND_HEIGHT),
         this.npcMaterial.material,
