@@ -97,21 +97,7 @@ export const ASSET_MANIFEST = {
   characterModel: null as string | null,
   dracoDecoderPath: assetPath("assets/draco/"),
   overworldGround: null as string | null,
-  overworldProps: [
-    {
-      id: "tree-test",
-      path: assetPath("assets/models/tree-test.fbx"),
-      position: { x: -5, z: -4 },
-      targetHeight: 7.2,
-    },
-    {
-      id: "tree-test-obj",
-      path: assetPath("assets/models/tree-test.obj"),
-      materialPath: assetPath("assets/models/tree-test.mtl"),
-      position: { x: -9, z: -4 },
-      targetHeight: 7.2,
-    },
-  ],
+  overworldProps: [],
   regions: {
     "music-shop": {
       id: "music-shop",
