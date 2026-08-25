@@ -65,7 +65,6 @@ export function bootstrap(root: HTMLElement): void {
   let audioProgress = 0;
   const regionImages = Object.values(ASSET_MANIFEST.regions).flatMap((region) => [
     region.background,
-    region.npc?.worldLayer ?? null,
     ...(region.npc?.portraits ?? []),
   ]).filter((path): path is string => path !== null);
   const images = [...new Set(regionImages)];
