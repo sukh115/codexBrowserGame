@@ -184,7 +184,8 @@ export class OverworldScene implements GameScene {
     const nearestDistanceSquared = Math.min(firstDistanceSquared, secondDistanceSquared);
     const activeEntrance = getEntranceManifest(this.activeRegionId);
     const nearEntrance = nearestDistanceSquared <= activeEntrance.activationRadius ** 2;
-    this.enterButton.hidden = !nearEntrance || this.entering;
+    const underConstruction = this.activeRegionId === "neon-forest";
+    this.enterButton.hidden = !nearEntrance || this.entering || underConstruction;
     this.enterButton.textContent = `${ASSET_MANIFEST.regions[this.activeRegionId].title}으로 들어가기`;
     const distanceToEntrance = Math.sqrt(nearestDistanceSquared);
     this.guideElapsed += deltaSeconds;
@@ -198,10 +199,14 @@ export class OverworldScene implements GameScene {
       1,
     );
     // 가장자리에서 볼륨이 갑자기 튀지 않도록 부드러운 감쇠 곡선을 쓴다.
-    this.onRegionProximityChange(
-      this.activeRegionId,
-      linearProximity * linearProximity * (3 - 2 * linearProximity),
-    );
+    if (underConstruction) {
+      this.onRegionProximityChange("music-shop", 0);
+    } else {
+      this.onRegionProximityChange(
+        this.activeRegionId,
+        linearProximity * linearProximity * (3 - 2 * linearProximity),
+      );
+    }
 
     if (this.entering) return;
     // 캐릭터의 보행 바운스는 연출용이며 카메라 추적 높이에는 반영하지 않는다.
@@ -379,10 +384,9 @@ export class OverworldScene implements GameScene {
 
   private updatePortalGuide(shopDistance: number, greenhouseDistance: number): void {
     const shopComplete = this.completedRegions.includes("music-shop");
-    const greenhouseComplete = this.completedRegions.includes("neon-forest");
     this.portalGuide.innerHTML = `
       <span class="${this.activeRegionId === "music-shop" ? "is-nearest" : ""}">${shopComplete ? "✓" : "♪"} ${ASSET_MANIFEST.regions["music-shop"].title} <b>${shopDistance.toFixed(1)}m</b></span>
-      <span class="${this.activeRegionId === "neon-forest" ? "is-nearest" : ""}">${greenhouseComplete ? "✓" : "♧"} ${ASSET_MANIFEST.regions["neon-forest"].title} <b>${greenhouseDistance.toFixed(1)}m</b></span>
+      <span class="${this.activeRegionId === "neon-forest" ? "is-nearest" : ""}">🚧 2지역 공사중 <b>${greenhouseDistance.toFixed(1)}m</b></span>
     `;
   }
 
@@ -408,6 +412,21 @@ export class OverworldScene implements GameScene {
       pots.setMatrixAt(index, matrix);
     }
     this.scene.add(pots);
+    this.createConstructionSign();
+  }
+
+  private createConstructionSign(): void {
+    const texture = this.createPortalLabelTexture("🚧 공사중", 0xe3a83b);
+    const sign = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true }));
+    sign.position.set(this.secondEntrancePosition.x, 1.55, this.secondEntrancePosition.z + 2.25);
+    sign.scale.set(3.4, 0.85, 1);
+    const postMaterial = new THREE.MeshStandardMaterial({ color: 0x594636, roughness: 1 });
+    for (const offset of [-0.85, 0.85]) {
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.5, 0.12), postMaterial.clone());
+      post.position.set(this.secondEntrancePosition.x + offset, 0.75, this.secondEntrancePosition.z + 2.3);
+      this.scene.add(post);
+    }
+    this.scene.add(sign);
   }
 
   private createPortalLabelTexture(label: string, color: number): THREE.CanvasTexture {
