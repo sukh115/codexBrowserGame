@@ -19,9 +19,8 @@ export interface RegionManifest {
 }
 
 export interface RegionNpcManifest {
+  readonly worldLayer: string;
   readonly portraits: readonly string[];
-  readonly worldPosition: { readonly u: number; readonly v: number };
-  readonly worldSize: number;
 }
 
 export type MusicEffect = "rhythm-accent" | "open-filter" | "completion-boost";
@@ -120,6 +119,7 @@ export const ASSET_MANIFEST = {
       noteGoal: 7,
       background: assetPath("assets/textures/music-shop.webp"),
       npc: {
+        worldLayer: assetPath("assets/textures/npc/dacapo-world.webp"),
         portraits: [
           assetPath("assets/textures/npc/dacapo-calm.png"),
           assetPath("assets/textures/npc/dacapo-calm.png"),
@@ -130,8 +130,6 @@ export const ASSET_MANIFEST = {
           assetPath("assets/textures/npc/dacapo-smile.png"),
           assetPath("assets/textures/npc/dacapo-smile.png"),
         ],
-        worldPosition: { u: 0.325, v: 0.46 },
-        worldSize: 2.8,
       },
       bpm: 100,
       musicalScale: [130.81, 155.56, 174.61, 196, 233.08, 261.63, 311.13, 349.23],
