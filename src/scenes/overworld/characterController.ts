@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
+import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { createPlaceholderCharacter, type PlaceholderCharacterRig } from "./placeholderCharacter";
 import { disposeObject3D } from "./resourceDisposal";
@@ -40,6 +41,10 @@ export class OverworldCharacterController {
   }
 
   private loadModel(modelPath: string, dracoDecoderPath: string): void {
+    if (modelPath.toLowerCase().endsWith(".fbx")) {
+      this.loadFbxModel(modelPath);
+      return;
+    }
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath(dracoDecoderPath);
     const loader = new GLTFLoader();
@@ -66,6 +71,119 @@ export class OverworldCharacterController {
         if (!this.disposed) console.warn(`[Character] GLB 로드 실패, 플레이스홀더 유지: ${modelPath}`, error);
       },
     );
+  }
+
+  private loadFbxModel(modelPath: string): void {
+    new FBXLoader().load(
+      modelPath,
+      (object) => {
+        const loadedMotion = new FbxMotion(object, object.animations);
+        if (this.disposed) {
+          loadedMotion.dispose();
+          return;
+        }
+        this.group.remove(this.motion.group);
+        this.motion.dispose();
+        this.motion = loadedMotion;
+        this.motion.setMoving(this.moving);
+        this.group.add(this.motion.group);
+        console.info(`[Character] FBX 로드 완료: ${modelPath}`);
+      },
+      undefined,
+      (error) => {
+        if (!this.disposed) console.warn(`[Character] FBX 로드 실패, 플레이스홀더 유지: ${modelPath}`, error);
+      },
+    );
+  }
+}
+
+class FbxMotion implements CharacterMotion {
+  readonly group: THREE.Group;
+  private readonly mixer: THREE.AnimationMixer;
+  private readonly idleAction: THREE.AnimationAction | null;
+  private readonly walkAction: THREE.AnimationAction | null;
+  private activeAction: THREE.AnimationAction | null = null;
+  private moving = false;
+  private time = 0;
+  private baseY = 0;
+
+  constructor(group: THREE.Group, clips: readonly THREE.AnimationClip[]) {
+    this.group = group;
+    this.normalizeModel();
+    this.applyFallbackMaterials();
+    this.mixer = new THREE.AnimationMixer(group);
+    this.idleAction = this.createAction(clips, ["idle"]);
+    this.walkAction = this.createAction(clips, ["walk", "walking"]);
+    this.activeAction = this.idleAction ?? this.walkAction;
+    this.activeAction?.play();
+    console.info(`[Character] FBX 애니메이션 클립: idle=${this.idleAction !== null}, walk=${this.walkAction !== null}`);
+  }
+
+  setMoving(moving: boolean): void {
+    this.moving = moving;
+    const nextAction = moving ? this.walkAction : this.idleAction;
+    if (!nextAction || nextAction === this.activeAction) return;
+    nextAction.reset().play();
+    if (this.activeAction) this.activeAction.crossFadeTo(nextAction, 0.25, false);
+    this.activeAction = nextAction;
+  }
+
+  update(deltaSeconds: number): void {
+    this.mixer.update(deltaSeconds);
+    if (this.activeAction) return;
+    this.time += deltaSeconds * (this.moving ? 9 : 1.8);
+    this.group.position.y = this.baseY + (this.moving
+      ? Math.abs(Math.sin(this.time)) * 0.1
+      : Math.max(0, Math.sin(this.time) * 0.018));
+    this.group.rotation.z = this.moving ? Math.sin(this.time * 0.5) * 0.035 : 0;
+  }
+
+  dispose(): void {
+    this.mixer.stopAllAction();
+    this.mixer.uncacheRoot(this.group);
+    disposeObject3D(this.group);
+    this.group.clear();
+  }
+
+  private createAction(clips: readonly THREE.AnimationClip[], names: readonly string[]): THREE.AnimationAction | null {
+    const clip = clips.find((candidate) => names.includes(candidate.name.toLowerCase()));
+    return clip ? this.mixer.clipAction(clip) : null;
+  }
+
+  private normalizeModel(): void {
+    const box = new THREE.Box3().setFromObject(this.group);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    if (size.y > 0) this.group.scale.setScalar(2.2 / size.y);
+    box.setFromObject(this.group);
+    this.group.position.y = -box.min.y;
+    this.baseY = this.group.position.y;
+    this.group.traverse((object) => {
+      if (!(object instanceof THREE.Mesh)) return;
+      object.castShadow = false;
+      object.receiveShadow = false;
+    });
+  }
+
+  private applyFallbackMaterials(): void {
+    const colors: Readonly<Record<string, number>> = {
+      hand_low: 0xe0aa8d,
+      head_low: 0xe0aa8d,
+      HP_low: 0x30233f,
+      top_low: 0x68417d,
+      bottom_low: 0x29263d,
+      Box_low: 0x8f6557,
+    };
+    this.group.traverse((object) => {
+      if (!(object instanceof THREE.Mesh)) return;
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      for (const material of materials) material.dispose();
+      object.material = new THREE.MeshStandardMaterial({
+        color: colors[object.name] ?? 0x67536f,
+        roughness: 0.88,
+        metalness: 0,
+      });
+    });
   }
 }
 
